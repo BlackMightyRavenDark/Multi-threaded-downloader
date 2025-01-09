@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using static MultiThreadedDownloaderLib.FileDownloader;
 using static MultiThreadedDownloaderLib.StreamAppender;
+using static MultiThreadedDownloaderLib.Utils;
 
 namespace MultiThreadedDownloaderLib
 {
@@ -72,8 +72,6 @@ namespace MultiThreadedDownloaderLib
 
 		private CancellationTokenSource _cancellationTokenSource;
 
-		public const int MEGABYTE = 1048576; //1024 * 1024;
-
 		public const int DOWNLOAD_ERROR_MERGING_CHUNKS = -200;
 		public const int DOWNLOAD_ERROR_CREATE_FILE = -201;
 		public const int DOWNLOAD_ERROR_NO_URL_SPECIFIED = -202;
@@ -114,56 +112,6 @@ namespace MultiThreadedDownloaderLib
 			{
 				_isDisposed = true;
 				Stop();
-			}
-		}
-
-		public static string GetNumberedFileName(string filePath)
-		{
-			if (File.Exists(filePath))
-			{
-				string dirPath = Path.GetDirectoryName(filePath);
-				string fileName = Path.GetFileNameWithoutExtension(filePath);
-				string ext = Path.GetExtension(filePath);
-				string part1 = !string.IsNullOrEmpty(dirPath) ? Path.Combine(dirPath, fileName) : fileName;
-				bool isExtensionPresent = !string.IsNullOrEmpty(ext) && !string.IsNullOrWhiteSpace(ext);
-
-				int i = 2;
-				string newFileName;
-				do
-				{
-					newFileName = isExtensionPresent ? $"{part1}_{i++}{ext}" : $"{part1}_{i++}";
-				} while (File.Exists(newFileName));
-				return newFileName;
-			}
-			return filePath;
-		}
-
-		private IEnumerable<Tuple<long, long>> SplitContentToChunks(long contentLength, int chunkCount)
-		{
-			if (contentLength <= 0L)
-			{
-				yield return new Tuple<long, long>(0L, -1L);
-				yield break;
-			}
-
-			long contentLengthRanged = RangeTo >= 0L ? RangeTo - RangeFrom : contentLength - RangeFrom;
-			if (chunkCount <= 1 || contentLengthRanged <= MEGABYTE)
-			{
-				long byteTo = RangeTo >= 0L ? RangeTo : contentLengthRanged + RangeFrom - 1;
-				yield return new Tuple<long, long>(RangeFrom, byteTo);
-				yield break;
-			}
-
-			long chunkSize = contentLengthRanged / chunkCount;
-			long startPos = RangeFrom;
-			for (int i = 0; i < chunkCount; ++i)
-			{
-				bool lastChunk = i == chunkCount - 1;
-				long endPos = lastChunk ? (RangeTo >= 0 ? RangeTo : contentLength - 1) : (startPos + chunkSize);
-
-				yield return new Tuple<long, long>(startPos, endPos);
-
-				if (!lastChunk) { startPos += chunkSize + 1; }
 			}
 		}
 
@@ -346,7 +294,7 @@ namespace MultiThreadedDownloaderLib
 				bufferSize = isRangeSupported ? 8192 : 4096;
 			}
 
-			int chunkCount = isRangeSupported && ContentLength > MEGABYTE ? ThreadCount : 1;
+			int chunkCount = isRangeSupported && ContentLength > ONE_MEGABYTE ? ThreadCount : 1;
 			ThreadCount = chunkCount;
 			for (int i = 0; i < chunkCount; ++i)
 			{
@@ -358,7 +306,7 @@ namespace MultiThreadedDownloaderLib
 			bool isExceptionRaised = false;
 
 			List<FileDownloader> downloaders = new List<FileDownloader>();
-			var chunkRanges = SplitContentToChunks(fullContentLength, chunkCount);
+			var chunkRanges = SplitContentToChunks(fullContentLength, RangeFrom, RangeTo, chunkCount);
 			var tasks = chunkRanges.Select((range, taskId) => Task.Run(() =>
 			{
 				long chunkFirstByte = range.Item1;
@@ -452,7 +400,7 @@ namespace MultiThreadedDownloaderLib
 						}
 						else
 						{
-							long bytesNeeded = chunkLastByte - chunkFirstByte + MEGABYTE;
+							long bytesNeeded = chunkLastByte - chunkFirstByte + ONE_MEGABYTE;
 							if (!IsEnoughDiskSpace(chunkFileName[0], bytesNeeded, out string errorMsg))
 							{
 								LastErrorCode = DOWNLOAD_ERROR_ABORTED;
@@ -665,31 +613,6 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		private static List<DownloadingTask> BuildChunkSequence(
-			ConcurrentDictionary<int, DownloadableContentChunk> contentChunks,
-			int threadCount, out bool isValidSequence)
-		{
-			int elementCount = contentChunks.Count;
-			if (elementCount > 0 && elementCount == threadCount)
-			{
-				isValidSequence = true;
-				for (int i = 0; i < threadCount; ++i)
-				{
-					isValidSequence &= contentChunks.ContainsKey(i) &&
-						contentChunks[i]?.DownloadingTask?.OutputStream != null;
-					if (!isValidSequence) { return null; }
-				}
-
-				List<DownloadingTask> taskList = contentChunks.Select(item => item.Value.DownloadingTask).ToList();
-				taskList.Sort((x, y) => x.ByteFrom < y.ByteFrom ? -1 : 1);
-
-				return taskList;
-			}
-
-			isValidSequence = false;
-			return null;
-		}
-
 		private int MergeChunks(IEnumerable<DownloadingTask> downloadingTasks)
 		{
 			string tmpFileName = GetNumberedFileName(GetTempMergingFilePath());
@@ -805,27 +728,6 @@ namespace MultiThreadedDownloaderLib
 			}
 
 			return 200;
-		}
-
-		private bool IsEnoughDiskSpace(char driveLetter, long bytesNeeded, out string errorMessage)
-		{
-			try
-			{
-				DriveInfo di = new DriveInfo(driveLetter.ToString());
-				if (!di.IsReady)
-				{
-					errorMessage = "Диск не готов";
-					return false;
-				}
-				bool ok = di.AvailableFreeSpace > bytesNeeded;
-				errorMessage = ok ? null : "Недостаточно места на диске";
-				return ok;
-			} catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine(ex.Message);
-				errorMessage = ex.Message;
-				return false;
-			}
 		}
 
 		private void ClearGarbage(ConcurrentDictionary<int, DownloadableContentChunk> dictionary)
@@ -944,16 +846,6 @@ namespace MultiThreadedDownloaderLib
 				return true;
 			}
 			return false;
-		}
-
-		public static int GetDefaultMaximumConnectionLimit()
-		{
-			return ServicePointManager.DefaultConnectionLimit;
-		}
-
-		public static void SetDefaultMaximumConnectionLimit(int limit)
-		{
-			ServicePointManager.DefaultConnectionLimit = limit;
 		}
 
 		public List<char> GetUsedDriveLetters()

@@ -25,7 +25,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			MultiThreadedDownloader.SetDefaultMaximumConnectionLimit(100);
+			Utils.SetDefaultMaximumConnectionLimit(100);
 			lblDownloadingProgress.Text = null;
 			lblMergingProgress.Text = null;
 			cbKeepDownloadedFileInTempOrMergingDirectory.Enabled = checkBoxMergeChunksAutomatically.Checked;
