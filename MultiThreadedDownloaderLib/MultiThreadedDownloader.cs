@@ -242,7 +242,8 @@ namespace MultiThreadedDownloaderLib
 			NameValueCollection responseHeaders = null;
 			while (true)
 			{
-				Connecting?.Invoke(this, Url, ++headersReceivingTryNumber, TryCountLimitPerThread);
+				headersReceivingTryNumber++;
+				Connecting?.Invoke(this, Url, headersReceivingTryNumber, TryCountLimitPerThread);
 				LastErrorCode = GetUrlResponseHeaders(Url, Headers, ConnectionTimeout,
 					out responseHeaders, out string headersErrorMessage);
 				
