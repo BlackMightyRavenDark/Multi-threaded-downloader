@@ -582,7 +582,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 			else
 			{
-				if (errorCode == 200 || errorCode == 206)
+				if ((errorCode == 200 || errorCode == 206) && headers != null)
 				{
 					string s = tryCountLimit > 0 ?
 						$"Заголовки получены (попытка №{tryNumber} / {tryCountLimit}):" :
@@ -594,6 +594,10 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				else
 				{
 					System.Diagnostics.Debug.WriteLine($"Ошибка при получении заголовков! Код: {errorCode}");
+					if (!(sender as FileDownloader).IgnoreHeadRequestErrors)
+					{
+						System.Diagnostics.Debug.WriteLine("Скачивание прервано!");
+					}
 				}
 			}
 		}

@@ -21,6 +21,8 @@ namespace MultiThreadedDownloaderLib
 		public NameValueCollection Headers { get => _headers; set { SetHeaders(value); } }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
 		public bool IgnoreStreamSizeExceededError { get; set; } = false;
+		public bool IgnoreHeadRequestErrors { get; set; } = true;
+		public bool SkipHeadRequest { get; set; } = false;
 		public long DownloadedInLastSession { get; private set; } = 0L;
 		public long OutputStreamSize => DownloadingTask?.OutputStream?.Stream != null ?
 			DownloadingTask.OutputStream.Stream.Length : 0L;
@@ -125,43 +127,46 @@ namespace MultiThreadedDownloaderLib
 			bool isInfiniteRetries = tryCountLimit <= 0;
 
 			NameValueCollection responseHeaders = null;
-			while (true)
+			if (!SkipHeadRequest)
 			{
-				tryNumber++;
-				HeadersReceiving?.Invoke(this, Url, downloadingTask, tryNumber, tryCountLimit);
-				LastErrorCode = GetUrlResponseHeaders(Url, Headers, ConnectionTimeout,
-					out responseHeaders, out string headersErrorText);
+				while (true)
+				{
+					tryNumber++;
+					HeadersReceiving?.Invoke(this, Url, downloadingTask, tryNumber, tryCountLimit);
+					LastErrorCode = GetUrlResponseHeaders(Url, Headers, ConnectionTimeout,
+						out responseHeaders, out string headersErrorText);
 
-				if (_cancellationTokenSource.IsCancellationRequested)
-				{
-					LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
-					LastErrorMessage = null;
-					IsActive = false;
-					return LastErrorCode;
-				}
-				else if (LastErrorCode == 200 || LastErrorCode == 206)
-				{
-					HeadersReceived?.Invoke(this, Url, downloadingTask, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
-					tryNumber = 0;
-					break;
-				}
+					if (_cancellationTokenSource.IsCancellationRequested)
+					{
+						LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
+						LastErrorMessage = null;
+						IsActive = false;
+						return LastErrorCode;
+					}
+					else if (IgnoreHeadRequestErrors || LastErrorCode == 200 || LastErrorCode == 206)
+					{
+						HeadersReceived?.Invoke(this, Url, downloadingTask, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
+						tryNumber = 0;
+						break;
+					}
 
-				if (!isInfiniteRetries && tryNumber + 1 > tryCountLimit)
-				{
-					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
-					LastErrorMessage = "Не удалось получить HTTP-заголовки!";
-					HeadersReceived?.Invoke(this, Url, downloadingTask, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
-					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
-					IsActive = false;
-					return LastErrorCode;
+					if (!isInfiniteRetries && tryNumber + 1 > tryCountLimit)
+					{
+						LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
+						LastErrorMessage = "Не удалось получить HTTP-заголовки!";
+						HeadersReceived?.Invoke(this, Url, downloadingTask, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
+						WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
+						IsActive = false;
+						return LastErrorCode;
+					}
 				}
 			}
 
 			Dictionary<int, long> chunkProcessingDict = new Dictionary<int, long>();
 
-			bool isRangeSupported = IsRangeSupported(responseHeaders);
+			bool isRangeSupported = responseHeaders != null && IsRangeSupported(responseHeaders);
 			long contentLength;
-			if (isRangeSupported)
+			if (isRangeSupported && responseHeaders != null)
 			{
 				ExtractContentLengthFromHeaders(responseHeaders, out contentLength);
 			}
@@ -184,7 +189,8 @@ namespace MultiThreadedDownloaderLib
 			{
 				Connecting?.Invoke(this, Url, ++tryNumber, tryCountLimit);
 				
-				long byteTo = downloadingTask.ByteTo == -1L ? contentLength - 1L : downloadingTask.ByteTo;
+				long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
+					(contentLength >= 0L ? contentLength - 1L : -1L);
 				if (isRangeSupported && !SetRange(DownloadedInLastSession + downloadingTask.ByteFrom, byteTo))
 				{
 					LastErrorCode = DOWNLOAD_ERROR_RANGE;
