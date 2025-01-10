@@ -673,7 +673,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 			else
 			{
-				string t = $"Скачано: 0 из {contentLength}, Попытка №{tryNumber}";
+				string contentLengthString = contentLength > 0L ? contentLength.ToString() : "<Неизвестно>";
+				string t = $"Скачано: 0 из {contentLengthString}, Попытка №{tryNumber}";
 				if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
 				lblDownloadingProgress.Text = t;
 
