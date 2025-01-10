@@ -282,19 +282,20 @@ namespace MultiThreadedDownloaderLib
 				{
 					System.Diagnostics.Debug.WriteLine("The \"Range\" header is not found! " +
 						"Can't use multiple threads! Switching to single-threaded mode!");
-					ThreadCount = 1;
 				}
-			}
-			else if (ThreadCount <= 0)
-			{
-				ThreadCount = 2;
 			}
 			if (bufferSize == 0)
 			{
 				bufferSize = isRangeSupported ? 8192 : 4096;
 			}
 
-			int chunkCount = isRangeSupported && ContentLength > ONE_MEGABYTE ? ThreadCount : 1;
+			bool isOutOfTries = false;
+			bool isExceptionRaised = false;
+
+			List<FileDownloader> downloaders = new List<FileDownloader>();
+			int predictedChunkCount = isRangeSupported && ContentLength > ONE_MEGABYTE ? ThreadCount : 1;
+			var chunkRanges = SplitContentToChunks(fullContentLength, RangeFrom, RangeTo, predictedChunkCount);
+			int chunkCount = chunkRanges.Count();
 			ThreadCount = chunkCount;
 			for (int i = 0; i < chunkCount; ++i)
 			{
@@ -302,11 +303,6 @@ namespace MultiThreadedDownloaderLib
 					null, i, 0L, -1, TryCountLimitPerThread, DownloadableContentChunkState.Preparing);
 			}
 
-			bool isOutOfTries = false;
-			bool isExceptionRaised = false;
-
-			List<FileDownloader> downloaders = new List<FileDownloader>();
-			var chunkRanges = SplitContentToChunks(fullContentLength, RangeFrom, RangeTo, chunkCount);
 			var tasks = chunkRanges.Select((range, taskId) => Task.Run(() =>
 			{
 				long chunkFirstByte = range.Item1;
