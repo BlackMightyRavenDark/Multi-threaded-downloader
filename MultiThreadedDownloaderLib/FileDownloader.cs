@@ -197,6 +197,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					LastErrorCode = DOWNLOAD_ERROR_RANGE;
 					LastErrorMessage = "Ошибка диапазона! Скачивание прервано!";
+					IsActive = false;
 					return LastErrorCode;
 				}
 				HttpRequestResult requestResult = HttpRequestSender.Send("GET", Url, ConnectionTimeout, Headers);
