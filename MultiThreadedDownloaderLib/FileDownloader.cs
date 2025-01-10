@@ -189,7 +189,7 @@ namespace MultiThreadedDownloaderLib
 			do
 			{
 				Connecting?.Invoke(this, Url, ++tryNumber, tryCountLimit);
-				
+
 				long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
 					(contentLength >= 0L ? contentLength - 1L : -1L);
 				if (isRangeSupported && !SetRange(DownloadedInLastSession + downloadingTask.ByteFrom, byteTo))
