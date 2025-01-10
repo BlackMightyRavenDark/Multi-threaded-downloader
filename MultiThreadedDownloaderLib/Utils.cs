@@ -36,6 +36,7 @@ namespace MultiThreadedDownloaderLib
 		internal static IEnumerable<Tuple<long, long>> SplitContentToChunks(
 			long contentLength, long rangeFrom, long rangeTo, int chunkCount)
 		{
+			if (rangeTo < 0L) { rangeTo = contentLength; }
 			if (contentLength <= 0L || rangeTo < rangeFrom)
 			{
 				yield return new Tuple<long, long>(0L, -1L);
