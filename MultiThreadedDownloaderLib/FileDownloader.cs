@@ -189,6 +189,15 @@ namespace MultiThreadedDownloaderLib
 			do
 			{
 				tryNumber++;
+				if (!isInfiniteRetries && tryNumber > tryCountLimit)
+				{
+					System.Diagnostics.Debug.WriteLine("Out of tries");
+					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
+					IsActive = false;
+					return LastErrorCode;
+				}
+				System.Diagnostics.Debug.WriteLine(isInfiniteRetries ? $"Try №{tryNumber}" : $"Try №{tryNumber} / {tryCountLimit}");
+
 				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
 
 				long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
@@ -206,8 +215,8 @@ namespace MultiThreadedDownloaderLib
 				if (HasErrors)
 				{
 					requestResult.Dispose();
-					IsActive = false;
-					return LastErrorCode;
+					System.Diagnostics.Debug.WriteLine("The 'GET' request is failed! Restarting...");
+					continue;
 				}
 				else if (requestResult.WebContent == null)
 				{
@@ -273,14 +282,7 @@ namespace MultiThreadedDownloaderLib
 				catch (Exception ex)
 				{
 					System.Diagnostics.Debug.WriteLine(ex.Message);
-					if (isInfiniteRetries)
-					{
-						System.Diagnostics.Debug.WriteLine($"Restarting... Try №{++tryNumber}");
-					}
-					else if (tryNumber < tryCountLimit)
-					{
-						System.Diagnostics.Debug.WriteLine($"Restarting... Try №{tryNumber + 1} / {tryCountLimit}");
-					}
+					System.Diagnostics.Debug.WriteLine("Restarting...");
 				}
 
 				requestResult.Dispose();
