@@ -540,7 +540,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 		}
 
-		public void OnPreparing(object sender, string url, DownloadingTask downloadingTask)
+		private void OnPreparing(object sender, string url, DownloadingTask downloadingTask)
 		{
 			if (InvokeRequired)
 			{
@@ -602,7 +602,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 		}
 
-		public void OnConnecting(object sender, string url, int tryNumber, int tryCountLimit)
+		private void OnConnecting(object sender, string url, int tryNumber, int tryCountLimit)
 		{
 			if (InvokeRequired)
 			{
@@ -616,7 +616,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 				progressBar1.SetItem(t);
 			}
-		}    
+		}
 
 		private int OnConnected(object sender, string url, long contentLength, NameValueCollection headers,
 			int tryNumber, int tryCountLimit, int errorCode)
@@ -665,7 +665,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			return errorCode;
 		}
 
-		public void OnWorkStarted(object sender, long contentLength, int tryNumber, int tryCountLimit)
+		private void OnWorkStarted(object sender, long contentLength, int tryNumber, int tryCountLimit)
 		{
 			if (InvokeRequired)
 			{
@@ -682,7 +682,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 		}
 
-		public void OnWorkProgress(object sender, long bytesTransferred, long contentLength, int tryNumber, int tryCountLimit)
+		private void OnWorkProgress(object sender, long bytesTransferred, long contentLength, int tryNumber, int tryCountLimit)
 		{
 			if (InvokeRequired)
 			{
@@ -707,7 +707,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 		}
 
-		public void OnWorkFinished(object sender, long bytesTransferred, long contentLength, int tryNumber, int tryCountLimit, int errorCode)
+		private void OnWorkFinished(object sender, long bytesTransferred, long contentLength, int tryNumber, int tryCountLimit, int errorCode)
 		{
 			if (InvokeRequired)
 			{
@@ -780,7 +780,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			});
 		}
 
-		private void ShowErrorMessage(int errorCode, string errorText)
+		private static void ShowErrorMessage(int errorCode, string errorText)
 		{
 			string messageCaption = errorCode == FileDownloader.DOWNLOAD_ERROR_CANCELED_BY_USER ?
 				"Отменятор отменения отмены" : "Ошибка!";
