@@ -774,7 +774,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			return driveLetters.All(driveLetter =>
 			{
 				DriveInfo driveInfo = new DriveInfo(driveLetter.ToString());
-				return driveInfo.AvailableFreeSpace < contentLength;
+				return driveInfo.AvailableFreeSpace > contentLength;
 			});
 		}
 
