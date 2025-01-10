@@ -741,6 +741,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnSelectTempDir.Enabled = enable;
 			btnSelectMergingDir.Enabled = enable;
 			btnHeaders.Enabled = enable;
+			checkBoxMergeChunksAutomatically.Enabled = enable;
 			cbKeepDownloadedFileInTempOrMergingDirectory.Enabled = enable;
 			checkBoxUseRamForTempFiles.Enabled = enable;
 			checkBoxUseAccurateMode.Enabled = enable;
