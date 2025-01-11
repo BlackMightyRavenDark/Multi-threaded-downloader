@@ -321,7 +321,29 @@ namespace MultiThreadedDownloaderLib
 				lock (downloaders) { downloaders.Add(downloader); }
 
 				int lastTime = Environment.TickCount;
-
+#if DEBUG
+				downloader.Preparing += (object sender, string url, DownloadingTask downloadingTask) =>
+				{
+					System.Diagnostics.Debug.WriteLine($"Task №{taskId}: Preparing...");
+				};
+				downloader.HeadersReceiving += (object sender, string url, DownloadingTask downloadingTask,
+					int tryNumber, int tryCountLimit) =>
+				{
+					string msg = $"Task №{taskId}: Receiving headers... Try №{tryNumber}";
+					if (!isInfiniteRetries) { msg += $" / {tryCountLimit}"; }
+					System.Diagnostics.Debug.WriteLine(msg);
+				};
+				downloader.HeadersReceived += (object sender, string url,
+					DownloadingTask downloadingTask, NameValueCollection headers,
+					int tryNumber, int tryCountLimit, int errCode) =>
+				{
+					string msg = errCode == 200 || errCode == 206 ?
+						$"Task №{taskId}: Headers are received OK with try №{tryNumber}" :
+						$"Task №{taskId}: Headers not received! Try №{tryNumber}";
+					if (!isInfiniteRetries) { msg += $" / {tryCountLimit}"; }
+					System.Diagnostics.Debug.WriteLine(msg);
+				};
+#endif
 				downloader.Connecting += (object sender, string url, int tryNumber, int tryCountLimit) =>
 				{
 					FileDownloader d = sender as FileDownloader;
