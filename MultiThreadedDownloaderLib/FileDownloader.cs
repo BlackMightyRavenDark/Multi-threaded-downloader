@@ -181,8 +181,9 @@ namespace MultiThreadedDownloaderLib
 				contentLength > 0L && outputStreamInitialPosition + contentLength <
 				downloadingTask.OutputStream.Stream.Length)
 			{
-				IsActive = false;
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED;
+				WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
+				IsActive = false;
 				return LastErrorCode;
 			}
 
@@ -193,6 +194,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					System.Diagnostics.Debug.WriteLine("Out of tries");
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
+					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
 					return LastErrorCode;
 				}
@@ -206,6 +208,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					LastErrorCode = DOWNLOAD_ERROR_RANGE;
 					LastErrorMessage = "Ошибка диапазона! Скачивание прервано!";
+					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
 					return LastErrorCode;
 				}
@@ -222,6 +225,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					requestResult.Dispose();
 					LastErrorCode = DOWNLOAD_ERROR_NULL_CONTENT;
+					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
 					return LastErrorCode;
 				}
@@ -241,6 +245,7 @@ namespace MultiThreadedDownloaderLib
 				if (HasErrors)
 				{
 					requestResult.Dispose();
+					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
 					return LastErrorCode;
 				}
@@ -248,8 +253,9 @@ namespace MultiThreadedDownloaderLib
 				if (contentLength == 0L)
 				{
 					requestResult.Dispose();
-					IsActive = false;
 					LastErrorCode = DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT;
+					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
+					IsActive = false;
 					return DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT;
 				}
 
