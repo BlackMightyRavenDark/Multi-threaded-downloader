@@ -28,8 +28,6 @@ namespace MultiThreadedDownloaderLib
 		public long OutputStreamSize => DownloadingTask?.OutputStream?.Stream != null ?
 			DownloadingTask.OutputStream.Stream.Length : 0L;
 		public DownloadingTask DownloadingTask { get; private set; }
-		private NameValueCollection _headers = new NameValueCollection();
-		private CancellationTokenSource _cancellationTokenSource;
 		public bool IsActive { get; private set; } = false;
 		public int LastErrorCode { get; private set; } = 200;
 		public string LastErrorMessage { get; private set; }
@@ -37,6 +35,9 @@ namespace MultiThreadedDownloaderLib
 		public bool HasErrorMessage => !string.IsNullOrEmpty(LastErrorMessage) &&
 			!string.IsNullOrWhiteSpace(LastErrorMessage) &&
 			!string.Equals(LastErrorMessage, "OK", StringComparison.OrdinalIgnoreCase);
+
+		private NameValueCollection _headers = new NameValueCollection();
+		private CancellationTokenSource _cancellationTokenSource;
 		private bool _isAborted = false;
 		private long _rangeFrom = 0L;
 		private long _rangeTo = -1L;
