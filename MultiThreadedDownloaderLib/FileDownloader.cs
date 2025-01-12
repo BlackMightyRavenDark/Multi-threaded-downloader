@@ -11,6 +11,7 @@ namespace MultiThreadedDownloaderLib
 {
 	public sealed class FileDownloader : IDisposable
 	{
+		public int Id { get; }
 		public string Url { get; set; }
 		public int ConnectionTimeout { get; set; }
 
@@ -78,6 +79,9 @@ namespace MultiThreadedDownloaderLib
 		public WorkStartedDelegate WorkStarted;
 		public WorkProgressDelegate WorkProgress;
 		public WorkFinishedDelegate WorkFinished;
+
+		public FileDownloader(int id) { Id = id; }
+		public FileDownloader() : this(0) { }
 
 		public void Dispose()
 		{
@@ -194,7 +198,7 @@ namespace MultiThreadedDownloaderLib
 				if (!isInfiniteRetries && tryNumber > tryCountLimit)
 				{
 #if DEBUG
-					System.Diagnostics.Debug.WriteLine("Out of tries");
+					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: Out of tries");
 #endif
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
@@ -202,7 +206,9 @@ namespace MultiThreadedDownloaderLib
 					return LastErrorCode;
 				}
 #if DEBUG
-				System.Diagnostics.Debug.WriteLine(isInfiniteRetries ? $"Try №{tryNumber}" : $"Try №{tryNumber} / {tryCountLimit}");
+				System.Diagnostics.Debug.WriteLine(isInfiniteRetries ?
+					$"Downloader №{Id}: Try №{tryNumber}" :
+					$"Downloader №{Id}: Try №{tryNumber} / {tryCountLimit}");
 #endif
 				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
 
@@ -223,7 +229,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					requestResult.Dispose();
 #if DEBUG
-					System.Diagnostics.Debug.WriteLine("The 'GET' request is failed! Restarting...");
+					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: The 'GET' request is failed! Restarting...");
 #endif
 					continue;
 				}
@@ -295,7 +301,7 @@ namespace MultiThreadedDownloaderLib
 				catch (Exception ex)
 				{
 					System.Diagnostics.Debug.WriteLine(ex.Message);
-					System.Diagnostics.Debug.WriteLine("Restarting...");
+					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: Restarting...");
 				}
 #else
 				catch {}
@@ -306,7 +312,7 @@ namespace MultiThreadedDownloaderLib
 				else if (!isInfiniteRetries && tryNumber >= tryCountLimit)
 				{
 #if DEBUG
-					System.Diagnostics.Debug.WriteLine("Out of tries");
+					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: Out of tries");
 #endif
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 					break;
@@ -314,7 +320,8 @@ namespace MultiThreadedDownloaderLib
 				else if (!isRangeSupported)
 				{
 #if DEBUG
-					System.Diagnostics.Debug.WriteLine("Resuming downloads is unavailable for this URL! Restarting from the beginning...");
+					System.Diagnostics.Debug.WriteLine(
+						$"Downloader №{Id}: Resuming downloads is unavailable for this URL! Restarting from the beginning...");
 #endif
 					chunkProcessingDict.Clear();
 					DownloadedInLastSession = 0L;

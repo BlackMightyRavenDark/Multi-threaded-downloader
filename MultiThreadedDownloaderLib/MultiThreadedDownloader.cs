@@ -262,7 +262,7 @@ namespace MultiThreadedDownloaderLib
 			}
 
 			void CallProgressUpdaterFunc(FileDownloader fd, long processedBytes,
-				int taskId, int tryNumber, DownloadableContentChunkState state)
+				int tryNumber, DownloadableContentChunkState state)
 			{
 				DownloadingTask downloadingTask = null;
 				if (state != DownloadableContentChunkState.Preparing)
@@ -271,7 +271,7 @@ namespace MultiThreadedDownloaderLib
 					downloadingTask = new DownloadingTask(fd.DownloadingTask.OutputStream, byteFrom, byteTo);
 				}
 				DownloadableContentChunk contentChunk = new DownloadableContentChunk(
-					downloadingTask, taskId, processedBytes, tryNumber, TryCountLimitPerThread, state);
+					downloadingTask, fd.Id, processedBytes, tryNumber, TryCountLimitPerThread, state);
 				OnProgressUpdatedFunc(contentChunk);
 			}
 
@@ -315,7 +315,7 @@ namespace MultiThreadedDownloaderLib
 
 				int taskTryNumber = 0;
 
-				FileDownloader downloader = new FileDownloader()
+				FileDownloader downloader = new FileDownloader(taskId)
 					{ Url = Url, ConnectionTimeout = ConnectionTimeout, Headers = Headers, TryCountLimit = TryCountLimitInsideThread };
 				lock (downloaders) { downloaders.Add(downloader); }
 
@@ -323,12 +323,14 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 				downloader.Preparing += (object sender, string url, DownloadingTask downloadingTask) =>
 				{
-					System.Diagnostics.Debug.WriteLine($"Task №{taskId}: Preparing...");
+					int id = (sender as FileDownloader).Id;
+					System.Diagnostics.Debug.WriteLine($"Task №{id}: Preparing...");
 				};
 				downloader.HeadersReceiving += (object sender, string url, DownloadingTask downloadingTask,
 					int tryNumber, int tryCountLimit) =>
 				{
-					string msg = $"Task №{taskId}: Receiving headers... Try №{tryNumber}";
+					int id = (sender as FileDownloader).Id;
+					string msg = $"Task №{id}: Receiving headers... Try №{tryNumber}";
 					if (!isInfiniteRetries) { msg += $" / {tryCountLimit}"; }
 					System.Diagnostics.Debug.WriteLine(msg);
 				};
@@ -336,9 +338,10 @@ namespace MultiThreadedDownloaderLib
 					DownloadingTask downloadingTask, NameValueCollection headers,
 					int tryNumber, int tryCountLimit, int errCode) =>
 				{
+					int id = (sender as FileDownloader).Id;
 					string msg = errCode == 200 || errCode == 206 ?
-						$"Task №{taskId}: Headers are received OK with try №{tryNumber}" :
-						$"Task №{taskId}: Headers not received! Try №{tryNumber}";
+						$"Task №{id}: Headers are received OK with try №{tryNumber}" :
+						$"Task №{id}: Headers not received! Try №{tryNumber}";
 					if (!isInfiniteRetries) { msg += $" / {tryCountLimit}"; }
 					System.Diagnostics.Debug.WriteLine(msg);
 				};
@@ -346,7 +349,7 @@ namespace MultiThreadedDownloaderLib
 				downloader.Connecting += (object sender, string url, int tryNumber, int tryCountLimit) =>
 				{
 					FileDownloader d = sender as FileDownloader;
-					CallProgressUpdaterFunc(d, -1L, taskId, taskTryNumber, DownloadableContentChunkState.Connecting);
+					CallProgressUpdaterFunc(d, -1L, taskTryNumber, DownloadableContentChunkState.Connecting);
 				};
 				downloader.Connected += (object sender, string url, long contentLength,
 					NameValueCollection headers, int tryNumber, int tryCountLimit, int errCode) =>
@@ -354,7 +357,7 @@ namespace MultiThreadedDownloaderLib
 					FileDownloader d = sender as FileDownloader;
 					DownloadableContentChunkState state = errCode == 200 || errCode == 206 ?
 						DownloadableContentChunkState.Connected : DownloadableContentChunkState.Errored;
-					CallProgressUpdaterFunc(d, 0L, taskId, taskTryNumber, state);
+					CallProgressUpdaterFunc(d, 0L, taskTryNumber, state);
 
 					return errCode;
 				};
@@ -364,7 +367,7 @@ namespace MultiThreadedDownloaderLib
 					if (currentTime - lastTime >= UpdateIntervalMilliseconds)
 					{
 						FileDownloader d = sender as FileDownloader;
-						CallProgressUpdaterFunc(d, transferred, taskId, taskTryNumber, DownloadableContentChunkState.Downloading);
+						CallProgressUpdaterFunc(d, transferred, taskTryNumber, DownloadableContentChunkState.Downloading);
 
 						lastTime = currentTime;
 					}
@@ -383,7 +386,7 @@ namespace MultiThreadedDownloaderLib
 								if (isOutOfTries)
 								{
 #if DEBUG
-									System.Diagnostics.Debug.WriteLine($"Task №{taskId}: Out of tries");
+									System.Diagnostics.Debug.WriteLine($"Task №{d.Id}: Out of tries");
 									System.Diagnostics.Debug.WriteLine("Aborting other tasks...");
 #endif
 									AbortTasks(downloaders);
@@ -401,7 +404,7 @@ namespace MultiThreadedDownloaderLib
 					d.GetRange(out long byteFrom, out long byteTo);
 					DownloadingTask downloadingTask = new DownloadingTask(d.DownloadingTask.OutputStream, byteFrom, byteTo);
 					DownloadableContentChunk contentChunk = new DownloadableContentChunk(
-						downloadingTask, taskId, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
+						downloadingTask, d.Id, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(contentChunk);
 				};
 
@@ -452,7 +455,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 							else
 							{
-								string restartMessage = $"Restarting the task №{taskId}... Try №{taskTryNumber + 1}";
+								string restartMessage = $"Restarting the task №{downloader.Id}... Try №{taskTryNumber + 1}";
 								if (!isInfiniteRetries)
 								{
 									restartMessage += $" / {TryCountLimitPerThread}";
@@ -466,7 +469,7 @@ namespace MultiThreadedDownloaderLib
 					catch (Exception ex)
 					{
 #if DEBUG
-						System.Diagnostics.Debug.WriteLine($"Task №{taskId} is failed!");
+						System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id} is failed!");
 						System.Diagnostics.Debug.WriteLine(ex.Message);
 #endif
 						LastErrorCode = DOWNLOAD_ERROR_ABORTED;
