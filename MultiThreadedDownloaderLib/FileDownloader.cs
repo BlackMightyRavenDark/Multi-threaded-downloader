@@ -192,14 +192,17 @@ namespace MultiThreadedDownloaderLib
 				tryNumber++;
 				if (!isInfiniteRetries && tryNumber > tryCountLimit)
 				{
+#if DEBUG
 					System.Diagnostics.Debug.WriteLine("Out of tries");
+#endif
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
 					return LastErrorCode;
 				}
+#if DEBUG
 				System.Diagnostics.Debug.WriteLine(isInfiniteRetries ? $"Try №{tryNumber}" : $"Try №{tryNumber} / {tryCountLimit}");
-
+#endif
 				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
 
 				long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
@@ -218,7 +221,9 @@ namespace MultiThreadedDownloaderLib
 				if (HasErrors)
 				{
 					requestResult.Dispose();
+#if DEBUG
 					System.Diagnostics.Debug.WriteLine("The 'GET' request is failed! Restarting...");
+#endif
 					continue;
 				}
 				else if (requestResult.WebContent == null)
@@ -285,24 +290,31 @@ namespace MultiThreadedDownloaderLib
 						}, token);
 					completed = true;
 				}
+#if DEBUG
 				catch (Exception ex)
 				{
 					System.Diagnostics.Debug.WriteLine(ex.Message);
 					System.Diagnostics.Debug.WriteLine("Restarting...");
 				}
-
+#else
+				catch {}
+#endif
 				requestResult.Dispose();
 
 				if (completed) { break; }
 				else if (!isInfiniteRetries && tryNumber >= tryCountLimit)
 				{
+#if DEBUG
 					System.Diagnostics.Debug.WriteLine("Out of tries");
+#endif
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 					break;
 				}
 				else if (!isRangeSupported)
 				{
+#if DEBUG
 					System.Diagnostics.Debug.WriteLine("Resuming downloads is unavailable for this URL! Restarting from the beginning...");
+#endif
 					chunkProcessingDict.Clear();
 					DownloadedInLastSession = 0L;
 					downloadingTask.OutputStream.Stream.Position = outputStreamInitialPosition;
@@ -430,7 +442,9 @@ namespace MultiThreadedDownloaderLib
 				}
 			} catch (Exception ex)
 			{
+#if DEBUG
 				System.Diagnostics.Debug.WriteLine(ex.Message);
+#endif
 				responseString = ex.Message;
 				return ex.HResult;
 			}
@@ -528,10 +542,12 @@ namespace MultiThreadedDownloaderLib
 							{
 								SetRange(rangeFrom, rangeTo);
 							}
+#if DEBUG
 							else
 							{
 								System.Diagnostics.Debug.WriteLine("Failed to parse the \"Range\" header!");
 							}
+#endif
 							continue;
 						}
 

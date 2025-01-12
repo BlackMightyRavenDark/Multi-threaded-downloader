@@ -182,15 +182,19 @@ namespace MultiThreadedDownloaderLib
 					{
 						request.ContentLength = length;
 					}
+#if DEBUG
 					else
 					{
 						System.Diagnostics.Debug.WriteLine("Can't parse value of \"Content-Length\" header!");
 					}
+#endif
 					continue;
 				}
 				else if (headerNameLowercased.Equals("connection"))
 				{
+#if DEBUG
 					System.Diagnostics.Debug.WriteLine("The \"Connection\" header is not supported yet.");
+#endif
 					continue;
 				}
 				else if (headerNameLowercased.Equals("range"))
@@ -202,20 +206,26 @@ namespace MultiThreadedDownloaderLib
 							request.AddRange(byteFrom, byteTo);
 						}
 					}
+#if DEBUG
 					else
 					{
 						System.Diagnostics.Debug.WriteLine("Invalid \"Range\" header value! The header will not bind!");
 					}
+#endif
 					continue;
 				}
 				else if (headerNameLowercased.Equals("if-modified-since"))
 				{
+#if DEBUG
 					System.Diagnostics.Debug.WriteLine("The \"If-Modified-Since\" header is not supported yet.");
+#endif
 					continue;
 				}
 				else if (headerNameLowercased.Equals("transfer-encoding"))
 				{
+#if DEBUG
 					System.Diagnostics.Debug.WriteLine("The \"Transfer-Encoding\" header is not supported yet.");
+#endif
 					continue;
 				}
 

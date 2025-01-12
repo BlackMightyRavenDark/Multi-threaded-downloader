@@ -276,14 +276,13 @@ namespace MultiThreadedDownloaderLib
 			}
 
 			bool isRangeSupported = IsRangeSupported(responseHeaders);
-			if (!isRangeSupported)
+#if DEBUG
+			if (!isRangeSupported && ThreadCount != 1)
 			{
-				if (ThreadCount != 1)
-				{
-					System.Diagnostics.Debug.WriteLine("The \"Range\" header is not found! " +
-						"Can't use multiple threads! Switching to single-threaded mode!");
-				}
+				System.Diagnostics.Debug.WriteLine("The \"Range\" header is not found! " +
+					"Can't use multiple threads! Switching to single-threaded mode!");
 			}
+#endif
 			if (bufferSize == 0)
 			{
 				bufferSize = isRangeSupported ? 8192 : 4096;
@@ -383,8 +382,10 @@ namespace MultiThreadedDownloaderLib
 								isOutOfTries = !isInfiniteRetries && taskTryNumber + 1 > TryCountLimitPerThread;
 								if (isOutOfTries)
 								{
+#if DEBUG
 									System.Diagnostics.Debug.WriteLine($"Task №{taskId}: Out of tries");
 									System.Diagnostics.Debug.WriteLine("Aborting other tasks...");
+#endif
 									AbortTasks(downloaders);
 								}
 							}
@@ -448,6 +449,7 @@ namespace MultiThreadedDownloaderLib
 							if (UseRamForTempFiles) { GC.Collect(); }
 
 							if (_isCanceled || isOutOfTries) { break; }
+#if DEBUG
 							else
 							{
 								string restartMessage = $"Restarting the task №{taskId}... Try №{taskTryNumber + 1}";
@@ -458,16 +460,21 @@ namespace MultiThreadedDownloaderLib
 
 								System.Diagnostics.Debug.WriteLine(restartMessage);
 							}
+#endif
 						}
 					}
 					catch (Exception ex)
 					{
+#if DEBUG
 						System.Diagnostics.Debug.WriteLine($"Task №{taskId} is failed!");
 						System.Diagnostics.Debug.WriteLine(ex.Message);
+#endif
 						LastErrorCode = DOWNLOAD_ERROR_ABORTED;
 						LastErrorMessage = ex.Message;
 						isExceptionRaised = true;
+#if DEBUG
 						System.Diagnostics.Debug.WriteLine("Aborting other tasks...");
+#endif
 						AbortTasks(downloaders);
 						break;
 					}
@@ -499,7 +506,9 @@ namespace MultiThreadedDownloaderLib
 			}
 			catch (Exception ex)
 			{
+#if DEBUG
 				System.Diagnostics.Debug.WriteLine(ex.Message);
+#endif
 				LastErrorMessage = ex.Message;
 				AbortTasks(downloaders);
 				ClearGarbage(contentChunks);
@@ -640,9 +649,14 @@ namespace MultiThreadedDownloaderLib
 			{
 				outputStream = File.OpenWrite(tmpFileName);
 			}
+#if DEBUG
 			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine(ex.Message);
+#else
+			catch
+			{
+#endif
 				outputStream?.Close();
 				ClearGarbage(downloadingTasks);
 				return DOWNLOAD_ERROR_CREATE_FILE;
@@ -713,9 +727,14 @@ namespace MultiThreadedDownloaderLib
 					++i;
 				}
 			}
+#if DEBUG
 			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine(ex.Message);
+#else
+			catch
+			{
+#endif
 				outputStream.Close();
 				ClearGarbage(downloadingTasks);
 				return DOWNLOAD_ERROR_MERGING_CHUNKS;
@@ -739,9 +758,15 @@ namespace MultiThreadedDownloaderLib
 			try
 			{
 				File.Move(tmpFileName, OutputFileName);
-			} catch (Exception ex)
+			}
+#if DEBUG
+			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine(ex.Message);
+#else
+			catch
+			{
+#endif
 				return DOWNLOAD_ERROR_MERGING_CHUNKS;
 			}
 

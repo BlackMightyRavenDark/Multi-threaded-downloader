@@ -43,7 +43,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			if (isClosing) { e.Cancel = true; return; }
 			else if (IsUnfinishedTaskPresent())
 			{
+#if DEBUG
 				System.Diagnostics.Debug.WriteLine("Canceling tasks...");
+#endif
 				isClosing = true;
 				e.Cancel = true;
 				StopAll();
@@ -188,7 +190,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			Stream stream = File.OpenWrite(fn);
 			int errorCode = await Task.Run(() => singleThreadedDownloader.Download(stream, fn));
 			stream.Close();
+#if DEBUG
 			System.Diagnostics.Debug.WriteLine($"Error code = {errorCode}");
+#endif
 			if (!isClosing)
 			{
 				if (errorCode == 200 || errorCode == 206)
@@ -301,9 +305,10 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				{
 					if (customError.ErrorCode == 200 || customError.ErrorCode == 206)
 					{
+#if DEBUG
 						string t = HttpRequestResult.HeadersToString(headers);
 						System.Diagnostics.Debug.WriteLine($"Заголовки получены:\n{t}");
-
+#endif
 						string connectedString = tryCountLimit > 0 ?
 							$"Подключено! (попытка №{tryNumber} / {tryCountLimit}" :
 							$"Подключено! (попытка №{tryNumber}";
@@ -475,8 +480,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 			bool useAccurateMode = checkBoxUseAccurateMode.Checked;
 			int errorCode = await Task.Run(() => multiThreadedDownloader.Download(useAccurateMode));
+#if DEBUG
 			System.Diagnostics.Debug.WriteLine($"Error code = {errorCode}");
-
+#endif
 			if (multiThreadedDownloader.UseRamForTempFiles)
 			{
 				GC.Collect();
@@ -567,7 +573,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
 				lblDownloadingProgress.Text = t;
 				progressBar1.ClearItems();
+#if DEBUG
 				System.Diagnostics.Debug.WriteLine($"{t} {url}");
+#endif
 			}
 		}
 
@@ -587,6 +595,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					string s = tryCountLimit > 0 ?
 						$"Заголовки получены (попытка №{tryNumber} / {tryCountLimit}):" :
 						$"Заголовки получены (попытка №{tryNumber}):";
+#if DEBUG
 					System.Diagnostics.Debug.WriteLine(s);
 					string t = HttpRequestResult.HeadersToString(headers);
 					System.Diagnostics.Debug.WriteLine(t);
@@ -598,6 +607,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					{
 						System.Diagnostics.Debug.WriteLine("Скачивание прервано!");
 					}
+#endif
 				}
 			}
 		}

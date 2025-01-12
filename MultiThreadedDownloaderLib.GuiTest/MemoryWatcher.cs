@@ -22,9 +22,14 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				RamUsed = RamTotal - RamFree;
 				return true;
 			}
+#if DEBUG
 			catch (Exception ex)
 			{
 				System.Diagnostics.Debug.WriteLine(ex.Message);
+#else
+			catch
+			{
+#endif
 				computerInfo = null;
 				return false;
 			}

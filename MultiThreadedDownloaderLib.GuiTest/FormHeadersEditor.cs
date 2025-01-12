@@ -54,7 +54,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 							headerName = headerName.Trim();
 							string headerValue = splitted.Length > 1 ? splitted[1].Trim() : string.Empty;
 							Headers.Add(headerName, headerValue);
+#if DEBUG
 							System.Diagnostics.Debug.WriteLine($"{headerName}: {headerValue}");
+#endif
 						}
 					}
 				}
