@@ -115,14 +115,18 @@ namespace MultiThreadedDownloaderLib
 
 			if (string.IsNullOrEmpty(Url) || string.IsNullOrWhiteSpace(Url))
 			{
+				LastErrorCode = DOWNLOAD_ERROR_URL_NOT_DEFINED;
+				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
 				IsActive = false;
-				return DOWNLOAD_ERROR_URL_NOT_DEFINED;
+				return LastErrorCode;
 			}
 
 			if (!IsRangeValid(downloadingTask.ByteFrom, downloadingTask.ByteTo))
 			{
+				LastErrorCode = DOWNLOAD_ERROR_RANGE;
+				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
 				IsActive = false;
-				return DOWNLOAD_ERROR_RANGE;
+				return LastErrorCode;
 			}
 
 			_cancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
