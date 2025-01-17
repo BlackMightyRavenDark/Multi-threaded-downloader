@@ -202,6 +202,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				}
 				else
 				{
+					progressBar1.ClearItems();
+
 					switch (errorCode)
 					{
 						case FileDownloader.DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE:
@@ -279,6 +281,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnDownloadSingleThreaded.Enabled = false;
 			EnableControls(false);
 			lblMergingProgress.Text = null;
+			bool isPreparing = true;
 
 			multiThreadedDownloader = new MultiThreadedDownloader();
 			multiThreadedDownloader.Preparing += (s) =>
@@ -313,6 +316,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 							$"Подключено! (попытка №{tryNumber} / {tryCountLimit}" :
 							$"Подключено! (попытка №{tryNumber}";
 						lblDownloadingProgress.Text = connectedString;
+						isPreparing = false;
 						if (contentLength > 0L)
 						{
 							long minimumFreeSpaceRequired = (long)(contentLength * 1.1);
@@ -492,11 +496,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			{
 				if (errorCode != 200 && errorCode != 206)
 				{
-					if (errorCode == MultiThreadedDownloader.DOWNLOAD_ERROR_NO_URL_SPECIFIED ||
-						errorCode == MultiThreadedDownloader.DOWNLOAD_ERROR_NO_FILE_NAME_SPECIFIED)
-					{
-						progressBar1.ClearItems();
-					}
+					if (isPreparing) { progressBar1.ClearItems(); }
 
 					switch (errorCode)
 					{
