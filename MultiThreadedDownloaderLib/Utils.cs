@@ -8,7 +8,7 @@ using System.Net;
 
 namespace MultiThreadedDownloaderLib
 {
-	public class Utils
+	public static class Utils
 	{
 		public const int ONE_MEGABYTE = 1048576; //1024 * 1024;
 
@@ -270,6 +270,189 @@ namespace MultiThreadedDownloaderLib
 				errorMessage = ex.Message;
 				return false;
 			}
+		}
+
+		public static void SetRequestHeaders(HttpWebRequest request, NameValueCollection headers)
+		{
+			request.Headers.Clear();
+			for (int i = 0; i < headers.Count; ++i)
+			{
+				string headerName = headers.GetKey(i).Trim();
+				if (string.IsNullOrEmpty(headerName) || string.IsNullOrWhiteSpace(headerName))
+				{
+					continue;
+				}
+				string headerValue = headers.Get(i).Trim();
+				string headerNameLowercased = headerName.ToLower();
+
+				//TODO: Complete headers support.
+				if (headerNameLowercased.Equals("accept"))
+				{
+					request.Accept = headerValue;
+					continue;
+				}
+				else if (headerNameLowercased.Equals("user-agent"))
+				{
+					request.UserAgent = headerValue;
+					continue;
+				}
+				else if (headerNameLowercased.Equals("referer"))
+				{
+					request.Referer = headerValue;
+					continue;
+				}
+				else if (headerNameLowercased.Equals("host"))
+				{
+					request.Host = headerValue;
+					continue;
+				}
+				else if (headerNameLowercased.Equals("content-type"))
+				{
+					request.ContentType = headerValue;
+					continue;
+				}
+				else if (headerNameLowercased.Equals("content-length"))
+				{
+					if (long.TryParse(headerValue, out long length))
+					{
+						request.ContentLength = length;
+					}
+#if DEBUG
+					else
+					{
+						System.Diagnostics.Debug.WriteLine("Can't parse value of \"Content-Length\" header!");
+					}
+#endif
+					continue;
+				}
+				else if (headerNameLowercased.Equals("connection"))
+				{
+#if DEBUG
+					System.Diagnostics.Debug.WriteLine("The \"Connection\" header is not supported yet.");
+#endif
+					continue;
+				}
+				else if (headerNameLowercased.Equals("range"))
+				{
+					if (ParseRangeHeaderValue(headerValue, out long byteFrom, out long byteTo))
+					{
+						if (byteFrom >= 0L && byteTo >= 0L && byteTo >= byteFrom)
+						{
+							request.AddRange(byteFrom, byteTo);
+						}
+					}
+#if DEBUG
+					else
+					{
+						System.Diagnostics.Debug.WriteLine("Invalid \"Range\" header value! The header will not bind!");
+					}
+#endif
+					continue;
+				}
+				else if (headerNameLowercased.Equals("if-modified-since"))
+				{
+#if DEBUG
+					System.Diagnostics.Debug.WriteLine("The \"If-Modified-Since\" header is not supported yet.");
+#endif
+					continue;
+				}
+				else if (headerNameLowercased.Equals("transfer-encoding"))
+				{
+#if DEBUG
+					System.Diagnostics.Debug.WriteLine("The \"Transfer-Encoding\" header is not supported yet.");
+#endif
+					continue;
+				}
+
+				request.Headers.Add(headerName, headerValue);
+			}
+		}
+
+		public static bool ParseRangeHeaderValue(string headerValue, out long byteFrom, out long byteTo)
+		{
+			string[] splitted = headerValue.Split('-');
+			if (splitted.Length == 2)
+			{
+				bool isStr0Empty = string.IsNullOrEmpty(splitted[0]) || string.IsNullOrWhiteSpace(splitted[0]);
+				bool isStr1Empty = string.IsNullOrEmpty(splitted[1]) || string.IsNullOrWhiteSpace(splitted[1]);
+				if (isStr0Empty && isStr1Empty)
+				{
+					byteFrom = 0L;
+					byteTo = -1L;
+					return false;
+				}
+
+				if (!isStr0Empty)
+				{
+					if (!long.TryParse(splitted[0], out byteFrom))
+					{
+						byteFrom = 0L;
+						byteTo = -1L;
+						return false;
+					}
+				}
+				else
+				{
+					byteFrom = 0L;
+				}
+
+				if (!isStr1Empty)
+				{
+					if (!long.TryParse(splitted[1], out byteTo))
+					{
+						byteFrom = 0L;
+						byteTo = -1L;
+						return false;
+					}
+				}
+				else
+				{
+					byteTo = -1L;
+				}
+
+				return true;
+			}
+
+			byteFrom = 0L;
+			byteTo = -1L;
+			return false;
+		}
+
+		public static NameValueCollection ParseHeaderList(string headersText)
+		{
+			NameValueCollection headers = new NameValueCollection();
+
+			string[] strings = headersText.Split(new string[] { "\r\n" }, System.StringSplitOptions.None);
+			foreach (string str in strings)
+			{
+				if (!string.IsNullOrEmpty(str) && !string.IsNullOrWhiteSpace(str))
+				{
+					string[] splitted = str.Split(new char[] { ':' }, 2);
+					if (splitted.Length == 2)
+					{
+						string headerName = splitted[0].Trim();
+						if (!string.IsNullOrEmpty(headerName) && !string.IsNullOrWhiteSpace(headerName))
+						{
+							string headerValue = splitted[1].Trim();
+							headers.Add(headerName, headerValue);
+						}
+					}
+				}
+			}
+
+			return headers;
+		}
+
+		public static Stream ToStream(this byte[] bytes, bool seekToBeginning = false)
+		{
+			if (bytes.Length > 0)
+			{
+				MemoryStream stream = new MemoryStream();
+				stream.Write(bytes, 0, bytes.Length);
+				if (seekToBeginning) { stream.Position = 0L; }
+				return stream;
+			}
+			return null;
 		}
 
 		public static int GetDefaultMaximumConnectionLimit()

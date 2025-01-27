@@ -45,7 +45,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			lblStatusCode.Text = null;
 			textBoxServerAnswer.Text = null;
 
-			NameValueCollection headers = HttpRequestSender.ParseHeaderList(textBoxRequestHeaders.Text);
+			NameValueCollection headers = Utils.ParseHeaderList(textBoxRequestHeaders.Text);
 			HttpRequestResult requestResult = await Task.Run(() => HttpRequestSender.Send(
 				requestType, requestUrl, _requestBody, Encoding.UTF8, headers));
 			lblStatusCode.Text = $"Код возврата: {requestResult.ErrorCode}";
