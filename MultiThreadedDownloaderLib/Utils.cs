@@ -191,7 +191,7 @@ namespace MultiThreadedDownloaderLib
 		public static int GetUrlResponseHeaders(string url, NameValueCollection inHeaders,
 			int timeout, out NameValueCollection outHeaders, out string errorText)
 		{
-			HttpRequestResult requestResult = HttpRequestSender.Send("HEAD", url, timeout, inHeaders);
+			HttpRequestResult requestResult = HttpRequestSender.Send("HEAD", url, inHeaders, timeout);
 			if (requestResult.ErrorCode == 200 || requestResult.ErrorCode == 206)
 			{
 				outHeaders = new NameValueCollection();

@@ -75,61 +75,52 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		public static HttpRequestResult Send(string method, string url,
-			Stream body, NameValueCollection headers, bool sendExpect100ContinueHeader = false)
+		public static HttpRequestResult Send(HttpRequestSenderParameters parameters)
 		{
-			return Send(method, url, body, headers, 0, sendExpect100ContinueHeader);
+			return Send(parameters.Method, parameters.Url, parameters.Body, parameters.Headers,
+				parameters.Timeout, parameters.SendExpect100ContinueHeader);
 		}
 
 		public static HttpRequestResult Send(string method, string url,
-			byte[] body, int timeout, NameValueCollection headers = null)
+			Stream body, NameValueCollection headers, int timeout = 0)
 		{
-			Stream stream = body?.ToStream(true);
-			HttpRequestResult result = Send(method, url, stream, headers, timeout, false);
-			stream?.Close();
+			HttpRequestSenderParameters parameters = new HttpRequestSenderParameters()
+			{
+				Method = method,
+				Url = url,
+				Body = body,
+				Headers = headers,
+				Timeout = timeout,
+				SendExpect100ContinueHeader = false
+			};
+			return Send(parameters);
+		}
+
+		public static HttpRequestResult Send(string method, string url,
+			byte[] body, NameValueCollection headers, int timeout = 0)
+		{
+			Stream bodyStream = body?.ToStream(true);
+			HttpRequestResult result = Send(method, url, bodyStream, headers, timeout);
+			bodyStream?.Dispose();
 			return result;
 		}
 
 		public static HttpRequestResult Send(string method, string url,
-			byte[] body, NameValueCollection headers = null)
+			string body, Encoding bodyEncoding, NameValueCollection headers, int timeout = 0)
 		{
-			return Send(method, url, body, 0, headers);
+			byte[] bodyBytes = !string.IsNullOrEmpty(body) && bodyEncoding != null ? bodyEncoding.GetBytes(body) : null;
+			return Send(method, url, bodyBytes, headers, timeout);
 		}
 
 		public static HttpRequestResult Send(string method, string url,
-			 string body, Encoding bodyEncoding, int timeout, NameValueCollection headers = null)
+			NameValueCollection headers, int timeout = 0)
 		{
-			byte[] bodyBytes = !string.IsNullOrEmpty(body) ? bodyEncoding.GetBytes(body) : null;
-			return Send(method, url, bodyBytes, timeout, headers);
+			return Send(method, url, (Stream)null, headers, timeout);
 		}
 
-		public static HttpRequestResult Send(string method, string url,
-			string body, Encoding bodyEncoding, NameValueCollection headers = null)
+		public static HttpRequestResult Send(string method, string url, int timeout = 0)
 		{
-			return Send(method, url, body, bodyEncoding, 0, headers);
-		}
-
-		public static HttpRequestResult Send(string method, string url,
-			string body, int timeout, NameValueCollection headers = null)
-		{
-			return Send(method, url, body, Encoding.UTF8, timeout, headers);
-		}
-
-		public static HttpRequestResult Send(string method, string url,
-			string body, NameValueCollection headers = null)
-		{
-			return Send(method, url, body, 0, headers);
-		}
-
-		public static HttpRequestResult Send(string method, string url,
-			int timeout, NameValueCollection headers = null)
-		{
-			return Send(method, url, (byte[])null, timeout, headers);
-		}
-
-		public static HttpRequestResult Send(string method, string url, NameValueCollection headers = null)
-		{
-			return Send(method, url, 0, headers);
+			return Send(method, url, null, timeout);
 		}
 
 		public static HttpRequestResult Send(string url, int timeout = 0)
@@ -308,7 +299,7 @@ namespace MultiThreadedDownloaderLib
 			return headers;
 		}
 
-		private static Stream ToStream(this byte[] bytes, bool seekToBeginning = false)
+		public static Stream ToStream(this byte[] bytes, bool seekToBeginning = false)
 		{
 			if (bytes.Length > 0)
 			{

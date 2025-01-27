@@ -226,7 +226,7 @@ namespace MultiThreadedDownloaderLib
 					IsActive = false;
 					return LastErrorCode;
 				}
-				HttpRequestResult requestResult = HttpRequestSender.Send("GET", Url, ConnectionTimeout, Headers);
+				HttpRequestResult requestResult = HttpRequestSender.Send("GET", Url, Headers, ConnectionTimeout);
 				LastErrorCode = requestResult.ErrorCode;
 				LastErrorMessage = HasErrors ? requestResult.ErrorMessage : null;
 				if (HasErrors)

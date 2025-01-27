@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -46,7 +47,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 
 			NameValueCollection headers = HttpRequestSender.ParseHeaderList(textBoxRequestHeaders.Text);
 			HttpRequestResult requestResult = await Task.Run(() => HttpRequestSender.Send(
-				requestType, requestUrl, _requestBody, headers));
+				requestType, requestUrl, _requestBody, Encoding.UTF8, headers));
 			lblStatusCode.Text = $"Код возврата: {requestResult.ErrorCode}";
 			if (requestResult.HttpWebResponse != null)
 			{
