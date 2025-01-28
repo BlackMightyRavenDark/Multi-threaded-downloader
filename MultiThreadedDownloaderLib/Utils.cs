@@ -208,7 +208,7 @@ namespace MultiThreadedDownloaderLib
 			}
 
 			outHeaders = null;
-			errorText = requestResult.ErrorMessage;
+			errorText = requestResult.HasErrorMessage ? requestResult.ErrorMessage : null;
 			int errorCode = requestResult.ErrorCode;
 			requestResult.Dispose();
 			return errorCode;

@@ -228,7 +228,7 @@ namespace MultiThreadedDownloaderLib
 				}
 				HttpRequestResult requestResult = HttpRequestSender.Send("GET", Url, Headers, ConnectionTimeout);
 				LastErrorCode = requestResult.ErrorCode;
-				LastErrorMessage = HasErrors ? requestResult.ErrorMessage : null;
+				LastErrorMessage = HasErrors && requestResult.HasErrorMessage ? requestResult.ErrorMessage : null;
 				if (HasErrors)
 				{
 					requestResult.Dispose();

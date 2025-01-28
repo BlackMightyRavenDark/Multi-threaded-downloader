@@ -8,6 +8,7 @@ namespace MultiThreadedDownloaderLib
 	{
 		public int ErrorCode { get; }
 		public string ErrorMessage { get; }
+		public bool HasErrorMessage => HasErrorMessageText();
 		public HttpWebResponse HttpWebResponse { get; private set; }
 		public WebContent WebContent { get; private set; }
 
@@ -47,6 +48,12 @@ namespace MultiThreadedDownloaderLib
 				return !string.IsNullOrEmpty(value) && value.Contains("gzip");
 			}
 			return false;
+		}
+
+		private bool HasErrorMessageText()
+		{
+			return !string.IsNullOrEmpty(ErrorMessage) && !string.IsNullOrWhiteSpace(ErrorMessage) &&
+				string.Compare(ErrorMessage, "ok", true) != 0;
 		}
 
 		public static string HeadersToString(NameValueCollection headers)
