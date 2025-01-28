@@ -33,9 +33,7 @@ namespace MultiThreadedDownloaderLib
 		public int LastErrorCode { get; private set; } = 200;
 		public string LastErrorMessage { get; private set; }
 		public bool HasErrors => LastErrorCode != 200 && LastErrorCode != 206;
-		public bool HasErrorMessage => !string.IsNullOrEmpty(LastErrorMessage) &&
-			!string.IsNullOrWhiteSpace(LastErrorMessage) &&
-			!string.Equals(LastErrorMessage, "OK", StringComparison.OrdinalIgnoreCase);
+		public bool HasErrorMessage => HasErrorMessageText();
 
 		private NameValueCollection _headers = new NameValueCollection();
 		private CancellationTokenSource _cancellationTokenSource;
@@ -567,6 +565,13 @@ namespace MultiThreadedDownloaderLib
 					}
 				}
 			}
+		}
+
+		private bool HasErrorMessageText()
+		{
+			return !string.IsNullOrEmpty(LastErrorMessage) &&
+				!string.IsNullOrWhiteSpace(LastErrorMessage) &&
+				string.Compare(LastErrorMessage, "ok", true) != 0;
 		}
 
 		public static string ErrorCodeToString(int errorCode)
