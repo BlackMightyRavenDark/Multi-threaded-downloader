@@ -191,27 +191,37 @@ namespace MultiThreadedDownloaderLib
 		public static int GetUrlResponseHeaders(string url, NameValueCollection inHeaders,
 			int timeout, out NameValueCollection outHeaders, out string errorText)
 		{
-			HttpRequestResult requestResult = HttpRequestSender.Send("HEAD", url, inHeaders, timeout);
-			if (requestResult.ErrorCode == 200 || requestResult.ErrorCode == 206)
+			try
 			{
-				outHeaders = new NameValueCollection();
-				for (int i = 0; i < requestResult.HttpWebResponse.Headers.Count; ++i)
+				using (HttpRequestResult requestResult = HttpRequestSender.Send("HEAD", url, inHeaders, timeout))
 				{
-					string name = requestResult.HttpWebResponse.Headers.GetKey(i);
-					string value = requestResult.HttpWebResponse.Headers.Get(i);
-					outHeaders.Add(name, value);
+					if (requestResult.ErrorCode == 200 || requestResult.ErrorCode == 206)
+					{
+						outHeaders = new NameValueCollection();
+						for (int i = 0; i < requestResult.HttpWebResponse.Headers.Count; ++i)
+						{
+							string name = requestResult.HttpWebResponse.Headers.GetKey(i);
+							string value = requestResult.HttpWebResponse.Headers.Get(i);
+							outHeaders.Add(name, value);
+						}
+
+						errorText = null;
+						return 200;
+					}
+
+					outHeaders = null;
+					errorText = requestResult.HasErrorMessage ? requestResult.ErrorMessage : null;
+					return requestResult.ErrorCode;
 				}
-
-				requestResult.Dispose();
-				errorText = null;
-				return 200;
+			} catch (Exception ex)
+			{
+#if DEBUG
+				System.Diagnostics.Debug.WriteLine(ex.Message);
+#endif
+				outHeaders = null;
+				errorText = ex.Message;
+				return ex.HResult;
 			}
-
-			outHeaders = null;
-			errorText = requestResult.HasErrorMessage ? requestResult.ErrorMessage : null;
-			int errorCode = requestResult.ErrorCode;
-			requestResult.Dispose();
-			return errorCode;
 		}
 
 		public static int GetUrlResponseHeaders(string url, NameValueCollection inHeaders,
