@@ -62,9 +62,7 @@ namespace MultiThreadedDownloaderLib
 			!string.IsNullOrWhiteSpace(TempDirectory) && Directory.Exists(TempDirectory);
 		public bool IsMergingDirectoryAvailable => !string.IsNullOrEmpty(MergingDirectory) &&
 			!string.IsNullOrWhiteSpace(MergingDirectory) && Directory.Exists(MergingDirectory);
-		public bool HasErrorMessage => !string.IsNullOrEmpty(LastErrorMessage) &&
-			!string.IsNullOrWhiteSpace(LastErrorMessage) &&
-			!string.Equals(LastErrorMessage, "OK", StringComparison.OrdinalIgnoreCase);
+		public bool HasErrorMessage => HasErrorMessageText();
 
 		private NameValueCollection _headers = new NameValueCollection();
 		private bool _isCanceled = false;
@@ -929,6 +927,13 @@ namespace MultiThreadedDownloaderLib
 				}
 			}
 			return true;
+		}
+
+		private bool HasErrorMessageText()
+		{
+			return !string.IsNullOrEmpty(LastErrorMessage) &&
+				!string.IsNullOrWhiteSpace(LastErrorMessage) &&
+				string.Compare(LastErrorMessage, "ok", true) != 0;
 		}
 
 		public static string ErrorCodeToString(int errorCode)
