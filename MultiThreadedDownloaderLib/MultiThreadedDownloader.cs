@@ -116,6 +116,8 @@ namespace MultiThreadedDownloaderLib
 		/// <summary>
 		/// Execute the downloading task.
 		/// </summary>
+		/// <param name="outputStream">
+		/// The stream to download to.</param>
 		/// <param name="accurateMode">
 		/// If 'true' - locks the thread list object before accessing it.
 		/// It's prevents losing the downloaded file parts sometimes.
@@ -125,7 +127,7 @@ namespace MultiThreadedDownloaderLib
 		/// Buffer size per thread.
 		/// Warning! Do not use numbers smaller than 8192!
 		/// Leave zero for auto select.</param>
-		public int Download(bool accurateMode, int bufferSize = 0)
+		public int Download(Stream outputStream, bool accurateMode, int bufferSize = 0)
 		{
 			IsActive = true;
 			Preparing?.Invoke(this);
@@ -140,45 +142,50 @@ namespace MultiThreadedDownloaderLib
 				IsActive = false;
 				return DOWNLOAD_ERROR_NO_URL_SPECIFIED;
 			}
-			if (string.IsNullOrEmpty(OutputFileName) || string.IsNullOrWhiteSpace(OutputFileName))
-			{
-				LastErrorCode = DOWNLOAD_ERROR_NO_FILE_NAME_SPECIFIED;
-				IsActive = false;
-				return DOWNLOAD_ERROR_NO_FILE_NAME_SPECIFIED;
-			}
-			if (!UseRamForTempFiles && IsTempDirectoryAvailable && !Directory.Exists(TempDirectory))
-			{
-				LastErrorCode = DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS;
-				IsActive = false;
-				return DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS;
-			}
-			if (IsMergingDirectoryAvailable && !Directory.Exists(MergingDirectory))
-			{
-				LastErrorCode = DOWNLOAD_ERROR_MERGING_DIR_NOT_EXISTS;
-				IsActive = false;
-				return DOWNLOAD_ERROR_MERGING_DIR_NOT_EXISTS;
-			}
 
-			string dirName = Path.GetDirectoryName(OutputFileName);
-			if (string.IsNullOrEmpty(dirName) || string.IsNullOrWhiteSpace(dirName))
+			bool isSharedStream = outputStream != null;
+			if (!isSharedStream)
 			{
-				string selfDirPath = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
-				OutputFileName = Path.Combine(selfDirPath, OutputFileName);
-			}
-			if (!IsTempDirectoryAvailable)
-			{
-				TempDirectory = Path.GetDirectoryName(OutputFileName);
-			}
-			if (!IsMergingDirectoryAvailable)
-			{
-				MergingDirectory = TempDirectory;
-			}
+				if (string.IsNullOrEmpty(OutputFileName) || string.IsNullOrWhiteSpace(OutputFileName))
+				{
+					LastErrorCode = DOWNLOAD_ERROR_NO_FILE_NAME_SPECIFIED;
+					IsActive = false;
+					return DOWNLOAD_ERROR_NO_FILE_NAME_SPECIFIED;
+				}
+				if (!UseRamForTempFiles && IsTempDirectoryAvailable && !Directory.Exists(TempDirectory))
+				{
+					LastErrorCode = DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS;
+					IsActive = false;
+					return DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS;
+				}
+				if (IsMergingDirectoryAvailable && !Directory.Exists(MergingDirectory))
+				{
+					LastErrorCode = DOWNLOAD_ERROR_MERGING_DIR_NOT_EXISTS;
+					IsActive = false;
+					return DOWNLOAD_ERROR_MERGING_DIR_NOT_EXISTS;
+				}
 
-			List<char> driveLetters = GetUsedDriveLetters();
-			if (driveLetters.Count > 0 && !driveLetters.Contains('\\') && !IsDrivesReady(driveLetters))
-			{
-				IsActive = false;
-				return DOWNLOAD_ERROR_DRIVE_NOT_READY;
+				string dirName = Path.GetDirectoryName(OutputFileName);
+				if (string.IsNullOrEmpty(dirName) || string.IsNullOrWhiteSpace(dirName))
+				{
+					string selfDirPath = Path.GetDirectoryName(Environment.GetCommandLineArgs()[0]);
+					OutputFileName = Path.Combine(selfDirPath, OutputFileName);
+				}
+				if (!IsTempDirectoryAvailable)
+				{
+					TempDirectory = Path.GetDirectoryName(OutputFileName);
+				}
+				if (!IsMergingDirectoryAvailable)
+				{
+					MergingDirectory = TempDirectory;
+				}
+
+				List<char> driveLetters = GetUsedDriveLetters();
+				if (driveLetters.Count > 0 && !driveLetters.Contains('\\') && !IsDrivesReady(driveLetters))
+				{
+					IsActive = false;
+					return DOWNLOAD_ERROR_DRIVE_NOT_READY;
+				}
 			}
 
 			_cancellationTokenSource = new CancellationTokenSource();
@@ -561,7 +568,7 @@ namespace MultiThreadedDownloaderLib
 				if (UseRamForTempFiles || downloadingTasks.Count > 1)
 				{
 					ChunkMergingStarted?.Invoke(this, downloadingTasks.Count);
-					LastErrorCode = MergeChunks(downloadingTasks);
+					LastErrorCode = MergeChunks(outputStream, downloadingTasks);
 					ChunkMergingFinished?.Invoke(this, LastErrorCode);
 				}
 				else if (!UseRamForTempFiles && downloadingTasks.Count == 1)
@@ -616,9 +623,14 @@ namespace MultiThreadedDownloaderLib
 			return LastErrorCode;
 		}
 
+		public int Download(bool accurateMode, int bufferSize = 0)
+		{
+			return Download(null, accurateMode, bufferSize);
+		}
+
 		public int Download(int bufferSize = 0)
 		{
-			return Download(false, bufferSize);
+			return Download(null, false, bufferSize);
 		}
 
 		public bool Stop()
@@ -641,26 +653,28 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		private int MergeChunks(IEnumerable<DownloadingTask> downloadingTasks)
+		private int MergeChunks(Stream outputStream, IEnumerable<DownloadingTask> downloadingTasks)
 		{
-			string tmpFileName = GetNumberedFileName(GetTempMergingFilePath());
-
-			Stream outputStream = null;
-			try
+			bool isSharedStream = outputStream != null;
+			string tmpFileName = !isSharedStream ? GetNumberedFileName(GetTempMergingFilePath()) : null;
+			if (!isSharedStream)
 			{
-				outputStream = File.OpenWrite(tmpFileName);
-			}
+				try
+				{
+					outputStream = File.OpenWrite(tmpFileName);
+				}
 #if DEBUG
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine(ex.Message);
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine(ex.Message);
 #else
-			catch
-			{
+				catch
+				{
 #endif
-				outputStream?.Close();
-				ClearGarbage(downloadingTasks);
-				return DOWNLOAD_ERROR_CREATE_FILE;
+					if (!isSharedStream && outputStream != null) { outputStream.Close(); }
+					ClearGarbage(downloadingTasks);
+					return DOWNLOAD_ERROR_CREATE_FILE;
+				}
 			}
 
 			try
@@ -712,7 +726,7 @@ namespace MultiThreadedDownloaderLib
 
 					if (!appended)
 					{
-						outputStream.Close();
+						if (!isSharedStream && outputStream != null) { outputStream.Close(); }
 						ClearGarbage(downloadingTasks);
 						return _cancellationTokenSource.IsCancellationRequested ?
 							DOWNLOAD_ERROR_CANCELED_BY_USER : DOWNLOAD_ERROR_MERGING_CHUNKS;
@@ -736,11 +750,12 @@ namespace MultiThreadedDownloaderLib
 			catch
 			{
 #endif
-				outputStream.Close();
+				if (!isSharedStream && outputStream != null) { outputStream.Close(); }
 				ClearGarbage(downloadingTasks);
 				return DOWNLOAD_ERROR_MERGING_CHUNKS;
 			}
-			outputStream.Close();
+
+			if (!isSharedStream && outputStream != null) { outputStream.Close(); }
 
 			if (_isCanceled)
 			{
@@ -756,19 +771,27 @@ namespace MultiThreadedDownloaderLib
 			}
 			OutputFileName = GetNumberedFileName(OutputFileName);
 
-			try
+			if (!isSharedStream &&
+				!string.IsNullOrEmpty(tmpFileName) &&
+				!string.IsNullOrWhiteSpace(tmpFileName))
 			{
-				File.Move(tmpFileName, OutputFileName);
-			}
+				try
+				{
+					if (File.Exists(tmpFileName))
+					{
+						File.Move(tmpFileName, OutputFileName);
+					}
+				}
 #if DEBUG
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine(ex.Message);
+				catch (Exception ex)
+				{
+					System.Diagnostics.Debug.WriteLine(ex.Message);
 #else
-			catch
-			{
+				catch
+				{
 #endif
-				return DOWNLOAD_ERROR_MERGING_CHUNKS;
+					return DOWNLOAD_ERROR_MERGING_CHUNKS;
+				}
 			}
 
 			return 200;

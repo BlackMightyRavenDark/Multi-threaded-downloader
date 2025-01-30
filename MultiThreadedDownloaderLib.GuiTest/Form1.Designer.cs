@@ -60,9 +60,10 @@
 			this.checkBoxUseAccurateMode = new System.Windows.Forms.CheckBox();
 			this.label9 = new System.Windows.Forms.Label();
 			this.numericUpDownConnectionTimeout = new System.Windows.Forms.NumericUpDown();
-			this.progressBar1 = new MultiThreadedDownloaderLib.MultipleProgressBar();
 			this.checkBoxMergeChunksAutomatically = new System.Windows.Forms.CheckBox();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+			this.checkBoxDownloadToRAM = new System.Windows.Forms.CheckBox();
+			this.progressBar1 = new MultiThreadedDownloaderLib.MultipleProgressBar();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownThreadCount)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownUpdateInterval)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownChunksMergingUpdateInterval)).BeginInit();
@@ -430,16 +431,6 @@
 			0,
 			0});
 			// 
-			// progressBar1
-			// 
-			this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-			| System.Windows.Forms.AnchorStyles.Right)));
-			this.progressBar1.Location = new System.Drawing.Point(12, 415);
-			this.progressBar1.Name = "progressBar1";
-			this.progressBar1.Size = new System.Drawing.Size(744, 23);
-			this.progressBar1.TabIndex = 27;
-			this.progressBar1.Text = "multipleProgressBar1";
-			// 
 			// checkBoxMergeChunksAutomatically
 			// 
 			this.checkBoxMergeChunksAutomatically.AutoSize = true;
@@ -454,11 +445,35 @@
 			this.checkBoxMergeChunksAutomatically.UseVisualStyleBackColor = true;
 			this.checkBoxMergeChunksAutomatically.CheckedChanged += new System.EventHandler(this.checkBoxMergeChunksAutomatically_CheckedChanged);
 			// 
+			// checkBoxDownloadToRAM
+			// 
+			this.checkBoxDownloadToRAM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.checkBoxDownloadToRAM.AutoSize = true;
+			this.checkBoxDownloadToRAM.Location = new System.Drawing.Point(526, 142);
+			this.checkBoxDownloadToRAM.Name = "checkBoxDownloadToRAM";
+			this.checkBoxDownloadToRAM.Size = new System.Drawing.Size(230, 17);
+			this.checkBoxDownloadToRAM.TabIndex = 37;
+			this.checkBoxDownloadToRAM.Text = "Скачивать в оперативную память (RAM)";
+			this.toolTip1.SetToolTip(this.checkBoxDownloadToRAM, "Внимание! Если скачиваемый файл большой, то для правильной работы требуется очень" +
+		" много свободной оперативной памяти!");
+			this.checkBoxDownloadToRAM.UseVisualStyleBackColor = true;
+			// 
+			// progressBar1
+			// 
+			this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
+			this.progressBar1.Location = new System.Drawing.Point(12, 415);
+			this.progressBar1.Name = "progressBar1";
+			this.progressBar1.Size = new System.Drawing.Size(744, 23);
+			this.progressBar1.TabIndex = 27;
+			this.progressBar1.Text = "multipleProgressBar1";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(768, 450);
+			this.Controls.Add(this.checkBoxDownloadToRAM);
 			this.Controls.Add(this.checkBoxMergeChunksAutomatically);
 			this.Controls.Add(this.numericUpDownConnectionTimeout);
 			this.Controls.Add(this.label9);
@@ -545,5 +560,6 @@
 		private System.Windows.Forms.NumericUpDown numericUpDownConnectionTimeout;
 		private System.Windows.Forms.CheckBox checkBoxMergeChunksAutomatically;
 		private System.Windows.Forms.ToolTip toolTip1;
+		private System.Windows.Forms.CheckBox checkBoxDownloadToRAM;
 	}
 }

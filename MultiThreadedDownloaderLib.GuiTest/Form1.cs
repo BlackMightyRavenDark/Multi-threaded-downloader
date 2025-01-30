@@ -166,8 +166,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnDownloadSingleThreaded.Text = "Stop";
 			lblMergingProgress.Text = null;
 
-			string fn = editFileName.Text;
-			if (File.Exists(fn))
+			string fn = checkBoxDownloadToRAM.Checked ? null : editFileName.Text;
+			if (!checkBoxDownloadToRAM.Checked && !string.IsNullOrEmpty(fn) && File.Exists(fn))
 			{
 				File.Delete(fn);
 			}
@@ -188,9 +188,10 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			singleThreadedDownloader.TryCountLimit = (int)numericUpDownTryCountInsideEachThread.Value;
 			singleThreadedDownloader.ConnectionTimeout = (int)numericUpDownConnectionTimeout.Value;
 
-			Stream stream = File.OpenWrite(fn);
+			Stream stream = checkBoxDownloadToRAM.Checked ? new MemoryStream() : (Stream)File.OpenWrite(fn);
 			int errorCode = await Task.Run(() => singleThreadedDownloader.Download(stream, fn));
 			stream.Close();
+			if (checkBoxDownloadToRAM.Checked) { GC.Collect(); }
 #if DEBUG
 			System.Diagnostics.Debug.WriteLine($"Error code = {errorCode}");
 #endif
@@ -318,7 +319,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 							$"Подключено! (попытка №{tryNumber}";
 						lblDownloadingProgress.Text = connectedString;
 						isPreparing = false;
-						if (contentLength > 0L)
+						if (!checkBoxDownloadToRAM.Checked && contentLength > 0L)
 						{
 							long minimumFreeSpaceRequired = (long)(contentLength * 1.1);
 
@@ -483,12 +484,13 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			multiThreadedDownloader.MergeChunksAutomatically = checkBoxMergeChunksAutomatically.Checked;
 			multiThreadedDownloader.ConnectionTimeout = (int)numericUpDownConnectionTimeout.Value;
 
+			Stream outputStream = checkBoxDownloadToRAM.Checked ? new MemoryStream() : null;
 			bool useAccurateMode = checkBoxUseAccurateMode.Checked;
-			int errorCode = await Task.Run(() => multiThreadedDownloader.Download(useAccurateMode));
+			int errorCode = await Task.Run(() => multiThreadedDownloader.Download(outputStream, useAccurateMode));
 #if DEBUG
 			System.Diagnostics.Debug.WriteLine($"Error code = {errorCode}");
 #endif
-			if (multiThreadedDownloader.UseRamForTempFiles)
+			if (multiThreadedDownloader.UseRamForTempFiles || checkBoxDownloadToRAM.Checked)
 			{
 				GC.Collect();
 			}
@@ -645,7 +647,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 						$"Подключено! (попытка №{tryNumber} / {tryCountLimit})" :
 						$"Подключено! (попытка №{tryNumber})";
 					lblDownloadingProgress.Text = s;
-					if (contentLength > 0L)
+					if (!checkBoxDownloadToRAM.Checked && contentLength > 0L)
 					{
 						string fn = editFileName.Text;
 						char driveLetter = fn.Length > 2 && fn[1] == ':' && fn[2] == '\\' ? fn[0] : Application.ExecutablePath[0];
@@ -755,6 +757,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnHeaders.Enabled = enable;
 			checkBoxMergeChunksAutomatically.Enabled = enable;
 			cbKeepDownloadedFileInTempOrMergingDirectory.Enabled = enable;
+			checkBoxDownloadToRAM.Enabled = enable;
 			checkBoxUseRamForTempFiles.Enabled = enable;
 			checkBoxUseAccurateMode.Enabled = enable;
 			numericUpDownThreadCount.Enabled = enable;
