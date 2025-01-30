@@ -152,7 +152,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				return;
 			}
 
-			if (string.IsNullOrEmpty(editFileName.Text) || string.IsNullOrWhiteSpace(editFileName.Text))
+			if (!checkBoxDownloadToRAM.Checked &&
+				(string.IsNullOrEmpty(editFileName.Text) || string.IsNullOrWhiteSpace(editFileName.Text)))
 			{
 				MessageBox.Show("Не указано имя файла!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
