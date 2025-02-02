@@ -451,7 +451,13 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				{
 					if (errCode == 200 || errCode == 206)
 					{
-						string t = $"Имя файла: {fileName}\nСкачано: {bytesTransferred} байт";
+						string t = $"Скачано: {bytesTransferred} байт";
+						if (!(s as MultiThreadedDownloader).FakeDownloading &&
+							!checkBoxDownloadToRAM.Checked &&
+							!string.IsNullOrEmpty(fileName))
+						{
+							t = $"Имя файла: {fileName}\n{t}";
+						}
 						MessageBox.Show(t, "Скачано!", MessageBoxButtons.OK, MessageBoxIcon.Information);
 					}
 				}));
