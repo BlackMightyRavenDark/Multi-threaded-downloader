@@ -143,7 +143,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnDownloadMultiThreaded.Enabled = false;
 			EnableControls(false);
 
-			if (string.IsNullOrEmpty(editUrl.Text) || string.IsNullOrWhiteSpace(editUrl.Text))
+			string url = editUrl.Text;
+			if (string.IsNullOrEmpty(url) || string.IsNullOrWhiteSpace(url))
 			{
 				MessageBox.Show("Не указана ссылка!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -152,8 +153,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				return;
 			}
 
+			string outputFilePath = editFileName.Text;
 			if (!checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked &&
-				(string.IsNullOrEmpty(editFileName.Text) || string.IsNullOrWhiteSpace(editFileName.Text)))
+				(string.IsNullOrEmpty(outputFilePath) || string.IsNullOrWhiteSpace(outputFilePath)))
 			{
 				MessageBox.Show("Не указано имя файла!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -167,10 +169,12 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnDownloadSingleThreaded.Text = "Stop";
 			lblMergingProgress.Text = null;
 
-			string fn = checkBoxDownloadToRAM.Checked || checkBoxFakeDownloading.Checked ? null : editFileName.Text;
-			if (!string.IsNullOrEmpty(fn) && !string.IsNullOrWhiteSpace(fn) && File.Exists(fn))
+			string actualOutputFilePath = checkBoxDownloadToRAM.Checked || checkBoxFakeDownloading.Checked ? null : outputFilePath;
+			if (!string.IsNullOrEmpty(actualOutputFilePath) &&
+				!string.IsNullOrWhiteSpace(actualOutputFilePath) &&
+				File.Exists(actualOutputFilePath))
 			{
-				File.Delete(fn);
+				File.Delete(actualOutputFilePath);
 			}
 
 			singleThreadedDownloader = new FileDownloader();
@@ -190,10 +194,10 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			singleThreadedDownloader.ConnectionTimeout = (int)numericUpDownConnectionTimeout.Value;
 			singleThreadedDownloader.FakeDownloading = checkBoxFakeDownloading.Checked;
 
-			Stream stream = checkBoxFakeDownloading.Checked ? null :
-				(checkBoxDownloadToRAM.Checked ? new MemoryStream() : (Stream)File.OpenWrite(fn));
-			int errorCode = await Task.Run(() => singleThreadedDownloader.Download(stream, fn));
-			stream.Close();
+			Stream outputStream = checkBoxFakeDownloading.Checked ? null :
+				(checkBoxDownloadToRAM.Checked ? new MemoryStream() : (Stream)File.OpenWrite(actualOutputFilePath));
+			int errorCode = await Task.Run(() => singleThreadedDownloader.Download(outputStream, actualOutputFilePath));
+			outputStream.Close();
 			if (checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked) { GC.Collect(); }
 #if DEBUG
 			System.Diagnostics.Debug.WriteLine($"Error code = {errorCode}");
@@ -432,11 +436,11 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				if ((s as MultiThreadedDownloader).FakeDownloading)
 				{
 					Invoke(new MethodInvoker(() => progressBar1.ClearItems()));
-					string msg = "No need to merge chunks while using fake downloading!";
+					const string msg = "No need to merge chunks while using fake downloading!";
 					return new CustomError(msg);
 				}
 				{
-					string msg = "Manual chunk merging is not implemented";
+					const string msg = "Manual chunk merging is not implemented";
 					Invoke(new MethodInvoker(() => progressBar1.SetItem($"{msg}!")));
 					return new CustomError(msg);
 				}

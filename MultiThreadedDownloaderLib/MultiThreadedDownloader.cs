@@ -319,7 +319,7 @@ namespace MultiThreadedDownloaderLib
 				long chunkLastByte = range.Item2;
 
 				string chunkFileName = UseRamForTempFiles || isFakeDownloading ? null :
-					GetTempChunkFilePath(chunkCount, chunkFirstByte, chunkLastByte);
+					FormatChunkTempFilePath(chunkCount, chunkFirstByte, chunkLastByte);
 				if (!string.IsNullOrEmpty(chunkFileName))
 				{
 					chunkFileName = GetNumberedFileName(chunkFileName);
@@ -847,32 +847,27 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		private string GetTempChunkFilePath(int chunkCount, long byteStart, long byteEnd)
+		private string FormatChunkTempFilePath(int chunkCount, long byteStart, long byteEnd)
 		{
-			if (!UseRamForTempFiles)
+			string fn = Path.GetFileName(OutputFileName);
+			string suffix = $".chunk_{byteStart}-{byteEnd}.tmp";
+
+			string chunkFileName;
+			if (chunkCount > 1)
 			{
-				string fn = Path.GetFileName(OutputFileName);
-				string suffix = $".chunk_{byteStart}-{byteEnd}.tmp";
-
-				string chunkFileName;
-				if (chunkCount > 1)
-				{
-					chunkFileName = IsTempDirectoryAvailable ?
-						Path.Combine(TempDirectory, fn + suffix) : fn + suffix;
-				}
-				else if (IsTempDirectoryAvailable)
-				{
-					chunkFileName = Path.Combine(TempDirectory, fn + suffix);
-				}
-				else
-				{
-					chunkFileName = $"{OutputFileName}_{byteStart}-{byteEnd}.tmp";
-				}
-
-				return chunkFileName;
+				chunkFileName = IsTempDirectoryAvailable ?
+					Path.Combine(TempDirectory, fn + suffix) : fn + suffix;
+			}
+			else if (IsTempDirectoryAvailable)
+			{
+				chunkFileName = Path.Combine(TempDirectory, fn + suffix);
+			}
+			else
+			{
+				chunkFileName = $"{OutputFileName}_{byteStart}-{byteEnd}.tmp";
 			}
 
-			return null;
+			return chunkFileName;
 		}
 
 		private string GetTempMergingFilePath()

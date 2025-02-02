@@ -38,19 +38,16 @@ namespace MultiThreadedDownloaderLib
 				return FileDownloader.DOWNLOAD_ERROR_NULL_CONTENT;
 			}
 
-			byte[] buf = new byte[bufferSize];
+			byte[] buffer = new byte[bufferSize];
 			long bytesTransferred = 0L;
 
 			Stream streamToRead = zipped ? new GZipStream(Data, CompressionMode.Decompress, true) : Data;
 
 			do
 			{
-				int bytesRead = streamToRead.Read(buf, 0, buf.Length);
-				if (bytesRead <= 0)
-				{
-					break;
-				}
-				stream?.Write(buf, 0, bytesRead);
+				int bytesRead = streamToRead.Read(buffer, 0, bufferSize);
+				if (bytesRead <= 0) { break; }
+				stream?.Write(buffer, 0, bytesRead);
 				bytesTransferred += bytesRead;
 
 				progress?.Invoke(bytesTransferred);
