@@ -63,6 +63,7 @@
 			this.checkBoxMergeChunksAutomatically = new System.Windows.Forms.CheckBox();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.checkBoxDownloadToRAM = new System.Windows.Forms.CheckBox();
+			this.checkBoxFakeDownloading = new System.Windows.Forms.CheckBox();
 			this.progressBar1 = new MultiThreadedDownloaderLib.MultipleProgressBar();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownThreadCount)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownUpdateInterval)).BeginInit();
@@ -449,7 +450,7 @@
 			// 
 			this.checkBoxDownloadToRAM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.checkBoxDownloadToRAM.AutoSize = true;
-			this.checkBoxDownloadToRAM.Location = new System.Drawing.Point(526, 142);
+			this.checkBoxDownloadToRAM.Location = new System.Drawing.Point(379, 142);
 			this.checkBoxDownloadToRAM.Name = "checkBoxDownloadToRAM";
 			this.checkBoxDownloadToRAM.Size = new System.Drawing.Size(230, 17);
 			this.checkBoxDownloadToRAM.TabIndex = 37;
@@ -457,6 +458,18 @@
 			this.toolTip1.SetToolTip(this.checkBoxDownloadToRAM, "Внимание! Если скачиваемый файл большой, то для правильной работы требуется очень" +
 		" много свободной оперативной памяти!");
 			this.checkBoxDownloadToRAM.UseVisualStyleBackColor = true;
+			// 
+			// checkBoxFakeDownloading
+			// 
+			this.checkBoxFakeDownloading.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.checkBoxFakeDownloading.AutoSize = true;
+			this.checkBoxFakeDownloading.Location = new System.Drawing.Point(615, 142);
+			this.checkBoxFakeDownloading.Name = "checkBoxFakeDownloading";
+			this.checkBoxFakeDownloading.Size = new System.Drawing.Size(141, 17);
+			this.checkBoxFakeDownloading.TabIndex = 38;
+			this.checkBoxFakeDownloading.Text = "Фейковое скачивание";
+			this.toolTip1.SetToolTip(this.checkBoxFakeDownloading, "В этом режиме скачанные данные никуда не сохраняются");
+			this.checkBoxFakeDownloading.UseVisualStyleBackColor = true;
 			// 
 			// progressBar1
 			// 
@@ -473,6 +486,7 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(768, 450);
+			this.Controls.Add(this.checkBoxFakeDownloading);
 			this.Controls.Add(this.checkBoxDownloadToRAM);
 			this.Controls.Add(this.checkBoxMergeChunksAutomatically);
 			this.Controls.Add(this.numericUpDownConnectionTimeout);
@@ -561,5 +575,6 @@
 		private System.Windows.Forms.CheckBox checkBoxMergeChunksAutomatically;
 		private System.Windows.Forms.ToolTip toolTip1;
 		private System.Windows.Forms.CheckBox checkBoxDownloadToRAM;
+		private System.Windows.Forms.CheckBox checkBoxFakeDownloading;
 	}
 }

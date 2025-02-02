@@ -50,7 +50,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					break;
 				}
-				stream.Write(buf, 0, bytesRead);
+				stream?.Write(buf, 0, bytesRead);
 				bytesTransferred += bytesRead;
 
 				progress?.Invoke(bytesTransferred);

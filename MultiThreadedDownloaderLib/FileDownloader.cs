@@ -29,6 +29,12 @@ namespace MultiThreadedDownloaderLib
 		public long OutputStreamSize => DownloadingTask?.OutputStream?.Stream != null ?
 			DownloadingTask.OutputStream.Stream.Length : 0L;
 		public DownloadingTask DownloadingTask { get; private set; }
+
+		/// <summary>
+		/// Don't save downloaded data to anywhere.
+		/// </summary>
+		public bool FakeDownloading { get; set;} = false;
+
 		public bool IsActive { get; private set; } = false;
 		public int LastErrorCode { get; private set; } = 200;
 		public string LastErrorMessage { get; private set; }
@@ -109,6 +115,7 @@ namespace MultiThreadedDownloaderLib
 			_isAborted = false;
 			LastErrorMessage = null;
 			DownloadingTask = downloadingTask;
+			bool fakeDownloading = FakeDownloading;
 			DownloadedInLastSession = 0L;
 
 			if (string.IsNullOrEmpty(Url) || string.IsNullOrWhiteSpace(Url))
@@ -129,7 +136,7 @@ namespace MultiThreadedDownloaderLib
 
 			_cancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
 
-			long outputStreamInitialPosition = downloadingTask.OutputStream.Stream.Position;
+			long outputStreamInitialPosition = fakeDownloading ? 0L : downloadingTask.OutputStream.Stream.Position;
 			int tryNumber = 0;
 			int tryCountLimit = TryCountLimit;
 			bool isInfiniteRetries = tryCountLimit <= 0;
@@ -184,7 +191,7 @@ namespace MultiThreadedDownloaderLib
 				ResetRange();
 			}
 
-			if (!IgnoreStreamSizeExceededError &&
+			if (!fakeDownloading && !IgnoreStreamSizeExceededError &&
 				contentLength > 0L && outputStreamInitialPosition + contentLength <
 				downloadingTask.OutputStream.Stream.Length)
 			{
@@ -214,16 +221,20 @@ namespace MultiThreadedDownloaderLib
 #endif
 				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
 
-				long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
-					(contentLength >= 0L ? contentLength - 1L : -1L);
-				if (isRangeSupported && !SetRange(DownloadedInLastSession + downloadingTask.ByteFrom, byteTo))
+				if (!fakeDownloading)
 				{
-					LastErrorCode = DOWNLOAD_ERROR_RANGE;
-					LastErrorMessage = "Ошибка диапазона! Скачивание прервано!";
-					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
-					IsActive = false;
-					return LastErrorCode;
+					long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
+						(contentLength >= 0L ? contentLength - 1L : -1L);
+					if (isRangeSupported && !SetRange(DownloadedInLastSession + downloadingTask.ByteFrom, byteTo))
+					{
+						LastErrorCode = DOWNLOAD_ERROR_RANGE;
+						LastErrorMessage = "Ошибка диапазона! Скачивание прервано!";
+						WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
+						IsActive = false;
+						return LastErrorCode;
+					}
 				}
+
 				HttpRequestResult requestResult = HttpRequestSender.Send("GET", Url, Headers, ConnectionTimeout);
 				LastErrorCode = requestResult.ErrorCode;
 				LastErrorMessage = HasErrors && requestResult.HasErrorMessage ? requestResult.ErrorMessage : null;
@@ -281,8 +292,9 @@ namespace MultiThreadedDownloaderLib
 				{
 					CancellationToken token = _cancellationTokenSource.Token;
 					bool gZipped = requestResult.IsZippedContent();
+					Stream actualOutputStream = fakeDownloading ? null : downloadingTask.OutputStream.Stream;
 					LastErrorCode = requestResult.WebContent.ContentToStream(
-						downloadingTask.OutputStream.Stream, bufferSize, gZipped, (long bytes) =>
+						actualOutputStream, bufferSize, gZipped, (long bytes) =>
 						{
 							chunkProcessingDict[tryNumber] = bytes;
 							DownloadedInLastSession = chunkProcessingDict.Sum(item => item.Value);
@@ -327,14 +339,17 @@ namespace MultiThreadedDownloaderLib
 #endif
 					chunkProcessingDict.Clear();
 					DownloadedInLastSession = 0L;
-					downloadingTask.OutputStream.Stream.Position = outputStreamInitialPosition;
+					if (!fakeDownloading)
+					{
+						downloadingTask.OutputStream.Stream.Position = outputStreamInitialPosition;
+					}
 				}
 			} while (!_cancellationTokenSource.IsCancellationRequested);
 			if (_cancellationTokenSource.IsCancellationRequested)
 			{
 				LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
 			}
-			else if (!IgnoreStreamSizeExceededError &&
+			else if (!IgnoreStreamSizeExceededError && !fakeDownloading &&
 				contentLength > 0L && downloadingTask.OutputStream.Stream.Length > contentLength)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED;
