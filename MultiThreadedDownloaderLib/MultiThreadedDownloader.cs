@@ -347,20 +347,22 @@ namespace MultiThreadedDownloaderLib
 				downloader.HeadersReceiving += (object sender, string url, DownloadingTask downloadingTask,
 					int tryNumber, int tryCountLimit) =>
 				{
+					bool infiniteThreadRetries = tryCountLimit <= 0;
 					int id = (sender as FileDownloader).Id;
 					string msg = $"Task №{id}: Receiving headers... Try №{tryNumber}";
-					if (!isInfiniteRetries) { msg += $" / {tryCountLimit}"; }
+					if (!infiniteThreadRetries) { msg += $" / {tryCountLimit}"; }
 					System.Diagnostics.Debug.WriteLine(msg);
 				};
 				downloader.HeadersReceived += (object sender, string url,
 					DownloadingTask downloadingTask, NameValueCollection headers,
 					int tryNumber, int tryCountLimit, int errCode) =>
 				{
+					bool infiniteThreadRetries = tryCountLimit <= 0;
 					int id = (sender as FileDownloader).Id;
 					string msg = errCode == 200 || errCode == 206 ?
 						$"Task №{id}: Headers are received OK with try №{tryNumber}" :
 						$"Task №{id}: Headers not received! Try №{tryNumber}";
-					if (!isInfiniteRetries) { msg += $" / {tryCountLimit}"; }
+					if (!infiniteThreadRetries) { msg += $" / {tryCountLimit}"; }
 					System.Diagnostics.Debug.WriteLine(msg);
 				};
 #endif
