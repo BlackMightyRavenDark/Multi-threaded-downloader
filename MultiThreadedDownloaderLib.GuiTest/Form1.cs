@@ -197,7 +197,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			Stream outputStream = checkBoxFakeDownloading.Checked ? null :
 				(checkBoxDownloadToRAM.Checked ? new MemoryStream() : (Stream)File.OpenWrite(actualOutputFilePath));
 			int errorCode = await Task.Run(() => singleThreadedDownloader.Download(outputStream, actualOutputFilePath));
-			outputStream.Close();
+			outputStream?.Close();
 			if (checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked) { GC.Collect(); }
 #if DEBUG
 			System.Diagnostics.Debug.WriteLine($"Error code = {errorCode}");
