@@ -180,7 +180,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			singleThreadedDownloader = new FileDownloader();
 			singleThreadedDownloader.Preparing += OnPreparing;
 			singleThreadedDownloader.HeadersReceiving += OnHeadersReceiving;
+#if DEBUG
 			singleThreadedDownloader.HeadersReceived += OnHeadersReceived;
+#endif
 			singleThreadedDownloader.Connecting += OnConnecting;
 			singleThreadedDownloader.Connected += OnConnected;
 			singleThreadedDownloader.WorkStarted += OnWorkStarted;
@@ -606,6 +608,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 		}
 
+#if DEBUG
 		private void OnHeadersReceived(object sender, string url,
 			DownloadingTask downloadingTask, NameValueCollection headers,
 			int tryNumber, int tryCountLimit, int errorCode)
@@ -622,7 +625,6 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					string s = tryCountLimit > 0 ?
 						$"Заголовки получены (попытка №{tryNumber} / {tryCountLimit}):" :
 						$"Заголовки получены (попытка №{tryNumber}):";
-#if DEBUG
 					System.Diagnostics.Debug.WriteLine(s);
 					string t = Utils.HeadersToString(headers);
 					System.Diagnostics.Debug.WriteLine(t);
@@ -634,10 +636,10 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					{
 						System.Diagnostics.Debug.WriteLine("Скачивание прервано!");
 					}
-#endif
 				}
 			}
 		}
+#endif
 
 		private void OnConnecting(object sender, string url, int tryNumber, int tryCountLimit)
 		{
