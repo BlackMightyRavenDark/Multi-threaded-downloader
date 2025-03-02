@@ -453,6 +453,20 @@ namespace MultiThreadedDownloaderLib
 			return headers;
 		}
 
+		public static string HeadersToString(NameValueCollection headers)
+		{
+			string t = string.Empty;
+
+			for (int i = 0; i < headers.Count; ++i)
+			{
+				string headerName = headers.GetKey(i);
+				string headerValue = headers.Get(i);
+				t += $"{headerName}: {headerValue}{Environment.NewLine}";
+			}
+
+			return t;
+		}
+
 		public static Stream ToStream(this byte[] bytes, bool seekToBeginning = false)
 		{
 			if (bytes.Length > 0)

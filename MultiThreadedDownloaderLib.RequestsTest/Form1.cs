@@ -51,7 +51,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			lblStatusCode.Text = $"Код возврата: {requestResult.ErrorCode}";
 			if (requestResult.HttpWebResponse != null)
 			{
-				textBoxServerAnswer.Text = HttpRequestResult.HeadersToString(requestResult.HttpWebResponse.Headers);
+				textBoxServerAnswer.Text = Utils.HeadersToString(requestResult.HttpWebResponse.Headers);
 			}
 			requestResult.Dispose();
 

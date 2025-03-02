@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.Net;
 
 namespace MultiThreadedDownloaderLib
@@ -54,20 +53,6 @@ namespace MultiThreadedDownloaderLib
 		{
 			return !string.IsNullOrEmpty(ErrorMessage) && !string.IsNullOrWhiteSpace(ErrorMessage) &&
 				string.Compare(ErrorMessage, "ok", true) != 0;
-		}
-
-		public static string HeadersToString(NameValueCollection headers)
-		{
-			string t = string.Empty;
-
-			for (int i = 0; i < headers.Count; ++i)
-			{
-				string headerName = headers.GetKey(i);
-				string headerValue = headers.Get(i);
-				t += $"{headerName}: {headerValue}{Environment.NewLine}";
-			}
-
-			return t;
 		}
 	}
 }

@@ -318,7 +318,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					if (customError.ErrorCode == 200 || customError.ErrorCode == 206)
 					{
 #if DEBUG
-						string t = HttpRequestResult.HeadersToString(headers);
+						string t = Utils.HeadersToString(headers);
 						System.Diagnostics.Debug.WriteLine($"Заголовки получены:\n{t}");
 #endif
 						string connectedString = tryCountLimit > 0 ?
@@ -624,7 +624,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 						$"Заголовки получены (попытка №{tryNumber}):";
 #if DEBUG
 					System.Diagnostics.Debug.WriteLine(s);
-					string t = HttpRequestResult.HeadersToString(headers);
+					string t = Utils.HeadersToString(headers);
 					System.Diagnostics.Debug.WriteLine(t);
 				}
 				else
