@@ -147,12 +147,14 @@ namespace MultiThreadedDownloaderLib
 		private Stream GetReadingStream(out bool isCompressedData)
 		{
 			isCompressedData = IsCompressedContent(out string algorithm);
-			if (!isCompressedData || string.IsNullOrEmpty(algorithm)) { return Data; }
-			switch (algorithm)
+			if (isCompressedData)
 			{
-				case "gzip": return new GZipStream(Data, CompressionMode.Decompress, true);
-				case "deflate": return new DeflateStream(Data, CompressionMode.Decompress, true);
-				case "br": return null;
+				switch (algorithm)
+				{
+					case "gzip": return new GZipStream(Data, CompressionMode.Decompress, true);
+					case "deflate": return new DeflateStream(Data, CompressionMode.Decompress, true);
+					default: return null;
+				}
 			}
 
 			return Data;
