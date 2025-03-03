@@ -44,6 +44,10 @@ namespace MultiThreadedDownloaderLib
 			byte[] buffer = new byte[bufferSize];
 			long bytesTransferred = 0L;
 			Stream readingStream = GetReadingStream(out bool isComressed);
+			if (isComressed && readingStream == null)
+			{
+				return FileDownloader.DOWNLOAD_ERROR_UNSUPPORTED_COMPRESSION_ALGORITHM;
+			}
 
 			do
 			{

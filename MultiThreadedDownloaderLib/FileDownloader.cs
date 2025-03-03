@@ -60,6 +60,7 @@ namespace MultiThreadedDownloaderLib
 		public const int DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT = -11;
 		public const int DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED = -12;
 		public const int DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED = -13;
+		public const int DOWNLOAD_ERROR_UNSUPPORTED_COMPRESSION_ALGORITHM = -14;
 
 		public delegate void PreparingDelegate(object sender, string url, DownloadingTask downloadingTask);
 		public delegate void HeadersReceivingDelegate(object sender, string url, DownloadingTask downloadingTask,
@@ -636,6 +637,9 @@ namespace MultiThreadedDownloaderLib
 
 				case DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED:
 					return "Размер файла может получиться больше размера скачанного! Данные могут быть повреждены!";
+
+				case DOWNLOAD_ERROR_UNSUPPORTED_COMPRESSION_ALGORITHM:
+					return "Алгоритм сжатия данных не поддерживается!";
 
 				default:
 					return $"Код ошибки: {errorCode}";
