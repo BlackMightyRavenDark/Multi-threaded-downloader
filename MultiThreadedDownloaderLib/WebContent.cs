@@ -110,18 +110,48 @@ namespace MultiThreadedDownloaderLib
 			return ContentToString(out resultString, Encoding.UTF8, bufferSize);
 		}
 
+		public bool IsCompressedContent(out string algorithm)
+		{
+			if (!string.IsNullOrEmpty(_contentEncodingHeaderValue))
+			{
+				if (_contentEncodingHeaderValue.Contains("gzip"))
+				{
+					algorithm = "gzip";
+					return true;
+				}
+				else if (_contentEncodingHeaderValue.Contains("deflate"))
+				{
+					algorithm = "deflate";
+					return true;
+				}
+				else if (_contentEncodingHeaderValue.Contains("br"))
+				{
+					algorithm = "br";
+					return true;
+				}
+			}
+
+			algorithm = null;
+			return false;
+		}
+
 		public bool IsCompressedContent()
 		{
-			return !string.IsNullOrEmpty(_contentEncodingHeaderValue) &&
-				(_contentEncodingHeaderValue.Contains("gzip") ||
-				_contentEncodingHeaderValue.Contains("br") ||
-				_contentEncodingHeaderValue.Contains("deflate"));
+			return IsCompressedContent(out _);
 		}
 
 		private Stream GetReadingStream(out bool isCompressedData)
 		{
-			isCompressedData = IsCompressedContent();
-			return isCompressedData ? new GZipStream(Data, CompressionMode.Decompress, true) : Data;
+			isCompressedData = IsCompressedContent(out string algorithm);
+			if (!isCompressedData || string.IsNullOrEmpty(algorithm)) { return Data; }
+			switch (algorithm)
+			{
+				case "gzip": return new GZipStream(Data, CompressionMode.Decompress, true);
+				case "deflate": return new DeflateStream(Data, CompressionMode.Decompress, true);
+				case "br": return null;
+			}
+
+			return Data;
 		}
 	}
 }
