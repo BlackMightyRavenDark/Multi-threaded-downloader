@@ -467,6 +467,16 @@ namespace MultiThreadedDownloaderLib
 			return t;
 		}
 
+		public static string GetContentEncodingHeaderValue(this HttpWebResponse httpWebResponse)
+		{
+			string value = httpWebResponse.Headers?.Get("Content-Encoding");
+			if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value))
+			{
+				value = httpWebResponse.ContentEncoding;
+			}
+			return value;
+		}
+
 		public static Stream ToStream(this byte[] bytes, bool seekToBeginning = false)
 		{
 			if (bytes.Length > 0)

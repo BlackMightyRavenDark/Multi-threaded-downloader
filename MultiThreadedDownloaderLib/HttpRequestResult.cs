@@ -35,20 +35,6 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		public bool IsZippedContent()
-		{
-			if (HttpWebResponse != null)
-			{
-				string value = HttpWebResponse.Headers?.Get("Content-Encoding");
-				if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value))
-				{
-					value = HttpWebResponse.ContentEncoding;
-				}
-				return !string.IsNullOrEmpty(value) && value.Contains("gzip");
-			}
-			return false;
-		}
-
 		private bool HasErrorMessageText()
 		{
 			return !string.IsNullOrEmpty(ErrorMessage) && !string.IsNullOrWhiteSpace(ErrorMessage) &&

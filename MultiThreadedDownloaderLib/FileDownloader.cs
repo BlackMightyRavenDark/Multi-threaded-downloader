@@ -288,10 +288,9 @@ namespace MultiThreadedDownloaderLib
 				try
 				{
 					CancellationToken token = _cancellationTokenSource.Token;
-					bool gZipped = requestResult.IsZippedContent();
 					Stream actualOutputStream = fakeDownloading ? null : downloadingTask.OutputStream.Stream;
 					LastErrorCode = requestResult.WebContent.ContentToStream(
-						actualOutputStream, bufferSize, gZipped, (long bytes) =>
+						actualOutputStream, bufferSize, (long bytes) =>
 						{
 							chunkProcessingDict[tryNumber] = bytes;
 							DownloadedInLastSession = chunkProcessingDict.Sum(item => item.Value);

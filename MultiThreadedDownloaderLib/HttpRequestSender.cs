@@ -55,8 +55,12 @@ namespace MultiThreadedDownloaderLib
 
 				HttpWebResponse response = (HttpWebResponse)httpWebRequest.GetResponse();
 				int resultErrorCode = (int)response.StatusCode;
-				WebContent webContent = resultErrorCode == 200 || resultErrorCode == 206 ?
-					new WebContent(response.GetResponseStream(), response.ContentLength) : null;
+				WebContent webContent = null;
+				if (resultErrorCode == 200 || resultErrorCode == 206)
+				{
+					string contentEncodingHeaderValue = response.GetContentEncodingHeaderValue();
+					webContent = new WebContent(response.GetResponseStream(), response.ContentLength, contentEncodingHeaderValue);
+				}
 				return new HttpRequestResult(resultErrorCode, response.StatusDescription, response, webContent);
 			}
 			catch (System.Exception ex)

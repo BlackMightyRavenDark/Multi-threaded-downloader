@@ -13,10 +13,13 @@ namespace MultiThreadedDownloaderLib
 
 		public delegate void ProgressDelegate(long byteCount);
 
-		public WebContent(Stream dataStream, long length)
+		private string _contentEncodingHeaderValue;
+
+		public WebContent(Stream dataStream, long length, string contentEncodingHeaderValue = null)
 		{
 			Data = dataStream;
 			Length = length;
+			_contentEncodingHeaderValue = contentEncodingHeaderValue;
 		}
 
 		public void Dispose()
@@ -30,7 +33,7 @@ namespace MultiThreadedDownloaderLib
 			Length = -1L;
 		}
 
-		public int ContentToStream(Stream stream, int bufferSize, bool zipped,
+		public int ContentToStream(Stream outputStream, int bufferSize,
 			ProgressDelegate progress, CancellationToken cancellationToken)
 		{
 			if (Data == null)
@@ -40,27 +43,26 @@ namespace MultiThreadedDownloaderLib
 
 			byte[] buffer = new byte[bufferSize];
 			long bytesTransferred = 0L;
-
-			Stream streamToRead = zipped ? new GZipStream(Data, CompressionMode.Decompress, true) : Data;
+			Stream readingStream = GetReadingStream(out bool isComressed);
 
 			do
 			{
-				int bytesRead = streamToRead.Read(buffer, 0, bufferSize);
+				int bytesRead = readingStream.Read(buffer, 0, bufferSize);
 				if (bytesRead <= 0) { break; }
-				stream?.Write(buffer, 0, bytesRead);
+				outputStream?.Write(buffer, 0, bytesRead);
 				bytesTransferred += bytesRead;
 
 				progress?.Invoke(bytesTransferred);
 			}
 			while (!cancellationToken.IsCancellationRequested);
 
-			if (zipped) { streamToRead.Close(); }
+			if (isComressed) { readingStream.Close(); }
 
 			if (cancellationToken.IsCancellationRequested)
 			{
 				return FileDownloader.DOWNLOAD_ERROR_CANCELED_BY_USER;
 			}
-			else if (!zipped && Length >= 0L && bytesTransferred != Length)
+			else if (!isComressed && Length >= 0L && bytesTransferred != Length)
 			{
 				return FileDownloader.DOWNLOAD_ERROR_INCOMPLETE_DATA_READ;
 			}
@@ -68,20 +70,14 @@ namespace MultiThreadedDownloaderLib
 			return 200;
 		}
 
-		public int ContentToStream(Stream stream, int bufferSize,
-			ProgressDelegate progress, CancellationToken cancellationToken)
-		{
-			return ContentToStream(stream, bufferSize, false, progress, cancellationToken);
-		}
-
-		public int ContentToString(out string resultString, Encoding encoding, int bufferSize, bool zipped,
+		public int ContentToString(out string resultString, Encoding encoding, int bufferSize,
 			ProgressDelegate progress, CancellationToken cancellationToken)
 		{
 			try
 			{
 				using (MemoryStream stream = new MemoryStream())
 				{
-					int errorCode = ContentToStream(stream, bufferSize, zipped, progress, cancellationToken);
+					int errorCode = ContentToStream(stream, bufferSize, progress, cancellationToken);
 					resultString = errorCode == 200 || errorCode == 206 ?
 						encoding.GetString(stream.ToArray()) : null;
 					return errorCode;
@@ -97,37 +93,35 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		public int ContentToString(out string resultString, int bufferSize, bool zipped,
-			ProgressDelegate progress, CancellationToken cancellationToken)
-		{
-			return ContentToString(out resultString, Encoding.UTF8, bufferSize, zipped,
-				progress, cancellationToken);
-		}
-
 		public int ContentToString(out string resultString, int bufferSize,
 			ProgressDelegate progress, CancellationToken cancellationToken)
 		{
-			return ContentToString(out resultString, bufferSize, false, progress, cancellationToken);
-		}
-
-		public int ContentToString(out string resultString, Encoding encoding, bool zipped, int bufferSize = 4096)
-		{
-			return ContentToString(out resultString, encoding, bufferSize, zipped, null, default);
+			return ContentToString(out resultString, Encoding.UTF8, bufferSize,
+				progress, cancellationToken);
 		}
 
 		public int ContentToString(out string resultString, Encoding encoding, int bufferSize = 4096)
 		{
-			return ContentToString(out resultString, encoding, bufferSize, false, null, default);
-		}
-
-		public int ContentToString(out string resultString, bool zipped, int bufferSize = 4096)
-		{
-			return ContentToString(out resultString, bufferSize, zipped, null, default);
+			return ContentToString(out resultString, encoding, bufferSize, null, default);
 		}
 
 		public int ContentToString(out string resultString, int bufferSize = 4096)
 		{
-			return ContentToString(out resultString, bufferSize, false, null, default);
+			return ContentToString(out resultString, Encoding.UTF8, bufferSize);
+		}
+
+		public bool IsCompressedContent()
+		{
+			return !string.IsNullOrEmpty(_contentEncodingHeaderValue) &&
+				(_contentEncodingHeaderValue.Contains("gzip") ||
+				_contentEncodingHeaderValue.Contains("br") ||
+				_contentEncodingHeaderValue.Contains("deflate"));
+		}
+
+		private Stream GetReadingStream(out bool isCompressedData)
+		{
+			isCompressedData = IsCompressedContent();
+			return isCompressedData ? new GZipStream(Data, CompressionMode.Decompress, true) : Data;
 		}
 	}
 }
