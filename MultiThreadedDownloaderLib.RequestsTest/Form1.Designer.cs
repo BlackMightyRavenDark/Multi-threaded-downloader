@@ -171,6 +171,8 @@
 			// 
 			// btnSetRequestBody
 			// 
+			this.btnSetRequestBody.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.btnSetRequestBody.Location = new System.Drawing.Point(697, 38);
 			this.btnSetRequestBody.Name = "btnSetRequestBody";
 			this.btnSetRequestBody.Size = new System.Drawing.Size(75, 23);

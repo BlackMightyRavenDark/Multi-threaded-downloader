@@ -23,12 +23,14 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 		private async void btnSend_Click(object sender, EventArgs e)
 		{
 			btnSend.Enabled = false;
+			btnSetRequestBody.Enabled = false;
 			
 			string requestUrl = textBoxRequestUrl.Text;
 			if (string.IsNullOrEmpty(requestUrl) || string.IsNullOrWhiteSpace(requestUrl))
 			{
 				MessageBox.Show("Введите ссылку!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				btnSetRequestBody.Enabled = true;
 				btnSend.Enabled = true;
 				return;
 			}
@@ -38,6 +40,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			{
 				MessageBox.Show("Введите тип запроса!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				btnSetRequestBody.Enabled = true;
 				btnSend.Enabled = true;
 				return;
 			}
@@ -55,6 +58,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			}
 			requestResult.Dispose();
 
+			btnSetRequestBody.Enabled = true;
 			btnSend.Enabled = true;
 		}
 
