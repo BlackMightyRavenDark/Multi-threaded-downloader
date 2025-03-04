@@ -8,4 +8,8 @@
 		<Platforms>AnyCPU;x64</Platforms>
 	</PropertyGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="BrotliSharpLib" Version="0.3.3" />
+	</ItemGroup>
+
 </Project>

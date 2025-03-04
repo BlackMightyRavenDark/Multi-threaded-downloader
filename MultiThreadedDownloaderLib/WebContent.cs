@@ -153,6 +153,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					case "gzip": return new GZipStream(Data, CompressionMode.Decompress, true);
 					case "deflate": return new DeflateStream(Data, CompressionMode.Decompress, true);
+					case "br": return new BrotliSharpLib.BrotliStream(Data, CompressionMode.Decompress, true);
 					default: return null;
 				}
 			}
