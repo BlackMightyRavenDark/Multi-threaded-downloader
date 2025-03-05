@@ -72,40 +72,63 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 		private void btnSelectFile_Click(object sender, EventArgs e)
 		{
-			SaveFileDialog sfd = new SaveFileDialog();
-			sfd.Title = "Выберите файл, куда будем качать";
-			sfd.Filter = "Все файлы|*.*";
-			sfd.InitialDirectory = Application.StartupPath;
-			if (sfd.ShowDialog() == DialogResult.OK)
+			try
 			{
-				editFileName.Text = sfd.FileName;
+				using (SaveFileDialog sfd = new SaveFileDialog())
+				{
+					sfd.Title = "Выберите файл, куда будем качать";
+					sfd.Filter = "Все файлы|*.*";
+					sfd.InitialDirectory = Application.StartupPath;
+					if (sfd.ShowDialog() == DialogResult.OK)
+					{
+						editFileName.Text = sfd.FileName;
+					}
+				}
+			} catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message, "Ошибка!",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
-			sfd.Dispose();
 		}
 
 		private void btnSelectTempDir_Click(object sender, EventArgs e)
 		{
-			FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-			folderBrowserDialog.Description = "Выберите папку для временных файлов";
-			folderBrowserDialog.SelectedPath = Application.StartupPath;
-			if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+			try
 			{
-				editTempPath.Text =
-					folderBrowserDialog.SelectedPath.EndsWith("\\")
-					? folderBrowserDialog.SelectedPath : folderBrowserDialog.SelectedPath + "\\";
+				using (FolderBrowserDialog fbd = new FolderBrowserDialog())
+				{
+					fbd.Description = "Выберите папку для временных файлов";
+					fbd.SelectedPath = Application.StartupPath;
+					if (fbd.ShowDialog() == DialogResult.OK)
+					{
+						editTempPath.Text = fbd.SelectedPath;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message, "Ошибка!",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 
 		private void btnSelectMergingDir_Click(object sender, EventArgs e)
 		{
-			FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-			folderBrowserDialog.Description = "Выберите папку для объединения чанков";
-			folderBrowserDialog.SelectedPath = Application.StartupPath;
-			if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
+			try
 			{
-				editMergingPath.Text =
-					folderBrowserDialog.SelectedPath.EndsWith("\\")
-					? folderBrowserDialog.SelectedPath : folderBrowserDialog.SelectedPath + "\\";
+				using (FolderBrowserDialog fbd = new FolderBrowserDialog())
+				{
+					fbd.Description = "Выберите папку для объединения чанков";
+					fbd.SelectedPath = Application.StartupPath;
+					if (fbd.ShowDialog() == DialogResult.OK)
+					{
+						editMergingPath.Text = fbd.SelectedPath;
+					}
+				}
+			} catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message, "Ошибка!",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 		}
 
@@ -115,16 +138,23 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnDownloadMultiThreaded.Enabled = false;
 			btnDownloadSingleThreaded.Enabled = false;
 
-			FormHeadersEditor editor = new FormHeadersEditor(headerCollection);
-			if (editor.ShowDialog() == DialogResult.OK)
+			try
 			{
-				headerCollection.Clear();
-				for (int i = 0; i < editor.Headers.Count; ++i)
+				FormHeadersEditor editor = new FormHeadersEditor(headerCollection);
+				if (editor.ShowDialog() == DialogResult.OK)
 				{
-					string headerName = editor.Headers.GetKey(i);
-					string headerValue = editor.Headers.Get(i);
-					headerCollection.Add(headerName, headerValue);
+					headerCollection.Clear();
+					for (int i = 0; i < editor.Headers.Count; ++i)
+					{
+						string headerName = editor.Headers.GetKey(i);
+						string headerValue = editor.Headers.Get(i);
+						headerCollection.Add(headerName, headerValue);
+					}
 				}
+			} catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message, "Ошибка!",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
 
 			btnDownloadMultiThreaded.Enabled = true;
@@ -169,12 +199,28 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnDownloadSingleThreaded.Text = "Stop";
 			lblMergingProgress.Text = null;
 
-			string actualOutputFilePath = checkBoxDownloadToRAM.Checked || checkBoxFakeDownloading.Checked ? null : outputFilePath;
-			if (!string.IsNullOrEmpty(actualOutputFilePath) &&
-				!string.IsNullOrWhiteSpace(actualOutputFilePath) &&
-				File.Exists(actualOutputFilePath))
+			string actualOutputFilePath = null;
+			try
 			{
-				File.Delete(actualOutputFilePath);
+				if (!checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked)
+				{
+					actualOutputFilePath = outputFilePath;
+				}
+
+				if (!string.IsNullOrEmpty(actualOutputFilePath) &&
+					!string.IsNullOrWhiteSpace(actualOutputFilePath) &&
+					File.Exists(actualOutputFilePath))
+				{
+					File.Delete(actualOutputFilePath);
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message, "Ошибка!",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				EnableControls(true);
+				btnDownloadMultiThreaded.Enabled = true;
+				return;
 			}
 
 			singleThreadedDownloader = new FileDownloader();
