@@ -319,7 +319,7 @@ namespace MultiThreadedDownloaderLib
 				long chunkLastByte = range.Item2;
 
 				string chunkFileName = UseRamForTempFiles || isFakeDownloading ? null :
-					FormatChunkTempFilePath(chunkCount, chunkFirstByte, chunkLastByte);
+					FormatChunkTempFilePath(chunkCount, chunkFirstByte, chunkLastByte, fullContentLength);
 				if (!string.IsNullOrEmpty(chunkFileName))
 				{
 					chunkFileName = GetNumberedFileName(chunkFileName);
@@ -847,10 +847,11 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		private string FormatChunkTempFilePath(int chunkCount, long byteStart, long byteEnd)
+		private string FormatChunkTempFilePath(int chunkCount, long byteStart, long byteEnd, long fileSize = -1L)
 		{
 			string fn = Path.GetFileName(OutputFileName);
-			string suffix = $".chunk_{byteStart}-{byteEnd}.tmp";
+			string fnRange = FormatChunkTempFileNameRange(byteStart, byteEnd, fileSize);
+			string suffix = $".chunk{fnRange}.tmp";
 
 			string chunkFileName;
 			if (chunkCount > 1)
@@ -864,10 +865,32 @@ namespace MultiThreadedDownloaderLib
 			}
 			else
 			{
-				chunkFileName = $"{OutputFileName}_{byteStart}-{byteEnd}.tmp";
+				chunkFileName = $"{OutputFileName}{fnRange}.tmp";
 			}
 
 			return chunkFileName;
+		}
+
+		private static string FormatChunkTempFileNameRange(long byteStart, long byteEnd, long fileSize = -1L)
+		{
+			if (byteStart >= 0L && byteEnd >= 0L)
+			{
+				return $"_{byteStart}-{byteEnd}";
+			}
+			else if (byteStart < 0L && byteEnd >= 0L)
+			{
+				return $"_0-{byteEnd}";
+			}
+			else if (byteStart >= 0L && byteEnd < 0L)
+			{
+				return fileSize >= 0 ? $"_{byteStart}-{fileSize}" : $"_{byteStart}-";
+			}
+			else if (byteStart < 0L && byteEnd < 0L)
+			{
+				return fileSize >= 0L ? $"_0-{fileSize}" : "_0-";
+			}
+
+			return string.Empty;
 		}
 
 		private string GetTempMergingFilePath()
