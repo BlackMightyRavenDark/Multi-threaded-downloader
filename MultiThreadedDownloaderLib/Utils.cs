@@ -499,6 +499,11 @@ namespace MultiThreadedDownloaderLib
 					resultHeaders["Content-Encoding"] = response.ContentEncoding;
 				}
 
+				if (string.IsNullOrEmpty(resultHeaders["Content-Length"]) && response.ContentLength >= 0L)
+				{
+					resultHeaders["Content-Length"] = response.ContentLength.ToString();
+				}
+
 				if (string.IsNullOrEmpty(resultHeaders["Content-Type"]) && !string.IsNullOrEmpty(response.ContentType))
 				{
 					resultHeaders["Content-Type"] = response.ContentType;
