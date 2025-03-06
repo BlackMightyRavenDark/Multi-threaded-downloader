@@ -9,6 +9,7 @@ namespace MultiThreadedDownloaderLib
 		public int ErrorCode { get; }
 		public string ErrorMessage { get; }
 		public NameValueCollection Headers { get; }
+		public DateTime LastModifiedDate => HttpWebResponse != null ? HttpWebResponse.LastModified : DateTime.MinValue;
 		public bool HasErrorMessage => HasErrorMessageText();
 		public HttpWebResponse HttpWebResponse { get; private set; }
 		public WebContent WebContent { get; private set; }
