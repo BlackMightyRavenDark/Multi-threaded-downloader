@@ -490,7 +490,7 @@ namespace MultiThreadedDownloaderLib
 				for (int i = 0; i < keyCount; ++i)
 				{
 					string keyName = response.Headers.GetKey(i);
-					string keyValue = response.Headers.Get(keyName);
+					string keyValue = response.Headers.Get(i);
 					resultHeaders.Add(keyName, keyValue);
 				}
 
