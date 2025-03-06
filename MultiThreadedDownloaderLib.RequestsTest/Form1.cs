@@ -52,10 +52,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			HttpRequestResult requestResult = await Task.Run(() => HttpRequestSender.Send(
 				requestType, requestUrl, _requestBody, Encoding.UTF8, headers));
 			lblStatusCode.Text = $"Код возврата: {requestResult.ErrorCode}";
-			if (requestResult.HttpWebResponse != null)
-			{
-				textBoxServerAnswer.Text = Utils.HeadersToString(requestResult.Headers);
-			}
+			textBoxServerAnswer.Text = Utils.HeadersToString(requestResult.Headers);
 			requestResult.Dispose();
 
 			btnSetRequestBody.Enabled = true;
