@@ -467,6 +467,21 @@ namespace MultiThreadedDownloaderLib
 			return t;
 		}
 
+		public static string HeadersToCode(NameValueCollection headers)
+		{
+			string code = $"NameValueCollection headers = new NameValueCollection(){Environment.NewLine}{{{Environment.NewLine}";
+			for (int i = 0; i < headers.Count; ++i)
+			{
+				string keyName = headers.GetKey(i);
+				string keyValue = headers.Get(i).Replace("\\", "\\\\").Replace("\"", "\\\"");
+				code += $"\t{{ \"{keyName}\", \"{keyValue}\" }},{Environment.NewLine}";
+			}
+
+			int n = Environment.NewLine.Length;
+			code = $"{code.Substring(0, code.Length - n - 1)}{Environment.NewLine}}};{Environment.NewLine}";
+			return code;
+		}
+
 		internal static bool CombineHeaders(this HttpWebResponse response, NameValueCollection resultHeaders)
 		{
 			if (response.Headers != null && resultHeaders != null)
