@@ -875,19 +875,19 @@ namespace MultiThreadedDownloaderLib
 		{
 			if (byteStart >= 0L && byteEnd >= 0L)
 			{
-				return $"_{byteStart}-{byteEnd}";
+				return fileSize >= 0L ? $"_{byteStart}-{byteEnd}={fileSize}=" : $"_{byteStart}-{byteEnd}";
 			}
 			else if (byteStart < 0L && byteEnd >= 0L)
 			{
-				return $"_0-{byteEnd}";
+				return fileSize >= 0L ? $"_0-{byteEnd}={fileSize}=" : $"_0-{byteEnd}";
 			}
 			else if (byteStart >= 0L && byteEnd < 0L)
 			{
-				return fileSize >= 0 ? $"_{byteStart}-{fileSize}" : $"_{byteStart}-";
+				return fileSize >= 0 ? $"_{byteStart}-{fileSize}={fileSize}=" : $"_{byteStart}-";
 			}
 			else if (byteStart < 0L && byteEnd < 0L)
 			{
-				return fileSize >= 0L ? $"_0-{fileSize}" : "_0-";
+				return fileSize >= 0L ? $"_0-{fileSize}={fileSize}=" : "_0-";
 			}
 
 			return string.Empty;
