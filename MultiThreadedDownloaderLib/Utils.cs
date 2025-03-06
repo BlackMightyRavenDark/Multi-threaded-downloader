@@ -467,6 +467,44 @@ namespace MultiThreadedDownloaderLib
 			return t;
 		}
 
+		internal static bool CombineHeaders(this HttpWebResponse response, NameValueCollection resultHeaders)
+		{
+			if (response.Headers != null && resultHeaders != null)
+			{
+				int keyCount = response.Headers.Count;
+				for (int i = 0; i < keyCount; ++i)
+				{
+					string keyName = response.Headers.GetKey(i);
+					string keyValue = response.Headers.Get(keyName);
+					resultHeaders.Add(keyName, keyValue);
+				}
+
+				if (string.IsNullOrEmpty(resultHeaders["Content-Encoding"]) && !string.IsNullOrEmpty(response.ContentEncoding))
+				{
+					resultHeaders["Content-Encoding"] = response.ContentEncoding;
+				}
+
+				if (string.IsNullOrEmpty(resultHeaders["Content-Type"]) && !string.IsNullOrEmpty(response.ContentType))
+				{
+					resultHeaders["Content-Type"] = response.ContentType;
+				}
+
+				if (string.IsNullOrEmpty(resultHeaders["Last-Modified"]))
+				{
+					resultHeaders["Last-Modified"] = response.LastModified.ToString("R");
+				}
+
+				if (string.IsNullOrEmpty(resultHeaders["Server"]) && !string.IsNullOrEmpty(response.Server))
+				{
+					resultHeaders["Server"] = response.Server;
+				}
+
+				return true;
+			}
+
+			return false;
+		}
+
 		public static string GetContentEncodingHeaderValue(this HttpWebResponse httpWebResponse)
 		{
 			string value = httpWebResponse.Headers?.Get("Content-Encoding");

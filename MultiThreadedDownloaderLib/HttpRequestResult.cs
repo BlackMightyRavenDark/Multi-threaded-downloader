@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Specialized;
 using System.Net;
 
 namespace MultiThreadedDownloaderLib
@@ -7,6 +8,7 @@ namespace MultiThreadedDownloaderLib
 	{
 		public int ErrorCode { get; }
 		public string ErrorMessage { get; }
+		public NameValueCollection Headers { get; }
 		public bool HasErrorMessage => HasErrorMessageText();
 		public HttpWebResponse HttpWebResponse { get; private set; }
 		public WebContent WebContent { get; private set; }
@@ -18,6 +20,7 @@ namespace MultiThreadedDownloaderLib
 			ErrorMessage = errorMessage;
 			HttpWebResponse = httpWebResponse;
 			WebContent = webContent;
+			Headers = new NameValueCollection();
 		}
 
 		public void Dispose()

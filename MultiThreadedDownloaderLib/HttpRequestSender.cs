@@ -61,7 +61,8 @@ namespace MultiThreadedDownloaderLib
 					string contentEncodingHeaderValue = response.GetContentEncodingHeaderValue();
 					webContent = new WebContent(response.GetResponseStream(), response.ContentLength, contentEncodingHeaderValue);
 				}
-				return new HttpRequestResult(resultErrorCode, response.StatusDescription, response, webContent);
+
+				return CreateRequestResult(resultErrorCode, response.StatusDescription, response, webContent);
 			}
 			catch (System.Exception ex)
 			{
@@ -71,12 +72,12 @@ namespace MultiThreadedDownloaderLib
 					HttpWebResponse response = (ex as WebException).Response as HttpWebResponse;
 					errorCode = (int)response.StatusCode;
 					WebContent webContent = new WebContent(response.GetResponseStream(), response.ContentLength);
-					return new HttpRequestResult(errorCode, response.StatusDescription, response, webContent);
+					return CreateRequestResult(errorCode, response.StatusDescription, response, webContent);
 				}
 
 				errorCode = ex.HResult;
 				string errorMessage = ex.Message;
-				return new HttpRequestResult(errorCode, errorMessage, null, null);
+				return CreateRequestResult(errorCode, errorMessage, null, null);
 			}
 		}
 
@@ -131,6 +132,14 @@ namespace MultiThreadedDownloaderLib
 		public static HttpRequestResult Send(string url, int timeout = 0)
 		{
 			return Send("GET", url, timeout);
+		}
+
+		private static HttpRequestResult CreateRequestResult(int errorCode, string errorMessage,
+			HttpWebResponse httpWebResponse, WebContent webContent)
+		{
+			HttpRequestResult result = new HttpRequestResult(errorCode, errorMessage, httpWebResponse, webContent);
+			Utils.CombineHeaders(httpWebResponse, result.Headers);
+			return result;
 		}
 	}
 }
