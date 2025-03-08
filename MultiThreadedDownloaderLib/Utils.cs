@@ -14,23 +14,36 @@ namespace MultiThreadedDownloaderLib
 
 		public static string GetNumberedFileName(string filePath)
 		{
-			if (File.Exists(filePath))
+			try
 			{
-				string dirPath = Path.GetDirectoryName(filePath);
-				string fileName = Path.GetFileNameWithoutExtension(filePath);
-				string ext = Path.GetExtension(filePath);
-				string part1 = !string.IsNullOrEmpty(dirPath) ? Path.Combine(dirPath, fileName) : fileName;
-				bool isExtensionPresent = !string.IsNullOrEmpty(ext) && !string.IsNullOrWhiteSpace(ext);
-
-				int i = 1;
-				string newFilePath;
-				do
+				if (string.IsNullOrEmpty(filePath) || string.IsNullOrWhiteSpace(filePath)) { return null; }
+				if (File.Exists(filePath))
 				{
-					newFilePath = isExtensionPresent ? $"{part1}_{++i}{ext}" : $"{part1}_{++i}";
-				} while (File.Exists(newFilePath));
-				return newFilePath;
+					string path = Path.GetDirectoryName(filePath);
+					string name = Path.GetFileNameWithoutExtension(filePath);
+					string extension = Path.GetExtension(filePath);
+					string part1 = Path.Combine(path, name);
+					bool isExtensionPresent = !string.IsNullOrEmpty(extension) && !string.IsNullOrWhiteSpace(extension);
+
+					int i = 1;
+					while (true)
+					{
+						string newFilePath = isExtensionPresent ? $"{part1}_{++i}{extension}" : $"{part1}_{++i}";
+						if (!File.Exists(newFilePath)) { return newFilePath; }
+					}
+				}
+
+				return filePath;
 			}
-			return filePath;
+#if DEBUG
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex.Message);
+			}
+#else
+			catch { }
+#endif
+			return null;
 		}
 
 		internal static IEnumerable<Tuple<long, long>> SplitContentToChunks(
