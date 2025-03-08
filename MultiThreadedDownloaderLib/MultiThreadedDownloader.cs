@@ -84,6 +84,7 @@ namespace MultiThreadedDownloaderLib
 		public const int DOWNLOAD_ERROR_CUSTOM = -206;
 		public const int DOWNLOAD_ERROR_CHUNK_SEQUENCE = -207;
 		public const int DOWNLOAD_ERROR_UNDEFINED = -208;
+		public const int DOWNLOAD_ERROR_FILE_NUMBERING = -209;
 
 		public delegate void PreparingDelegate(object sender);
 		public delegate void ConnectingDelegate(object sender, string url, int tryNumber, int tryCountLimit);
@@ -318,11 +319,15 @@ namespace MultiThreadedDownloaderLib
 				long chunkFirstByte = range.Item1;
 				long chunkLastByte = range.Item2;
 
-				string chunkFileName = UseRamForTempFiles || isFakeDownloading ? null :
-					FormatChunkTempFilePath(chunkCount, chunkFirstByte, chunkLastByte, fullContentLength);
-				if (!string.IsNullOrEmpty(chunkFileName))
+				string chunkFileName = null;
+				if (!UseRamForTempFiles && !isFakeDownloading)
 				{
-					chunkFileName = GetNumberedFileName(chunkFileName);
+					chunkFileName = GetNumberedFileName(FormatChunkTempFilePath(chunkCount, chunkFirstByte, chunkLastByte, fullContentLength));
+					if (string.IsNullOrEmpty(chunkFileName) || string.IsNullOrWhiteSpace(chunkFileName))
+					{
+						LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
+						return;
+					}
 				}
 
 				int taskTryNumber = 0;
@@ -598,7 +603,17 @@ namespace MultiThreadedDownloaderLib
 								KeepDownloadedFileInTempOrMergingDirectory ? chunkFilePath : OutputFileName);
 							string destinationFileName = Path.GetFileName(OutputFileName);
 							string destinationFilePath = Path.Combine(destinationDirPath, destinationFileName);
-							OutputFileName = GetNumberedFileName(destinationFilePath);
+							string outputFn = GetNumberedFileName(destinationFilePath);
+							if (string.IsNullOrEmpty(outputFn) || string.IsNullOrWhiteSpace(outputFn))
+							{
+								ClearGarbage(contentChunks);
+								LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
+								LastErrorMessage = null;
+								IsActive = false;
+								return LastErrorCode;
+							}
+
+							OutputFileName = outputFn;
 							File.Move(chunkFilePath, OutputFileName);
 							LastErrorCode = 200;
 						}
@@ -677,6 +692,14 @@ namespace MultiThreadedDownloaderLib
 			string tmpFileName = !isSharedStream ? GetNumberedFileName(GetTempMergingFilePath()) : null;
 			if (!isSharedStream)
 			{
+				if (string.IsNullOrEmpty(tmpFileName) || string.IsNullOrWhiteSpace(tmpFileName))
+				{
+					LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
+					LastErrorMessage = null;
+					outputStream?.Close();
+					return LastErrorCode;
+				}
+
 				try
 				{
 					outputStream = File.OpenWrite(tmpFileName);
@@ -787,7 +810,16 @@ namespace MultiThreadedDownloaderLib
 				string fn = Path.GetFileName(OutputFileName);
 				OutputFileName = Path.Combine(MergingDirectory, fn);
 			}
-			OutputFileName = GetNumberedFileName(OutputFileName);
+
+			string outputFn = GetNumberedFileName(OutputFileName);
+			if (string.IsNullOrEmpty(outputFn) || string.IsNullOrWhiteSpace(outputFn))
+			{
+				ClearGarbage(downloadingTasks);
+				LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
+				LastErrorMessage = null;
+				return LastErrorCode;
+			}
+			OutputFileName = outputFn;
 
 			if (!isSharedStream &&
 				!string.IsNullOrEmpty(tmpFileName) &&
@@ -1025,6 +1057,9 @@ namespace MultiThreadedDownloaderLib
 
 				case DOWNLOAD_ERROR_UNDEFINED:
 					return "Неопределённая ошибка!";
+
+				case DOWNLOAD_ERROR_FILE_NUMBERING:
+					return "Ошибка при нумерации файла!";
 
 				default:
 					return FileDownloader.ErrorCodeToString(errorCode);
