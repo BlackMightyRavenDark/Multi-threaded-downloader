@@ -10,6 +10,7 @@
 
 	<ItemGroup>
 	  <PackageReference Include="BrotliSharpLib" Version="0.3.3" />
+	  <PackageReference Include="Zstandard.Net" Version="1.1.7" />
 	</ItemGroup>
 
 </Project>

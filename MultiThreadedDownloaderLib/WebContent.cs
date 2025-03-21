@@ -133,6 +133,11 @@ namespace MultiThreadedDownloaderLib
 					algorithm = "br";
 					return true;
 				}
+				else if (_contentEncodingHeaderValue.Contains("zstd"))
+				{
+					algorithm = "zstd";
+					return true;
+				}
 			}
 
 			algorithm = null;
@@ -154,6 +159,7 @@ namespace MultiThreadedDownloaderLib
 					case "gzip": return new GZipStream(Data, CompressionMode.Decompress, true);
 					case "deflate": return new DeflateStream(Data, CompressionMode.Decompress, true);
 					case "br": return new BrotliSharpLib.BrotliStream(Data, CompressionMode.Decompress, true);
+					case "zstd": return new Zstandard.Net.ZstandardStream(Data, CompressionMode.Decompress, true);
 					default: return null;
 				}
 			}
