@@ -15,10 +15,10 @@ namespace MultiThreadedDownloaderLib
 
 		private string _contentEncodingHeaderValue;
 
-		public WebContent(Stream dataStream, long length, string contentEncodingHeaderValue = null)
+		public WebContent(Stream dataStream, long dataStreamLength, string contentEncodingHeaderValue = null)
 		{
 			Data = dataStream;
-			Length = length;
+			Length = dataStreamLength;
 			_contentEncodingHeaderValue = contentEncodingHeaderValue;
 		}
 
