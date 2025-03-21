@@ -158,6 +158,7 @@
 			this.textBoxRequestHeaders.ScrollBars = System.Windows.Forms.ScrollBars.Both;
 			this.textBoxRequestHeaders.Size = new System.Drawing.Size(314, 245);
 			this.textBoxRequestHeaders.TabIndex = 1;
+			this.textBoxRequestHeaders.Text = "Accept: */*\r\nAccept-Language: en-US\r\nAccept-Encoding: gzip, deflate, br, zstd";
 			this.textBoxRequestHeaders.WordWrap = false;
 			// 
 			// label3
