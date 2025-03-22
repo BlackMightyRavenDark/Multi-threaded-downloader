@@ -11,6 +11,7 @@ namespace MultiThreadedDownloaderLib
 		public static HttpRequestResult Send(string method, string url,
 			Stream body, NameValueCollection headers, int timeout, bool sendExpect100ContinueHeader = false)
 		{
+			HttpWebResponse response = null;
 			try
 			{
 				HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
@@ -53,7 +54,7 @@ namespace MultiThreadedDownloaderLib
 					}
 				}
 
-				HttpWebResponse response = (HttpWebResponse)httpWebRequest.GetResponse();
+				response = (HttpWebResponse)httpWebRequest.GetResponse();
 				int resultErrorCode = (int)response.StatusCode;
 				WebContent webContent = null;
 				if (resultErrorCode == 200 || resultErrorCode == 206)
@@ -66,18 +67,16 @@ namespace MultiThreadedDownloaderLib
 			}
 			catch (System.Exception ex)
 			{
-				int errorCode;
-				if (ex is WebException && (ex as WebException).Status == WebExceptionStatus.ProtocolError)
+				response?.Close();
+				if (ex is WebException && (ex as WebException).Status == WebExceptionStatus.ProtocolError &&
+					((ex as WebException).Response is HttpWebResponse responseException))
 				{
-					HttpWebResponse response = (ex as WebException).Response as HttpWebResponse;
-					errorCode = (int)response.StatusCode;
-					WebContent webContent = new WebContent(response.GetResponseStream(), response.ContentLength);
-					return CreateRequestResult(errorCode, response.StatusDescription, response, webContent);
+					int errorCode = (int)responseException.StatusCode;
+					WebContent webContent = new WebContent(responseException.GetResponseStream(), responseException.ContentLength);
+					return CreateRequestResult(errorCode, responseException.StatusDescription, responseException, webContent);
 				}
 
-				errorCode = ex.HResult;
-				string errorMessage = ex.Message;
-				return CreateRequestResult(errorCode, errorMessage, null, null);
+				return CreateRequestResult(ex.HResult, ex.Message, null, null);
 			}
 		}
 
