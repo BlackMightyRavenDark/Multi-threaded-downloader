@@ -137,7 +137,10 @@ namespace MultiThreadedDownloaderLib
 			HttpWebResponse httpWebResponse, WebContent webContent)
 		{
 			HttpRequestResult result = new HttpRequestResult(errorCode, errorMessage, httpWebResponse, webContent);
-			Utils.CombineHeaders(httpWebResponse, result.Headers);
+			if (httpWebResponse != null)
+			{
+				Utils.CombineHeaders(httpWebResponse, result.Headers);
+			}
 			return result;
 		}
 	}
