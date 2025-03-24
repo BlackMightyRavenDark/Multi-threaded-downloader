@@ -9,13 +9,15 @@ namespace MultiThreadedDownloaderLib
 	public static class HttpRequestSender
 	{
 		public static HttpRequestResult Send(string method, string url,
-			Stream body, NameValueCollection headers, int timeout, bool sendExpect100ContinueHeader = false)
+			Stream body, NameValueCollection headers, IWebProxy proxy,
+			int timeout, bool sendExpect100ContinueHeader = false)
 		{
 			HttpWebResponse response = null;
 			try
 			{
 				HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
 				httpWebRequest.Method = method;
+				httpWebRequest.Proxy = proxy;
 				httpWebRequest.ServicePoint.Expect100Continue = sendExpect100ContinueHeader;
 				if (timeout >= 500)
 				{
@@ -82,12 +84,12 @@ namespace MultiThreadedDownloaderLib
 
 		public static HttpRequestResult Send(HttpRequestSenderParameters parameters)
 		{
-			return Send(parameters.Method, parameters.Url, parameters.Body, parameters.Headers,
+			return Send(parameters.Method, parameters.Url, parameters.Body, parameters.Headers, parameters.Proxy,
 				parameters.Timeout, parameters.SendExpect100ContinueHeader);
 		}
 
 		public static HttpRequestResult Send(string method, string url,
-			Stream body, NameValueCollection headers, int timeout = 0)
+			Stream body, NameValueCollection headers, IWebProxy proxy, int timeout = 0)
 		{
 			HttpRequestSenderParameters parameters = new HttpRequestSenderParameters()
 			{
@@ -95,6 +97,7 @@ namespace MultiThreadedDownloaderLib
 				Url = url,
 				Body = body,
 				Headers = headers,
+				Proxy = proxy,
 				Timeout = timeout,
 				SendExpect100ContinueHeader = false
 			};
@@ -102,10 +105,16 @@ namespace MultiThreadedDownloaderLib
 		}
 
 		public static HttpRequestResult Send(string method, string url,
-			byte[] body, NameValueCollection headers, int timeout = 0)
+			Stream body, NameValueCollection headers, int timeout = 0)
+		{
+			return Send(method, url, body, headers, null, timeout);
+		}
+
+		public static HttpRequestResult Send(string method, string url,
+			byte[] body, NameValueCollection headers, IWebProxy proxy, int timeout = 0)
 		{
 			Stream bodyStream = body?.ToStream(true);
-			HttpRequestResult result = Send(method, url, bodyStream, headers, timeout);
+			HttpRequestResult result = Send(method, url, bodyStream, headers, proxy, timeout);
 			bodyStream?.Dispose();
 			return result;
 		}
@@ -114,13 +123,13 @@ namespace MultiThreadedDownloaderLib
 			string body, Encoding bodyEncoding, NameValueCollection headers, int timeout = 0)
 		{
 			byte[] bodyBytes = !string.IsNullOrEmpty(body) && bodyEncoding != null ? bodyEncoding.GetBytes(body) : null;
-			return Send(method, url, bodyBytes, headers, timeout);
+			return Send(method, url, bodyBytes, headers, null, timeout);
 		}
 
 		public static HttpRequestResult Send(string method, string url,
 			NameValueCollection headers, int timeout = 0)
 		{
-			return Send(method, url, (Stream)null, headers, timeout);
+			return Send(method, url, null, headers, timeout);
 		}
 
 		public static HttpRequestResult Send(string method, string url, int timeout = 0)

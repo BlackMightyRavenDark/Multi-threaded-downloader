@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using static MultiThreadedDownloaderLib.Utils;
@@ -21,6 +22,7 @@ namespace MultiThreadedDownloaderLib
 		public int TryCountLimit { get; set; } = 1;
 
 		public NameValueCollection Headers { get => _headers; set { SetHeaders(value); } }
+		public WebProxy Proxy { get; set; }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
 		public bool IgnoreStreamSizeExceededError { get; set; } = false;
 		public bool IgnoreHeadRequestErrors { get; set; } = true;
@@ -149,7 +151,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					tryNumber++;
 					HeadersReceiving?.Invoke(this, Url, downloadingTask, tryNumber, tryCountLimit);
-					LastErrorCode = GetUrlResponseHeaders(Url, Headers, ConnectionTimeout,
+					LastErrorCode = GetUrlResponseHeaders(Url, Headers, Proxy, ConnectionTimeout,
 						out responseHeaders, out string headersErrorText);
 
 					if (_cancellationTokenSource.IsCancellationRequested)
@@ -219,6 +221,10 @@ namespace MultiThreadedDownloaderLib
 				System.Diagnostics.Debug.WriteLine(isInfiniteRetries ?
 					$"Downloader №{Id}: Try №{tryNumber}" :
 					$"Downloader №{Id}: Try №{tryNumber} / {tryCountLimit}");
+				if (Proxy != null)
+				{
+					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: Using a proxy server {Proxy.Address}");
+				}
 #endif
 				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
 
@@ -233,7 +239,15 @@ namespace MultiThreadedDownloaderLib
 					return LastErrorCode;
 				}
 
-				HttpRequestResult requestResult = HttpRequestSender.Send("GET", Url, Headers, ConnectionTimeout);
+				HttpRequestSenderParameters requestParameters = new HttpRequestSenderParameters()
+				{
+					Method = "GET",
+					Url = Url,
+					Headers = Headers,
+					Proxy = Proxy,
+					Timeout = ConnectionTimeout
+				};
+				HttpRequestResult requestResult = HttpRequestSender.Send(requestParameters);
 				LastErrorCode = requestResult.ErrorCode;
 				LastErrorMessage = HasErrors && requestResult.HasErrorMessage ? requestResult.ErrorMessage : null;
 				if (HasErrors)

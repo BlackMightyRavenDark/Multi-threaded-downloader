@@ -77,10 +77,10 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		public static int GetUrlContentLength(string url, NameValueCollection inHeaders,
+		public static int GetUrlContentLength(string url, NameValueCollection inHeaders, IWebProxy proxy,
 			out long contentLength, out string errorText, int timeout = 0)
 		{
-			int errorCode = GetUrlResponseHeaders(url, inHeaders, timeout,
+			int errorCode = GetUrlResponseHeaders(url, inHeaders, proxy, timeout,
 				out NameValueCollection responseHeaders, out errorText);
 			if (errorCode == 200)
 			{
@@ -93,7 +93,7 @@ namespace MultiThreadedDownloaderLib
 
 		public static int GetUrlContentLength(string url, out long contentLength, out string errorText, int timeout = 0)
 		{
-			return GetUrlContentLength(url, null, out contentLength, out errorText, timeout);
+			return GetUrlContentLength(url, null, null, out contentLength, out errorText, timeout);
 		}
 
 		public static int GetUrlContentLength(string url, out long contentLength, int timeout = 0)
@@ -101,10 +101,10 @@ namespace MultiThreadedDownloaderLib
 			return GetUrlContentLength(url, out contentLength, out _, timeout);
 		}
 
-		public static int IsRangeSupported(string url, NameValueCollection inHeaders,
+		public static int IsRangeSupported(string url, NameValueCollection inHeaders, IWebProxy proxy,
 			out bool result, out string errorText, int timeout = 0)
 		{
-			int errorCode = GetUrlResponseHeaders(url, inHeaders, timeout,
+			int errorCode = GetUrlResponseHeaders(url, inHeaders, proxy, timeout,
 				out NameValueCollection responseHeaders, out errorText);
 			if (errorCode == 200)
 			{
@@ -119,7 +119,7 @@ namespace MultiThreadedDownloaderLib
 		public static int IsRangeSupported(string url, NameValueCollection inHeaders,
 			out bool result, int timeout = 0)
 		{
-			return IsRangeSupported(url, inHeaders, out result, out _, timeout);
+			return IsRangeSupported(url, inHeaders, null, out result, out _, timeout);
 		}
 
 		public static int IsRangeSupported(string url, out bool result, int timeout = 0)
@@ -201,12 +201,20 @@ namespace MultiThreadedDownloaderLib
 			return 404;
 		}
 
-		public static int GetUrlResponseHeaders(string url, NameValueCollection inHeaders,
+		public static int GetUrlResponseHeaders(string url, NameValueCollection inHeaders, IWebProxy proxy,
 			int timeout, out NameValueCollection outHeaders, out string errorText)
 		{
 			try
 			{
-				using (HttpRequestResult requestResult = HttpRequestSender.Send("HEAD", url, inHeaders, timeout))
+				HttpRequestSenderParameters requestParameters = new HttpRequestSenderParameters()
+				{
+					Method = "Head",
+					Url = url,
+					Headers = inHeaders,
+					Proxy = proxy,
+					Timeout = timeout,
+				};
+				using (HttpRequestResult requestResult = HttpRequestSender.Send(requestParameters))
 				{
 					if (requestResult.ErrorCode == 200 || requestResult.ErrorCode == 206)
 					{
@@ -240,7 +248,7 @@ namespace MultiThreadedDownloaderLib
 		public static int GetUrlResponseHeaders(string url, NameValueCollection inHeaders,
 			out NameValueCollection outHeaders, out string errorText)
 		{
-			return GetUrlResponseHeaders(url, inHeaders, 0, out outHeaders, out errorText);
+			return GetUrlResponseHeaders(url, inHeaders, null, 0, out outHeaders, out errorText);
 		}
 
 		public static bool IsRangeValid(long rangeFrom, long rangeTo)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -9,6 +10,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 	public partial class Form1 : Form
 	{
 		private string _requestBody = null;
+		private WebProxy _proxy = null;
 
 		public Form1()
 		{
@@ -24,13 +26,15 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 		{
 			btnSend.Enabled = false;
 			btnSetRequestBody.Enabled = false;
-			
+			btnProxy.Enabled = false;
+
 			string requestUrl = textBoxRequestUrl.Text;
 			if (string.IsNullOrEmpty(requestUrl) || string.IsNullOrWhiteSpace(requestUrl))
 			{
 				MessageBox.Show("Введите ссылку!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
 				btnSetRequestBody.Enabled = true;
+				btnProxy.Enabled = true;
 				btnSend.Enabled = true;
 				return;
 			}
@@ -41,6 +45,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 				MessageBox.Show("Введите тип запроса!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
 				btnSetRequestBody.Enabled = true;
+				btnProxy.Enabled = true;
 				btnSend.Enabled = true;
 				return;
 			}
@@ -49,13 +54,24 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			textBoxServerAnswer.Text = null;
 
 			NameValueCollection headers = Utils.ParseHeaderList(textBoxRequestHeaders.Text);
-			HttpRequestResult requestResult = await Task.Run(() => HttpRequestSender.Send(
-				requestType, requestUrl, _requestBody, Encoding.UTF8, headers));
+			HttpRequestResult requestResult = await Task.Run(() =>
+			{
+				HttpRequestSenderParameters requestParameters = new HttpRequestSenderParameters()
+				{
+					Method = requestType,
+					Url = requestUrl,
+					Body = string.IsNullOrEmpty(_requestBody) ? null : Encoding.UTF8.GetBytes(_requestBody).ToStream(true),
+					Headers = headers,
+					Proxy = _proxy
+				};
+				return HttpRequestSender.Send(requestParameters);
+			});
 			lblStatusCode.Text = $"Код возврата: {requestResult.ErrorCode}";
 			textBoxServerAnswer.Text = Utils.HeadersToString(requestResult.Headers);
 			requestResult.Dispose();
 
 			btnSetRequestBody.Enabled = true;
+			btnProxy.Enabled = true;
 			btnSend.Enabled = true;
 		}
 
@@ -65,6 +81,17 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			if (editor.ShowDialog() == DialogResult.OK)
 			{
 				_requestBody = editor.BodyContent;
+			}
+		}
+
+		private void btnProxy_Click(object sender, EventArgs e)
+		{
+			string address = _proxy != null ? _proxy.Address.Host : null;
+			ushort port = (ushort)(_proxy != null ? _proxy.Address.Port : 1);
+			FormProxyEditor proxyEditor = new FormProxyEditor(address, port);
+			if (proxyEditor.ShowDialog() == DialogResult.OK)
+			{
+				_proxy = proxyEditor.Proxy;
 			}
 		}
 	}

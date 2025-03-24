@@ -64,13 +64,20 @@
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.checkBoxDownloadToRAM = new System.Windows.Forms.CheckBox();
 			this.checkBoxFakeDownloading = new System.Windows.Forms.CheckBox();
+			this.textBoxProxyAddress = new System.Windows.Forms.TextBox();
+			this.numericUpDownProxyPort = new System.Windows.Forms.NumericUpDown();
 			this.progressBar1 = new MultiThreadedDownloaderLib.MultipleProgressBar();
+			this.groupBoxProxy = new System.Windows.Forms.GroupBox();
+			this.label12 = new System.Windows.Forms.Label();
+			this.label11 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownThreadCount)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownUpdateInterval)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownChunksMergingUpdateInterval)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownTryCountPerThread)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownTryCountInsideEachThread)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownConnectionTimeout)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.numericUpDownProxyPort)).BeginInit();
+			this.groupBoxProxy.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// btnDownloadSingleThreaded
@@ -471,6 +478,31 @@
 			this.toolTip1.SetToolTip(this.checkBoxFakeDownloading, "В этом режиме скачанные данные никуда не сохраняются");
 			this.checkBoxFakeDownloading.UseVisualStyleBackColor = true;
 			// 
+			// textBoxProxyAddress
+			// 
+			this.textBoxProxyAddress.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
+			this.textBoxProxyAddress.Location = new System.Drawing.Point(65, 19);
+			this.textBoxProxyAddress.Name = "textBoxProxyAddress";
+			this.textBoxProxyAddress.Size = new System.Drawing.Size(293, 20);
+			this.textBoxProxyAddress.TabIndex = 1;
+			this.toolTip1.SetToolTip(this.textBoxProxyAddress, "Оставьте это поле пустым, чтобы не использовать прокси-сервер");
+			// 
+			// numericUpDownProxyPort
+			// 
+			this.numericUpDownProxyPort.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
+			this.numericUpDownProxyPort.Location = new System.Drawing.Point(65, 45);
+			this.numericUpDownProxyPort.Maximum = new decimal(new int[] {
+			65000,
+			0,
+			0,
+			0});
+			this.numericUpDownProxyPort.Name = "numericUpDownProxyPort";
+			this.numericUpDownProxyPort.Size = new System.Drawing.Size(293, 20);
+			this.numericUpDownProxyPort.TabIndex = 2;
+			this.toolTip1.SetToolTip(this.numericUpDownProxyPort, "Введите 0, чтобы не использовать прокси-сервер");
+			// 
 			// progressBar1
 			// 
 			this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
@@ -481,11 +513,43 @@
 			this.progressBar1.TabIndex = 27;
 			this.progressBar1.Text = "multipleProgressBar1";
 			// 
+			// groupBoxProxy
+			// 
+			this.groupBoxProxy.Controls.Add(this.label12);
+			this.groupBoxProxy.Controls.Add(this.numericUpDownProxyPort);
+			this.groupBoxProxy.Controls.Add(this.textBoxProxyAddress);
+			this.groupBoxProxy.Controls.Add(this.label11);
+			this.groupBoxProxy.Location = new System.Drawing.Point(392, 211);
+			this.groupBoxProxy.Name = "groupBoxProxy";
+			this.groupBoxProxy.Size = new System.Drawing.Size(364, 70);
+			this.groupBoxProxy.TabIndex = 39;
+			this.groupBoxProxy.TabStop = false;
+			this.groupBoxProxy.Text = "Прокси-сервер";
+			// 
+			// label12
+			// 
+			this.label12.AutoSize = true;
+			this.label12.Location = new System.Drawing.Point(18, 47);
+			this.label12.Name = "label12";
+			this.label12.Size = new System.Drawing.Size(35, 13);
+			this.label12.TabIndex = 3;
+			this.label12.Text = "Порт:";
+			// 
+			// label11
+			// 
+			this.label11.AutoSize = true;
+			this.label11.Location = new System.Drawing.Point(18, 22);
+			this.label11.Name = "label11";
+			this.label11.Size = new System.Drawing.Size(41, 13);
+			this.label11.TabIndex = 0;
+			this.label11.Text = "Адрес:";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(768, 450);
+			this.Controls.Add(this.groupBoxProxy);
 			this.Controls.Add(this.checkBoxFakeDownloading);
 			this.Controls.Add(this.checkBoxDownloadToRAM);
 			this.Controls.Add(this.checkBoxMergeChunksAutomatically);
@@ -533,6 +597,9 @@
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownTryCountPerThread)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownTryCountInsideEachThread)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownConnectionTimeout)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.numericUpDownProxyPort)).EndInit();
+			this.groupBoxProxy.ResumeLayout(false);
+			this.groupBoxProxy.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -576,5 +643,10 @@
 		private System.Windows.Forms.ToolTip toolTip1;
 		private System.Windows.Forms.CheckBox checkBoxDownloadToRAM;
 		private System.Windows.Forms.CheckBox checkBoxFakeDownloading;
+		private System.Windows.Forms.GroupBox groupBoxProxy;
+		private System.Windows.Forms.Label label12;
+		private System.Windows.Forms.NumericUpDown numericUpDownProxyPort;
+		private System.Windows.Forms.TextBox textBoxProxyAddress;
+		private System.Windows.Forms.Label label11;
 	}
 }

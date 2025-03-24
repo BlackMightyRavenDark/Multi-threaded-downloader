@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -29,6 +30,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			lblDownloadingProgress.Text = null;
 			lblMergingProgress.Text = null;
 			cbKeepDownloadedFileInTempOrMergingDirectory.Enabled = checkBoxMergeChunksAutomatically.Checked;
+			numericUpDownProxyPort.Maximum = ushort.MaxValue;
 
 			headerCollection = new NameValueCollection()
 			{
@@ -223,6 +225,20 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				return;
 			}
 
+			if (!CreateProxy(out WebProxy proxy, out string proxyError))
+			{
+				string msg = $"Неверно указан прокси-сервер!\n{proxyError}\nПродолжить скачивание без использования прокси-сервера?";
+				if (MessageBox.Show(msg, "Ошибка!",
+					MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+				{
+					btnDownloadSingleThreaded.Text = "Download single threaded";
+					btnDownloadMultiThreaded.Enabled = true;
+					EnableControls(true);
+					isDownloading = false;
+					return;
+				}
+			}
+
 			singleThreadedDownloader = new FileDownloader();
 			singleThreadedDownloader.Preparing += OnPreparing;
 			singleThreadedDownloader.HeadersReceiving += OnHeadersReceiving;
@@ -237,6 +253,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 			singleThreadedDownloader.Url = editUrl.Text;
 			singleThreadedDownloader.Headers = headerCollection;
+			singleThreadedDownloader.Proxy = proxy;
 			singleThreadedDownloader.UpdateIntervalMilliseconds = (int)numericUpDownUpdateInterval.Value;
 			singleThreadedDownloader.TryCountLimit = (int)numericUpDownTryCountInsideEachThread.Value;
 			singleThreadedDownloader.ConnectionTimeout = (int)numericUpDownConnectionTimeout.Value;
@@ -338,6 +355,21 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnDownloadSingleThreaded.Enabled = false;
 			EnableControls(false);
 			lblMergingProgress.Text = null;
+
+			if (!CreateProxy(out WebProxy proxy, out string proxyError))
+			{
+				string msg = $"Неверно указан прокси-сервер!\n{proxyError}\nПродолжить скачивание без использования прокси-сервера?";
+				if (MessageBox.Show(msg, "Ошибка!",
+					MessageBoxButtons.YesNo, MessageBoxIcon.Error) == DialogResult.No)
+				{
+					btnDownloadMultiThreaded.Text = "Download multi threaded";
+					btnDownloadSingleThreaded.Enabled = true;
+					EnableControls(true);
+					isDownloading = false;
+					return;
+				}
+			}
+
 			bool isPreparing = true;
 
 			multiThreadedDownloader = new MultiThreadedDownloader();
@@ -543,6 +575,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			multiThreadedDownloader.TryCountLimitPerThread = (int)numericUpDownTryCountPerThread.Value;
 			multiThreadedDownloader.TryCountLimitInsideThread = (int)numericUpDownTryCountInsideEachThread.Value;
 			multiThreadedDownloader.Url = editUrl.Text;
+			multiThreadedDownloader.Proxy = proxy;
 			multiThreadedDownloader.OutputFileName = editFileName.Text;
 			multiThreadedDownloader.TempDirectory = editTempPath.Text;
 			multiThreadedDownloader.MergingDirectory = editMergingPath.Text;
@@ -839,6 +872,33 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			numericUpDownUpdateInterval.Enabled = enable;
 			numericUpDownChunksMergingUpdateInterval.Enabled = enable;
 			numericUpDownConnectionTimeout.Enabled = enable;
+			textBoxProxyAddress.Enabled = enable;
+			numericUpDownProxyPort.Enabled = enable;
+		}
+
+		private bool CreateProxy(out WebProxy proxy, out string errorMessage)
+		{
+			try
+			{
+				string proxyAddress = textBoxProxyAddress.Text;
+				if (proxyAddress.Contains(" "))
+				{
+					errorMessage = "Адрес прокси-сервера не должен содержать пробелов!";
+					proxy = null;
+					return false;
+				}
+				int proxyPort = (int)numericUpDownProxyPort.Value;
+				proxy = !string.IsNullOrWhiteSpace(proxyAddress) && proxyPort > 0 ?
+					new WebProxy(proxyAddress, proxyPort) : null;
+				errorMessage = null;
+				return true;
+			}
+			catch (Exception ex)
+			{
+				errorMessage = ex.Message;
+				proxy = null;
+				return false;
+			}
 		}
 
 		private static MultipleProgressBarItem[] GenerateChunkMergingProgressVisualizationItems(
