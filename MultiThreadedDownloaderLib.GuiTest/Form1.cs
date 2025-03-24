@@ -222,6 +222,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
 				EnableControls(true);
 				btnDownloadMultiThreaded.Enabled = true;
+				btnDownloadSingleThreaded.Text = "Download single threaded";
+				isDownloading = false;
 				return;
 			}
 
