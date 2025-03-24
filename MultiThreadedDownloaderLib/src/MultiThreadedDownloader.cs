@@ -151,6 +151,16 @@ namespace MultiThreadedDownloaderLib
 				return DOWNLOAD_ERROR_NO_URL_SPECIFIED;
 			}
 
+			bool isDownloadingToRam = outputStream != null && outputStream is MemoryStream;
+			bool isTempDirectoryProvided = !string.IsNullOrEmpty(TempDirectory) && !string.IsNullOrWhiteSpace(TempDirectory);
+			bool isTempDirectoryAvailable = isTempDirectoryProvided && Directory.Exists(TempDirectory);
+			if (!UseRamForTempFiles && !FakeDownloading && isDownloadingToRam && !isTempDirectoryAvailable)
+			{
+				LastErrorCode = DOWNLOAD_ERROR_CUSTOM;
+				LastErrorMessage = "Не указана или недоступна папка для временных файлов!";
+				return LastErrorCode;
+			}
+
 			bool isFakeDownloading = FakeDownloading;
 			bool isSharedStream = outputStream != null;
 			if (!isSharedStream && !isFakeDownloading)
