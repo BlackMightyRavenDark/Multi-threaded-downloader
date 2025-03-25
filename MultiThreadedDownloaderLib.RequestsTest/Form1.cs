@@ -26,7 +26,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 		{
 			btnSend.Enabled = false;
 			btnSetRequestBody.Enabled = false;
-			btnProxy.Enabled = false;
+			btnSetRequestProxy.Enabled = false;
 
 			string requestUrl = textBoxRequestUrl.Text;
 			if (string.IsNullOrEmpty(requestUrl) || string.IsNullOrWhiteSpace(requestUrl))
@@ -34,7 +34,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 				MessageBox.Show("Введите ссылку!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
 				btnSetRequestBody.Enabled = true;
-				btnProxy.Enabled = true;
+				btnSetRequestProxy.Enabled = true;
 				btnSend.Enabled = true;
 				return;
 			}
@@ -45,7 +45,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 				MessageBox.Show("Введите тип запроса!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
 				btnSetRequestBody.Enabled = true;
-				btnProxy.Enabled = true;
+				btnSetRequestProxy.Enabled = true;
 				btnSend.Enabled = true;
 				return;
 			}
@@ -71,7 +71,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			requestResult.Dispose();
 
 			btnSetRequestBody.Enabled = true;
-			btnProxy.Enabled = true;
+			btnSetRequestProxy.Enabled = true;
 			btnSend.Enabled = true;
 		}
 
@@ -84,7 +84,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			}
 		}
 
-		private void btnProxy_Click(object sender, EventArgs e)
+		private void btnSetRequestProxy_Click(object sender, EventArgs e)
 		{
 			string address = _proxy != null ? _proxy.Address.Host : null;
 			ushort port = (ushort)(_proxy != null ? _proxy.Address.Port : 1);

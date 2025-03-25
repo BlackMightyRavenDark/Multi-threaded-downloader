@@ -42,7 +42,7 @@
 			this.label3 = new System.Windows.Forms.Label();
 			this.btnSetRequestBody = new System.Windows.Forms.Button();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-			this.btnProxy = new System.Windows.Forms.Button();
+			this.btnSetRequestProxy = new System.Windows.Forms.Button();
 			this.groupBox1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
@@ -183,23 +183,23 @@
 			this.btnSetRequestBody.UseVisualStyleBackColor = true;
 			this.btnSetRequestBody.Click += new System.EventHandler(this.btnSetRequestBody_Click);
 			// 
-			// btnProxy
+			// btnSetRequestProxy
 			// 
-			this.btnProxy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnProxy.Location = new System.Drawing.Point(642, 9);
-			this.btnProxy.Name = "btnProxy";
-			this.btnProxy.Size = new System.Drawing.Size(49, 23);
-			this.btnProxy.TabIndex = 10;
-			this.btnProxy.Text = "Proxy";
-			this.btnProxy.UseVisualStyleBackColor = true;
-			this.btnProxy.Click += new System.EventHandler(this.btnProxy_Click);
+			this.btnSetRequestProxy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnSetRequestProxy.Location = new System.Drawing.Point(642, 9);
+			this.btnSetRequestProxy.Name = "btnSetRequestProxy";
+			this.btnSetRequestProxy.Size = new System.Drawing.Size(49, 23);
+			this.btnSetRequestProxy.TabIndex = 10;
+			this.btnSetRequestProxy.Text = "Proxy";
+			this.btnSetRequestProxy.UseVisualStyleBackColor = true;
+			this.btnSetRequestProxy.Click += new System.EventHandler(this.btnSetRequestProxy_Click);
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(784, 361);
-			this.Controls.Add(this.btnProxy);
+			this.Controls.Add(this.btnSetRequestProxy);
 			this.Controls.Add(this.btnSetRequestBody);
 			this.Controls.Add(this.groupBox2);
 			this.Controls.Add(this.groupBox1);
@@ -236,7 +236,7 @@
 		private System.Windows.Forms.TextBox textBoxRequestHeaders;
 		private System.Windows.Forms.Button btnSetRequestBody;
 		private System.Windows.Forms.ToolTip toolTip1;
-		private System.Windows.Forms.Button btnProxy;
+		private System.Windows.Forms.Button btnSetRequestProxy;
 	}
 }
 
