@@ -26,7 +26,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			}
 		}
 
-		public FormProxyEditor(string address, ushort port) : this(new WebProxy(address, port)) { }
+		public FormProxyEditor(string address, ushort port) : this(CreateProxy(address, port)) { }
 
 		private void btnOk_Click(object sender, EventArgs e)
 		{
@@ -47,6 +47,23 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 
 			DialogResult = DialogResult.OK;
 			Close();
+		}
+
+		private static WebProxy CreateProxy(string address, ushort port)
+		{
+			try
+			{
+				return new WebProxy(address, port);
+			}
+#if DEBUG
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine(ex.Message);
+#else
+			catch {
+#endif
+				return null;
+			}
 		}
 	}
 }
