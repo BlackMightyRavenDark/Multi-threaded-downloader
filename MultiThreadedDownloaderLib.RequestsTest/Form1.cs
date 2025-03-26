@@ -10,6 +10,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 	public partial class Form1 : Form
 	{
 		private string _requestBody = null;
+		private CookieContainer _cookies;
 		private WebProxy _proxy = null;
 
 		public Form1()
@@ -26,6 +27,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 		{
 			btnSend.Enabled = false;
 			btnSetRequestBody.Enabled = false;
+			btnSetRequestCookies.Enabled = false;
 			btnSetRequestProxy.Enabled = false;
 
 			string requestUrl = textBoxRequestUrl.Text;
@@ -34,6 +36,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 				MessageBox.Show("Введите ссылку!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
 				btnSetRequestBody.Enabled = true;
+				btnSetRequestCookies.Enabled = true;
 				btnSetRequestProxy.Enabled = true;
 				btnSend.Enabled = true;
 				return;
@@ -45,6 +48,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 				MessageBox.Show("Введите тип запроса!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
 				btnSetRequestBody.Enabled = true;
+				btnSetRequestCookies.Enabled = true;
 				btnSetRequestProxy.Enabled = true;
 				btnSend.Enabled = true;
 				return;
@@ -62,6 +66,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 					Url = requestUrl,
 					Body = string.IsNullOrEmpty(_requestBody) ? null : Encoding.UTF8.GetBytes(_requestBody).ToStream(true),
 					Headers = headers,
+					Cookies = _cookies,
 					Proxy = _proxy
 				};
 				return HttpRequestSender.Send(requestParameters);
@@ -71,6 +76,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			requestResult.Dispose();
 
 			btnSetRequestBody.Enabled = true;
+			btnSetRequestCookies.Enabled = true;
 			btnSetRequestProxy.Enabled = true;
 			btnSend.Enabled = true;
 		}
@@ -92,6 +98,19 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			if (proxyEditor.ShowDialog() == DialogResult.OK)
 			{
 				_proxy = proxyEditor.Proxy;
+			}
+		}
+
+		private void btnSetRequestCookies_Click(object sender, EventArgs e)
+		{
+			FormCookieEditor cookieEditor = new FormCookieEditor();
+			if (cookieEditor.ShowDialog() == DialogResult.OK)
+			{
+				_cookies = new CookieContainer();
+				foreach (Cookie cookie in cookieEditor.Cookies)
+				{
+					_cookies.Add(cookie);
+				}
 			}
 		}
 	}

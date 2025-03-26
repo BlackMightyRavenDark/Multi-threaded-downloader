@@ -16,6 +16,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 		private bool isDownloading = false;
 		private bool isClosing = false;
 		private NameValueCollection headerCollection;
+		private CookieContainer cookies;
 		private FileDownloader singleThreadedDownloader;
 		private MultiThreadedDownloader multiThreadedDownloader;
 
@@ -164,6 +165,30 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnHeaders.Enabled = true;
 		}
 
+		private void btnCookies_Click(object sender, EventArgs e)
+		{
+			FormCookieEditor editor = new FormCookieEditor();
+			if (editor.ShowDialog() == DialogResult.OK)
+			{
+				if (editor.Cookies != null && editor.Cookies.Count > 0)
+				{
+					cookies = new CookieContainer();
+					foreach (Cookie cookie in editor.Cookies)
+					{
+						cookies.Add(cookie);
+					}
+
+					string s = editor.Cookies.Count > 1 ? $"{editor.Cookies.Count} cookies" : "1 cookie";
+					lblCookieCount.Text = $"{s} loaded";
+				}
+				else
+				{
+					cookies = null;
+					lblCookieCount.Text = "No cookies loaded";
+				}
+			}	
+		}
+
 		private async void btnDownloadSingleThreaded_Click(object sender, EventArgs e)
 		{
 			if (isDownloading)
@@ -255,6 +280,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 			singleThreadedDownloader.Url = editUrl.Text;
 			singleThreadedDownloader.Headers = headerCollection;
+			singleThreadedDownloader.Cookies = cookies;
 			singleThreadedDownloader.Proxy = proxy;
 			singleThreadedDownloader.UpdateIntervalMilliseconds = (int)numericUpDownUpdateInterval.Value;
 			singleThreadedDownloader.TryCountLimit = (int)numericUpDownTryCountInsideEachThread.Value;
@@ -577,6 +603,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			multiThreadedDownloader.TryCountLimitPerThread = (int)numericUpDownTryCountPerThread.Value;
 			multiThreadedDownloader.TryCountLimitInsideThread = (int)numericUpDownTryCountInsideEachThread.Value;
 			multiThreadedDownloader.Url = editUrl.Text;
+			multiThreadedDownloader.Cookies = cookies;
 			multiThreadedDownloader.Proxy = proxy;
 			multiThreadedDownloader.OutputFileName = editFileName.Text;
 			multiThreadedDownloader.TempDirectory = editTempPath.Text;
@@ -876,6 +903,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			numericUpDownConnectionTimeout.Enabled = enable;
 			textBoxProxyAddress.Enabled = enable;
 			numericUpDownProxyPort.Enabled = enable;
+			btnCookies.Enabled = enable;
 		}
 
 		private bool CreateProxy(out WebProxy proxy, out string errorMessage)

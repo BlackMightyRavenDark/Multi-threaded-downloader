@@ -70,6 +70,9 @@
 			this.groupBoxProxy = new System.Windows.Forms.GroupBox();
 			this.label12 = new System.Windows.Forms.Label();
 			this.label11 = new System.Windows.Forms.Label();
+			this.groupBox1 = new System.Windows.Forms.GroupBox();
+			this.lblCookieCount = new System.Windows.Forms.Label();
+			this.btnCookies = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownThreadCount)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownUpdateInterval)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownChunksMergingUpdateInterval)).BeginInit();
@@ -78,6 +81,7 @@
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownConnectionTimeout)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownProxyPort)).BeginInit();
 			this.groupBoxProxy.SuspendLayout();
+			this.groupBox1.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// btnDownloadSingleThreaded
@@ -544,11 +548,44 @@
 			this.label11.TabIndex = 0;
 			this.label11.Text = "Адрес:";
 			// 
+			// groupBox1
+			// 
+			this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
+			this.groupBox1.Controls.Add(this.lblCookieCount);
+			this.groupBox1.Controls.Add(this.btnCookies);
+			this.groupBox1.Location = new System.Drawing.Point(392, 289);
+			this.groupBox1.Name = "groupBox1";
+			this.groupBox1.Size = new System.Drawing.Size(365, 44);
+			this.groupBox1.TabIndex = 40;
+			this.groupBox1.TabStop = false;
+			this.groupBox1.Text = "Cookies";
+			// 
+			// lblCookieCount
+			// 
+			this.lblCookieCount.AutoSize = true;
+			this.lblCookieCount.Location = new System.Drawing.Point(114, 21);
+			this.lblCookieCount.Name = "lblCookieCount";
+			this.lblCookieCount.Size = new System.Drawing.Size(96, 13);
+			this.lblCookieCount.TabIndex = 1;
+			this.lblCookieCount.Text = "No cookies loaded";
+			// 
+			// btnCookies
+			// 
+			this.btnCookies.Location = new System.Drawing.Point(6, 16);
+			this.btnCookies.Name = "btnCookies";
+			this.btnCookies.Size = new System.Drawing.Size(102, 23);
+			this.btnCookies.TabIndex = 0;
+			this.btnCookies.Text = "Добавить куки";
+			this.btnCookies.UseVisualStyleBackColor = true;
+			this.btnCookies.Click += new System.EventHandler(this.btnCookies_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(768, 450);
+			this.Controls.Add(this.groupBox1);
 			this.Controls.Add(this.groupBoxProxy);
 			this.Controls.Add(this.checkBoxFakeDownloading);
 			this.Controls.Add(this.checkBoxDownloadToRAM);
@@ -600,6 +637,8 @@
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownProxyPort)).EndInit();
 			this.groupBoxProxy.ResumeLayout(false);
 			this.groupBoxProxy.PerformLayout();
+			this.groupBox1.ResumeLayout(false);
+			this.groupBox1.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -648,5 +687,8 @@
 		private System.Windows.Forms.NumericUpDown numericUpDownProxyPort;
 		private System.Windows.Forms.TextBox textBoxProxyAddress;
 		private System.Windows.Forms.Label label11;
+		private System.Windows.Forms.GroupBox groupBox1;
+		private System.Windows.Forms.Button btnCookies;
+		private System.Windows.Forms.Label lblCookieCount;
 	}
 }

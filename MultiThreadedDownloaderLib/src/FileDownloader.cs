@@ -22,6 +22,7 @@ namespace MultiThreadedDownloaderLib
 		public int TryCountLimit { get; set; } = 1;
 
 		public NameValueCollection Headers { get => _headers; set { SetHeaders(value); } }
+		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
 		public bool IgnoreStreamSizeExceededError { get; set; } = false;
@@ -151,7 +152,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					tryNumber++;
 					HeadersReceiving?.Invoke(this, Url, downloadingTask, tryNumber, tryCountLimit);
-					LastErrorCode = GetUrlResponseHeaders(Url, Headers, Proxy, ConnectionTimeout,
+					LastErrorCode = GetUrlResponseHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
 						out responseHeaders, out string headersErrorText);
 
 					if (_cancellationTokenSource.IsCancellationRequested)
@@ -244,6 +245,7 @@ namespace MultiThreadedDownloaderLib
 					Method = "GET",
 					Url = Url,
 					Headers = Headers,
+					Cookies = Cookies,
 					Proxy = Proxy,
 					Timeout = ConnectionTimeout
 				};

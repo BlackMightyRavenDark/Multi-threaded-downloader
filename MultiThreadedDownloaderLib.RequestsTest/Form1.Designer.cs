@@ -43,6 +43,7 @@
 			this.btnSetRequestBody = new System.Windows.Forms.Button();
 			this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
 			this.btnSetRequestProxy = new System.Windows.Forms.Button();
+			this.btnSetRequestCookies = new System.Windows.Forms.Button();
 			this.groupBox1.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.SuspendLayout();
@@ -62,7 +63,7 @@
 			| System.Windows.Forms.AnchorStyles.Right)));
 			this.textBoxRequestUrl.Location = new System.Drawing.Point(83, 10);
 			this.textBoxRequestUrl.Name = "textBoxRequestUrl";
-			this.textBoxRequestUrl.Size = new System.Drawing.Size(553, 20);
+			this.textBoxRequestUrl.Size = new System.Drawing.Size(527, 20);
 			this.textBoxRequestUrl.TabIndex = 1;
 			this.textBoxRequestUrl.Text = "https://google.com";
 			// 
@@ -72,7 +73,7 @@
 			| System.Windows.Forms.AnchorStyles.Right)));
 			this.textBoxRequestType.Location = new System.Drawing.Point(83, 38);
 			this.textBoxRequestType.Name = "textBoxRequestType";
-			this.textBoxRequestType.Size = new System.Drawing.Size(608, 20);
+			this.textBoxRequestType.Size = new System.Drawing.Size(527, 20);
 			this.textBoxRequestType.TabIndex = 2;
 			this.textBoxRequestType.Text = "HEAD";
 			// 
@@ -173,7 +174,7 @@
 			// 
 			// btnSetRequestBody
 			// 
-			this.btnSetRequestBody.Anchor = (System.Windows.Forms.AnchorStyles)(System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right);
+			this.btnSetRequestBody.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnSetRequestBody.Location = new System.Drawing.Point(697, 38);
 			this.btnSetRequestBody.Name = "btnSetRequestBody";
 			this.btnSetRequestBody.Size = new System.Drawing.Size(75, 23);
@@ -186,19 +187,31 @@
 			// btnSetRequestProxy
 			// 
 			this.btnSetRequestProxy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnSetRequestProxy.Location = new System.Drawing.Point(642, 9);
+			this.btnSetRequestProxy.Location = new System.Drawing.Point(616, 9);
 			this.btnSetRequestProxy.Name = "btnSetRequestProxy";
-			this.btnSetRequestProxy.Size = new System.Drawing.Size(49, 23);
+			this.btnSetRequestProxy.Size = new System.Drawing.Size(75, 23);
 			this.btnSetRequestProxy.TabIndex = 10;
 			this.btnSetRequestProxy.Text = "Proxy";
 			this.btnSetRequestProxy.UseVisualStyleBackColor = true;
 			this.btnSetRequestProxy.Click += new System.EventHandler(this.btnSetRequestProxy_Click);
+			// 
+			// btnSetRequestCookies
+			// 
+			this.btnSetRequestCookies.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnSetRequestCookies.Location = new System.Drawing.Point(616, 38);
+			this.btnSetRequestCookies.Name = "btnSetRequestCookies";
+			this.btnSetRequestCookies.Size = new System.Drawing.Size(75, 23);
+			this.btnSetRequestCookies.TabIndex = 11;
+			this.btnSetRequestCookies.Text = "Cookies";
+			this.btnSetRequestCookies.UseVisualStyleBackColor = true;
+			this.btnSetRequestCookies.Click += new System.EventHandler(this.btnSetRequestCookies_Click);
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(784, 361);
+			this.Controls.Add(this.btnSetRequestCookies);
 			this.Controls.Add(this.btnSetRequestProxy);
 			this.Controls.Add(this.btnSetRequestBody);
 			this.Controls.Add(this.groupBox2);
@@ -237,6 +250,7 @@
 		private System.Windows.Forms.Button btnSetRequestBody;
 		private System.Windows.Forms.ToolTip toolTip1;
 		private System.Windows.Forms.Button btnSetRequestProxy;
+		private System.Windows.Forms.Button btnSetRequestCookies;
 	}
 }
 
