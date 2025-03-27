@@ -301,7 +301,9 @@ namespace MultiThreadedDownloaderLib
 			}
 			catch (Exception ex)
 			{
+#if DEBUG
 				System.Diagnostics.Debug.WriteLine(ex.Message);
+#endif
 				errorMessage = ex.Message;
 				return false;
 			}
