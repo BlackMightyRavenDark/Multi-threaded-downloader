@@ -41,14 +41,14 @@ namespace MultiThreadedDownloaderLib
 				return FileDownloader.DOWNLOAD_ERROR_NULL_CONTENT;
 			}
 
-			byte[] buffer = new byte[bufferSize];
-			long bytesTransferred = 0L;
 			Stream readingStream = GetReadingStream(out bool isComressed);
 			if (isComressed && readingStream == null)
 			{
 				return FileDownloader.DOWNLOAD_ERROR_UNSUPPORTED_COMPRESSION_ALGORITHM;
 			}
 
+			byte[] buffer = new byte[bufferSize];
+			long bytesTransferred = 0L;
 			do
 			{
 				int bytesRead = readingStream.Read(buffer, 0, bufferSize);
