@@ -74,6 +74,11 @@ namespace MultiThreadedDownloaderLib
 			return 200;
 		}
 
+		public int ContentToStream(Stream outputStream, int bufferSize = 4096)
+		{
+			return ContentToStream(outputStream, bufferSize, null, default);
+		}
+
 		public int ContentToString(out string resultString, Encoding encoding, int bufferSize,
 			ProgressDelegate progress, CancellationToken cancellationToken)
 		{
