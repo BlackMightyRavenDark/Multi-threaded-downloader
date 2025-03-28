@@ -77,6 +77,12 @@ namespace MultiThreadedDownloaderLib
 		public int ContentToString(out string resultString, Encoding encoding, int bufferSize,
 			ProgressDelegate progress, CancellationToken cancellationToken)
 		{
+			if (Data == null)
+			{
+				resultString = null;
+				return FileDownloader.DOWNLOAD_ERROR_NULL_CONTENT;
+			}
+
 			try
 			{
 				using (MemoryStream stream = new MemoryStream())
