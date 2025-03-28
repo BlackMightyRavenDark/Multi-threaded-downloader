@@ -68,7 +68,7 @@ namespace MultiThreadedDownloaderLib
 			}
 			else if (!isComressed && Length >= 0L && bytesTransferred != Length)
 			{
-				return FileDownloader.DOWNLOAD_ERROR_INCOMPLETE_DATA_READ;
+				return FileDownloader.DOWNLOAD_ERROR_DATA_SIZE_MISMATCH;
 			}
 
 			return 200;

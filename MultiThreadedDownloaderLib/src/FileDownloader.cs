@@ -53,7 +53,7 @@ namespace MultiThreadedDownloaderLib
 		public const int DOWNLOAD_ERROR_URL_NOT_DEFINED = -1;
 		public const int DOWNLOAD_ERROR_INVALID_URL = -2;
 		public const int DOWNLOAD_ERROR_CANCELED_BY_USER = -3;
-		public const int DOWNLOAD_ERROR_INCOMPLETE_DATA_READ = -4;
+		public const int DOWNLOAD_ERROR_DATA_SIZE_MISMATCH = -4;
 		public const int DOWNLOAD_ERROR_RANGE = -5;
 		public const int DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT = -6;
 		public const int DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE = -7;
@@ -627,8 +627,8 @@ namespace MultiThreadedDownloaderLib
 				case DOWNLOAD_ERROR_ABORTED:
 					return "Скачивание прервано!";
 
-				case DOWNLOAD_ERROR_INCOMPLETE_DATA_READ:
-					return "Ошибка чтения данных!";
+				case DOWNLOAD_ERROR_DATA_SIZE_MISMATCH:
+					return "Размер скачанного не совпадает с заявленным!";
 
 				case DOWNLOAD_ERROR_RANGE:
 					return "Указан неверный диапазон!";
