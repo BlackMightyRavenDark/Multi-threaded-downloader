@@ -36,6 +36,7 @@ namespace MultiThreadedDownloaderLib
 			System.Diagnostics.Stopwatch stopwatch =
 				streamAppendProgress != null && updateIntervalMilliseconds > 0L ?
 				new System.Diagnostics.Stopwatch() : null;
+			stopwatch?.Start();
 			do
 			{
 				int bytesRead = inputStream.Read(buffer, 0, buffer.Length);
@@ -47,9 +48,10 @@ namespace MultiThreadedDownloaderLib
 					streamAppendProgress.Invoke(
 						inputStream.Position, inputStreamLength,
 						outputStream.Position, outputStream.Length);
-					stopwatch.Reset();
+					stopwatch.Restart();
 				}
 			} while (!cancellationToken.IsCancellationRequested);
+			stopwatch?.Stop();
 			streamAppendProgress?.Invoke(inputStream.Position, inputStreamLength,
 				outputStream.Position, outputStream.Length);
 
