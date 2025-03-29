@@ -26,8 +26,8 @@ namespace MultiThreadedDownloaderLib
 		public WebProxy Proxy { get; set; }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
 		public bool IgnoreStreamSizeExceededError { get; set; } = false;
-		public bool IgnoreHeadRequestErrors { get; set; } = true;
-		public bool SkipHeadRequest { get; set; } = false;
+		public bool IgnoreHeaderRequestErrors { get; set; } = true;
+		public bool SkipHeaderRequest { get; set; } = false;
 		public long DownloadedInLastSession { get; private set; } = 0L;
 		public long OutputStreamSize => DownloadingTask?.OutputStream?.Stream != null ?
 			DownloadingTask.OutputStream.Stream.Length : 0L;
@@ -146,7 +146,7 @@ namespace MultiThreadedDownloaderLib
 			bool isInfiniteRetries = tryCountLimit <= 0;
 
 			NameValueCollection responseHeaders = null;
-			if (!SkipHeadRequest)
+			if (!SkipHeaderRequest)
 			{
 				while (true)
 				{
@@ -162,7 +162,7 @@ namespace MultiThreadedDownloaderLib
 						IsActive = false;
 						return LastErrorCode;
 					}
-					else if (IgnoreHeadRequestErrors || LastErrorCode == 200 || LastErrorCode == 206)
+					else if (IgnoreHeaderRequestErrors || LastErrorCode == 200 || LastErrorCode == 206)
 					{
 						HeadersReceived?.Invoke(this, Url, downloadingTask, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
 						tryNumber = 0;

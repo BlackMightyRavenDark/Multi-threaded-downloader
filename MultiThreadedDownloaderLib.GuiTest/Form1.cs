@@ -740,7 +740,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				else
 				{
 					System.Diagnostics.Debug.WriteLine($"Ошибка при получении заголовков! Код: {errorCode}");
-					if (!(sender as FileDownloader).IgnoreHeadRequestErrors)
+					if (!(sender as FileDownloader).IgnoreHeaderRequestErrors)
 					{
 						System.Diagnostics.Debug.WriteLine("Скачивание прервано!");
 					}
