@@ -229,15 +229,18 @@ namespace MultiThreadedDownloaderLib
 #endif
 				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
 
-				long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
-					(contentLength >= 0L ? contentLength - 1L : -1L);
-				if (isRangeSupported && !SetRange(DownloadedInLastSession + downloadingTask.ByteFrom, byteTo))
+				if (isRangeSupported)
 				{
-					LastErrorCode = DOWNLOAD_ERROR_RANGE;
-					LastErrorMessage = "Ошибка диапазона! Скачивание прервано!";
-					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
-					IsActive = false;
-					return LastErrorCode;
+					long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
+						(contentLength >= 0L ? contentLength - 1L : -1L);
+					if (!SetRange(DownloadedInLastSession + downloadingTask.ByteFrom, byteTo))
+					{
+						LastErrorCode = DOWNLOAD_ERROR_RANGE;
+						LastErrorMessage = "Ошибка диапазона! Скачивание прервано!";
+						WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
+						IsActive = false;
+						return LastErrorCode;
+					}
 				}
 
 				HttpRequestSenderParameters requestParameters = new HttpRequestSenderParameters()
