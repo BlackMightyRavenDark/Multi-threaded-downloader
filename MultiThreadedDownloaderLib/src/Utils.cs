@@ -255,6 +255,17 @@ namespace MultiThreadedDownloaderLib
 			return GetUrlResponseHeaders(url, inHeaders, null, null, 0, out outHeaders, out errorText);
 		}
 
+		internal static HttpRequestResult CreateHttpRequestResult(int errorCode, string errorMessage,
+			HttpWebResponse httpWebResponse, bool exceptionWasRaised = false)
+		{
+			HttpRequestResult result = new HttpRequestResult(errorCode, errorMessage, httpWebResponse, exceptionWasRaised);
+			if (httpWebResponse != null)
+			{
+				CombineHeaders(httpWebResponse, result.Headers);
+			}
+			return result;
+		}
+
 		public static bool IsRangeValid(long rangeFrom, long rangeTo)
 		{
 			return rangeFrom >= 0L && (rangeTo < 0L || rangeTo >= rangeFrom);

@@ -250,6 +250,36 @@ namespace MultiThreadedDownloaderLib
 					Timeout = ConnectionTimeout
 				};
 				HttpRequestResult requestResult = HttpRequestSender.Send(requestParameters);
+				requestResult.GetContent(out string webContentErrorMessage);
+				if (requestResult.WebContent == null)
+				{
+					requestResult.Dispose();
+					LastErrorCode = DOWNLOAD_ERROR_NULL_CONTENT;
+					LastErrorMessage = webContentErrorMessage;
+					IsActive = false;
+					return LastErrorCode;
+				}
+
+				if (requestResult.WebContent.Length == 0L)
+				{
+					requestResult.Dispose();
+					LastErrorCode = DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT;
+					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
+					IsActive = false;
+					return LastErrorCode;
+				}
+
+				if (requestResult.IsExceptionRaised)
+				{
+					LastErrorCode = requestResult.ErrorCode;
+					LastErrorMessage = requestResult.WebContent.ContentToString(
+						out webContentErrorMessage) == 200 ? webContentErrorMessage :
+						(requestResult.HasErrorMessage ? requestResult.ErrorMessage : null);
+					requestResult.Dispose();
+					IsActive = false;
+					return LastErrorCode;
+				}
+
 				LastErrorCode = requestResult.ErrorCode;
 				LastErrorMessage = HasErrors && requestResult.HasErrorMessage ? requestResult.ErrorMessage : null;
 				if (HasErrors)
@@ -259,14 +289,6 @@ namespace MultiThreadedDownloaderLib
 					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: The 'GET' request is failed! Restarting...");
 #endif
 					continue;
-				}
-				else if (requestResult.WebContent == null)
-				{
-					requestResult.Dispose();
-					LastErrorCode = DOWNLOAD_ERROR_NULL_CONTENT;
-					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
-					IsActive = false;
-					return LastErrorCode;
 				}
 
 				if (contentLength == -1L)

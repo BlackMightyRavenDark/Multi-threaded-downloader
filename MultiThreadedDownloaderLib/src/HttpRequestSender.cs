@@ -1,4 +1,5 @@
-﻿using System.Collections.Specialized;
+﻿using System;
+using System.Collections.Specialized;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -59,27 +60,19 @@ namespace MultiThreadedDownloaderLib
 
 				response = (HttpWebResponse)httpWebRequest.GetResponse();
 				int resultErrorCode = (int)response.StatusCode;
-				WebContent webContent = null;
-				if (resultErrorCode == 200 || resultErrorCode == 206)
-				{
-					string contentEncodingHeaderValue = response.GetContentEncodingHeaderValue();
-					webContent = new WebContent(response.GetResponseStream(), response.ContentLength, contentEncodingHeaderValue);
-				}
-
-				return CreateRequestResult(resultErrorCode, response.StatusDescription, response, webContent);
+				return CreateHttpRequestResult(resultErrorCode, response.StatusDescription, response);
 			}
-			catch (System.Exception ex)
+			catch (Exception ex)
 			{
 				response?.Close();
 				if (ex is WebException && (ex as WebException).Status == WebExceptionStatus.ProtocolError &&
 					((ex as WebException).Response is HttpWebResponse responseException))
 				{
 					int errorCode = (int)responseException.StatusCode;
-					WebContent webContent = new WebContent(responseException.GetResponseStream(), responseException.ContentLength);
-					return CreateRequestResult(errorCode, responseException.StatusDescription, responseException, webContent);
+					return CreateHttpRequestResult(errorCode, responseException.StatusDescription, responseException, true);
 				}
-
-				return CreateRequestResult(ex.HResult, ex.Message, null, null);
+				
+				return CreateHttpRequestResult(ex.HResult, ex.Message, null, true);
 			}
 		}
 
@@ -155,17 +148,6 @@ namespace MultiThreadedDownloaderLib
 		public static HttpRequestResult Send(string url, int timeout = 0)
 		{
 			return Send("GET", url, timeout);
-		}
-
-		private static HttpRequestResult CreateRequestResult(int errorCode, string errorMessage,
-			HttpWebResponse httpWebResponse, WebContent webContent)
-		{
-			HttpRequestResult result = new HttpRequestResult(errorCode, errorMessage, httpWebResponse, webContent);
-			if (httpWebResponse != null)
-			{
-				Utils.CombineHeaders(httpWebResponse, result.Headers);
-			}
-			return result;
 		}
 	}
 }
