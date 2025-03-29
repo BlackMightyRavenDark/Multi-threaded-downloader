@@ -271,13 +271,22 @@ namespace MultiThreadedDownloaderLib
 
 				if (requestResult.IsExceptionRaised)
 				{
-					LastErrorCode = requestResult.ErrorCode;
-					LastErrorMessage = requestResult.WebContent.ContentToString(
-						out webContentErrorMessage) == 200 ? webContentErrorMessage :
-						(requestResult.HasErrorMessage ? requestResult.ErrorMessage : null);
+#if DEBUG
+					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: The 'GET' request is failed with exception! " +
+						$"Error code: {requestResult.ErrorCode}. Restarting...");
+#endif
+					if (!isInfiniteRetries && tryNumber <= tryCountLimit)
+					{
+						LastErrorCode = requestResult.ErrorCode;
+						if (tryNumber == tryCountLimit)
+						{
+							LastErrorMessage = requestResult.WebContent.ContentToString(
+								out webContentErrorMessage) == 200 ? webContentErrorMessage :
+								(requestResult.HasErrorMessage ? requestResult.ErrorMessage : null);
+						}
+					}
 					requestResult.Dispose();
-					IsActive = false;
-					return LastErrorCode;
+					continue;
 				}
 
 				LastErrorCode = requestResult.ErrorCode;
