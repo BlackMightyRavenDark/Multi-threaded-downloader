@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -140,7 +141,6 @@ namespace MultiThreadedDownloaderLib
 
 			_cancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
 
-			long outputStreamInitialPosition = fakeDownloading ? 0L : downloadingTask.OutputStream.Stream.Position;
 			int tryNumber = 0;
 			int tryCountLimit = TryCountLimit;
 			bool isInfiniteRetries = tryCountLimit <= 0;
@@ -195,9 +195,10 @@ namespace MultiThreadedDownloaderLib
 				ResetRange();
 			}
 
-			if (!fakeDownloading && !IgnoreStreamSizeExceededError &&
-				contentLength > 0L && outputStreamInitialPosition + contentLength <
-				downloadingTask.OutputStream.Stream.Length)
+			long outputStreamInitialPosition = fakeDownloading ? 0L : downloadingTask.OutputStream.Stream.Position;
+
+			if (!fakeDownloading && !IgnoreStreamSizeExceededError && contentLength > 0L &&
+				outputStreamInitialPosition + contentLength < downloadingTask.OutputStream.Stream.Length)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED;
 				WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
@@ -208,10 +209,11 @@ namespace MultiThreadedDownloaderLib
 			do
 			{
 				tryNumber++;
-				if (!isInfiniteRetries && tryNumber > tryCountLimit)
+				bool isTryLimitReached = !isInfiniteRetries && tryNumber > tryCountLimit;
+				if (isTryLimitReached)
 				{
 #if DEBUG
-					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: Out of tries");
+					Debug.WriteLine($"Downloader №{Id}: Out of tries");
 #endif
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
@@ -219,16 +221,14 @@ namespace MultiThreadedDownloaderLib
 					return LastErrorCode;
 				}
 #if DEBUG
-				System.Diagnostics.Debug.WriteLine(isInfiniteRetries ?
+				Debug.WriteLine(isInfiniteRetries ?
 					$"Downloader №{Id}: Try №{tryNumber}" :
 					$"Downloader №{Id}: Try №{tryNumber} / {tryCountLimit}");
 				if (Proxy != null)
 				{
-					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: Using a proxy server {Proxy.Address}");
+					Debug.WriteLine($"Downloader №{Id}: Using a proxy server {Proxy.Address}");
 				}
 #endif
-				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
-
 				if (isRangeSupported)
 				{
 					long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
@@ -241,7 +241,45 @@ namespace MultiThreadedDownloaderLib
 						IsActive = false;
 						return LastErrorCode;
 					}
+#if DEBUG
+					long resumingPosition = outputStreamInitialPosition + DownloadedInLastSession;
+#endif
+					if (!fakeDownloading)
+					{
+						downloadingTask.OutputStream.Stream.Position =
+#if DEBUG
+							resumingPosition;
+#else
+							outputStreamInitialPosition + DownloadedInLastSession;
+#endif
+					}
+#if DEBUG
+					if (tryNumber > 1)
+					{
+						Debug.WriteLine($"Downloader №{Id}: Resuming from position {resumingPosition}...");
+					}
+#endif
 				}
+				else //range is not supported.
+				{
+#if DEBUG
+					if (tryNumber > 1)
+					{
+						Debug.WriteLine($"Downloader №{Id}: Resuming downloads is unavailable for this URL! Restarting from the beginning...");
+					}
+#endif
+					chunkProcessingDict.Clear();
+					DownloadedInLastSession = 0L;
+					if (!fakeDownloading)
+					{
+#if DEBUG
+						Debug.WriteLine($"Downloader №{Id}: Output stream position is {outputStreamInitialPosition}");
+#endif
+						downloadingTask.OutputStream.Stream.Position = outputStreamInitialPosition;
+					}
+				}
+
+				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
 
 				HttpRequestSenderParameters requestParameters = new HttpRequestSenderParameters()
 				{
@@ -275,10 +313,10 @@ namespace MultiThreadedDownloaderLib
 				if (requestResult.IsExceptionRaised)
 				{
 #if DEBUG
-					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: The 'GET' request is failed with exception! " +
+					Debug.WriteLine($"Downloader №{Id}: The 'GET' request is failed with an exception! " +
 						$"Error code: {requestResult.ErrorCode}. Restarting...");
 #endif
-					if (!isInfiniteRetries && tryNumber <= tryCountLimit)
+					if (!isTryLimitReached)
 					{
 						LastErrorCode = requestResult.ErrorCode;
 						if (tryNumber == tryCountLimit)
@@ -298,7 +336,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					requestResult.Dispose();
 #if DEBUG
-					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: The 'GET' request is failed! Restarting...");
+					Debug.WriteLine($"Downloader №{Id}: The 'GET' request is failed with error code {LastErrorCode}! Restarting...");
 #endif
 					continue;
 				}
@@ -358,40 +396,20 @@ namespace MultiThreadedDownloaderLib
 						}, token);
 					completed = true;
 				}
-#if DEBUG
 				catch (Exception ex)
 				{
-					System.Diagnostics.Debug.WriteLine(ex.Message);
-					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: Restarting...");
-				}
-#else
-				catch {}
+#if DEBUG
+					Debug.WriteLine($"Downloader №{Id} catches exception!\n{ex.Message}");
 #endif
+					LastErrorCode = ex.HResult;
+					LastErrorMessage = ex.Message;
+				}
+
 				requestResult.Dispose();
 
 				if (completed) { break; }
-				else if (!isInfiniteRetries && tryNumber >= tryCountLimit)
-				{
-#if DEBUG
-					System.Diagnostics.Debug.WriteLine($"Downloader №{Id}: Out of tries");
-#endif
-					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
-					break;
-				}
-				else if (!isRangeSupported)
-				{
-#if DEBUG
-					System.Diagnostics.Debug.WriteLine(
-						$"Downloader №{Id}: Resuming downloads is unavailable for this URL! Restarting from the beginning...");
-#endif
-					chunkProcessingDict.Clear();
-					DownloadedInLastSession = 0L;
-					if (!fakeDownloading)
-					{
-						downloadingTask.OutputStream.Stream.Position = outputStreamInitialPosition;
-					}
-				}
 			} while (!_cancellationTokenSource.IsCancellationRequested);
+
 			if (_cancellationTokenSource.IsCancellationRequested)
 			{
 				LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
@@ -515,7 +533,7 @@ namespace MultiThreadedDownloaderLib
 			} catch (Exception ex)
 			{
 #if DEBUG
-				System.Diagnostics.Debug.WriteLine(ex.Message);
+				Debug.WriteLine(ex.Message);
 #endif
 				responseString = ex.Message;
 				return ex.HResult;
@@ -617,7 +635,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 							else
 							{
-								System.Diagnostics.Debug.WriteLine("Failed to parse the \"Range\" header!");
+								Debug.WriteLine("Failed to parse the \"Range\" header!");
 							}
 #endif
 							continue;
