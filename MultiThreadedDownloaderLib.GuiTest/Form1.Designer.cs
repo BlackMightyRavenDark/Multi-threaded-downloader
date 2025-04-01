@@ -73,6 +73,8 @@
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.lblCookieCount = new System.Windows.Forms.Label();
 			this.btnCookies = new System.Windows.Forms.Button();
+			this.numericUpDownRetryInterval = new System.Windows.Forms.NumericUpDown();
+			this.label13 = new System.Windows.Forms.Label();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownThreadCount)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownUpdateInterval)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownChunksMergingUpdateInterval)).BeginInit();
@@ -82,12 +84,13 @@
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownProxyPort)).BeginInit();
 			this.groupBoxProxy.SuspendLayout();
 			this.groupBox1.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numericUpDownRetryInterval)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// btnDownloadSingleThreaded
 			// 
 			this.btnDownloadSingleThreaded.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnDownloadSingleThreaded.Location = new System.Drawing.Point(12, 365);
+			this.btnDownloadSingleThreaded.Location = new System.Drawing.Point(12, 394);
 			this.btnDownloadSingleThreaded.Name = "btnDownloadSingleThreaded";
 			this.btnDownloadSingleThreaded.Size = new System.Drawing.Size(138, 23);
 			this.btnDownloadSingleThreaded.TabIndex = 0;
@@ -105,7 +108,7 @@
 			// btnDownloadMultiThreaded
 			// 
 			this.btnDownloadMultiThreaded.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnDownloadMultiThreaded.Location = new System.Drawing.Point(156, 365);
+			this.btnDownloadMultiThreaded.Location = new System.Drawing.Point(156, 394);
 			this.btnDownloadMultiThreaded.Name = "btnDownloadMultiThreaded";
 			this.btnDownloadMultiThreaded.Size = new System.Drawing.Size(148, 23);
 			this.btnDownloadMultiThreaded.TabIndex = 3;
@@ -117,7 +120,7 @@
 			// 
 			this.lblDownloadingProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lblDownloadingProgress.AutoSize = true;
-			this.lblDownloadingProgress.Location = new System.Drawing.Point(9, 399);
+			this.lblDownloadingProgress.Location = new System.Drawing.Point(9, 428);
 			this.lblDownloadingProgress.Name = "lblDownloadingProgress";
 			this.lblDownloadingProgress.Size = new System.Drawing.Size(58, 13);
 			this.lblDownloadingProgress.TabIndex = 4;
@@ -245,7 +248,7 @@
 			// 
 			this.lblMergingProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lblMergingProgress.AutoSize = true;
-			this.lblMergingProgress.Location = new System.Drawing.Point(73, 399);
+			this.lblMergingProgress.Location = new System.Drawing.Point(73, 428);
 			this.lblMergingProgress.Name = "lblMergingProgress";
 			this.lblMergingProgress.Size = new System.Drawing.Size(96, 13);
 			this.lblMergingProgress.TabIndex = 17;
@@ -511,7 +514,7 @@
 			// 
 			this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
 			| System.Windows.Forms.AnchorStyles.Right)));
-			this.progressBar1.Location = new System.Drawing.Point(12, 415);
+			this.progressBar1.Location = new System.Drawing.Point(12, 444);
 			this.progressBar1.Name = "progressBar1";
 			this.progressBar1.Size = new System.Drawing.Size(744, 23);
 			this.progressBar1.TabIndex = 27;
@@ -580,11 +583,49 @@
 			this.btnCookies.UseVisualStyleBackColor = true;
 			this.btnCookies.Click += new System.EventHandler(this.btnCookies_Click);
 			// 
+			// numericUpDownRetryInterval
+			// 
+			this.numericUpDownRetryInterval.Increment = new decimal(new int[] {
+			100,
+			0,
+			0,
+			0});
+			this.numericUpDownRetryInterval.Location = new System.Drawing.Point(332, 365);
+			this.numericUpDownRetryInterval.Maximum = new decimal(new int[] {
+			10000,
+			0,
+			0,
+			0});
+			this.numericUpDownRetryInterval.Minimum = new decimal(new int[] {
+			500,
+			0,
+			0,
+			0});
+			this.numericUpDownRetryInterval.Name = "numericUpDownRetryInterval";
+			this.numericUpDownRetryInterval.Size = new System.Drawing.Size(54, 20);
+			this.numericUpDownRetryInterval.TabIndex = 41;
+			this.numericUpDownRetryInterval.Value = new decimal(new int[] {
+			1000,
+			0,
+			0,
+			0});
+			// 
+			// label13
+			// 
+			this.label13.AutoSize = true;
+			this.label13.Location = new System.Drawing.Point(9, 367);
+			this.label13.Name = "label13";
+			this.label13.Size = new System.Drawing.Size(177, 13);
+			this.label13.TabIndex = 42;
+			this.label13.Text = "Интервал между попытками (ms):";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(768, 450);
+			this.ClientSize = new System.Drawing.Size(768, 479);
+			this.Controls.Add(this.label13);
+			this.Controls.Add(this.numericUpDownRetryInterval);
 			this.Controls.Add(this.groupBox1);
 			this.Controls.Add(this.groupBoxProxy);
 			this.Controls.Add(this.checkBoxFakeDownloading);
@@ -639,6 +680,7 @@
 			this.groupBoxProxy.PerformLayout();
 			this.groupBox1.ResumeLayout(false);
 			this.groupBox1.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.numericUpDownRetryInterval)).EndInit();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -690,5 +732,7 @@
 		private System.Windows.Forms.GroupBox groupBox1;
 		private System.Windows.Forms.Button btnCookies;
 		private System.Windows.Forms.Label lblCookieCount;
+		private System.Windows.Forms.NumericUpDown numericUpDownRetryInterval;
+		private System.Windows.Forms.Label label13;
 	}
 }

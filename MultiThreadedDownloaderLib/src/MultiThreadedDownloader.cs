@@ -28,6 +28,7 @@ namespace MultiThreadedDownloaderLib
 		public string MergingDirectory { get; set; } = null;
 		public bool KeepDownloadedFileInTempOrMergingDirectory { get; set; } = false;
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
+		public int RetryIntervalMilliseconds { get; set; } = 1000;
 		public int ChunksMergingUpdateIntervalMilliseconds { get; set; } = 100;
 		public long DownloadedBytes { get; private set; } = 0L;
 		public long ContentLength { get; private set; } = -1L;
@@ -212,9 +213,12 @@ namespace MultiThreadedDownloaderLib
 
 			int headersReceivingTryNumber = 0;
 			bool isInfiniteRetries = TryCountLimitPerThread <= 0;
+			System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+
 			NameValueCollection responseHeaders = null;
 			while (true)
 			{
+				stopwatch.Restart();
 				headersReceivingTryNumber++;
 				Connecting?.Invoke(this, Url, headersReceivingTryNumber, TryCountLimitPerThread);
 				LastErrorCode = GetUrlResponseHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
@@ -222,6 +226,7 @@ namespace MultiThreadedDownloaderLib
 				
 				if (_cancellationTokenSource.IsCancellationRequested)
 				{
+					stopwatch.Stop();
 					LastErrorCode = DOWNLOAD_ERROR_CANCELED_BY_USER;
 					LastErrorMessage = null;
 					IsActive = false;
@@ -230,13 +235,29 @@ namespace MultiThreadedDownloaderLib
 				else if (LastErrorCode == 200 || LastErrorCode == 206) { break; }
 				else if (!isInfiniteRetries && headersReceivingTryNumber + 1 > TryCountLimitPerThread)
 				{
+					stopwatch.Stop();
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 					LastErrorMessage = "Не удалось получить HTTP-заголовки!";
 					DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
 					IsActive = false;
 					return LastErrorCode;
 				}
+
+				if (isInfiniteRetries || !isInfiniteRetries && headersReceivingTryNumber < TryCountLimitPerThread)
+				{
+					TimeSpan interval = TimeSpan.FromMilliseconds(RetryIntervalMilliseconds);
+					TimeSpan elapsed = stopwatch.Elapsed;
+					if (elapsed < interval)
+					{
+						TimeSpan difference = interval - elapsed;
+#if DEBUG
+						System.Diagnostics.Debug.WriteLine($"Receiving headers: {(int)difference.TotalMilliseconds} milliseconds until next try...");
+#endif
+						Thread.Sleep(difference);
+					}
+				}
 			}
+			stopwatch.Stop();
 
 			ExtractContentLengthFromHeaders(responseHeaders, out long fullContentLength);
 			ContentLength = fullContentLength == -1L ? -1L :
@@ -353,6 +374,7 @@ namespace MultiThreadedDownloaderLib
 					Cookies = Cookies,
 					Proxy = Proxy,
 					TryCountLimit = TryCountLimitInsideThread,
+					RetryIntervalMilliseconds = RetryIntervalMilliseconds,
 					FakeDownloading = FakeDownloading
 				};
 				lock (downloaders) { downloaders.Add(downloader); }

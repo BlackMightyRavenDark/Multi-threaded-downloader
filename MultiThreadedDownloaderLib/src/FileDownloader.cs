@@ -26,6 +26,7 @@ namespace MultiThreadedDownloaderLib
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
+		public int RetryIntervalMilliseconds { get; set; } = 1000;
 		public bool IgnoreStreamSizeExceededError { get; set; } = false;
 		public bool IgnoreHeaderRequestErrors { get; set; } = true;
 		public bool SkipHeaderRequest { get; set; } = false;
@@ -145,6 +146,7 @@ namespace MultiThreadedDownloaderLib
 			int tryCountLimit = TryCountLimit;
 			bool isInfiniteRetries = tryCountLimit <= 0;
 
+			Stopwatch stopwatch = new Stopwatch();
 			NameValueCollection responseHeaders = null;
 			if (!SkipHeaderRequest)
 			{
@@ -152,11 +154,13 @@ namespace MultiThreadedDownloaderLib
 				{
 					tryNumber++;
 					HeadersReceiving?.Invoke(this, Url, downloadingTask, tryNumber, tryCountLimit);
+					stopwatch.Restart();
 					LastErrorCode = GetUrlResponseHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
 						out responseHeaders, out string headersErrorText);
 
 					if (_cancellationTokenSource.IsCancellationRequested)
 					{
+						stopwatch.Stop();
 						LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
 						LastErrorMessage = null;
 						IsActive = false;
@@ -171,6 +175,7 @@ namespace MultiThreadedDownloaderLib
 
 					if (!isInfiniteRetries && tryNumber + 1 > tryCountLimit)
 					{
+						stopwatch.Stop();
 						LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 						LastErrorMessage = "Не удалось получить HTTP-заголовки!";
 						HeadersReceived?.Invoke(this, Url, downloadingTask, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
@@ -178,6 +183,8 @@ namespace MultiThreadedDownloaderLib
 						IsActive = false;
 						return LastErrorCode;
 					}
+
+					WaitInterval(stopwatch, tryNumber, tryCountLimit);
 				}
 			}
 
@@ -215,6 +222,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 					Debug.WriteLine($"Downloader №{Id}: Out of tries");
 #endif
+					stopwatch.Stop();
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
@@ -240,6 +248,7 @@ namespace MultiThreadedDownloaderLib
 						(contentLength >= 0L ? contentLength - 1L : -1L);
 					if (!SetRange(DownloadedInLastSession + downloadingTask.ByteFrom, byteTo))
 					{
+						stopwatch.Stop();
 						LastErrorCode = DOWNLOAD_ERROR_RANGE;
 						LastErrorMessage = "Ошибка диапазона! Скачивание прервано!";
 						WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
@@ -286,6 +295,7 @@ namespace MultiThreadedDownloaderLib
 
 				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
 
+				stopwatch.Restart();
 				HttpRequestSenderParameters requestParameters = new HttpRequestSenderParameters()
 				{
 					Method = "GET",
@@ -300,6 +310,7 @@ namespace MultiThreadedDownloaderLib
 				if (requestResult.WebContent == null)
 				{
 					requestResult.Dispose();
+					stopwatch.Stop();
 					LastErrorCode = DOWNLOAD_ERROR_NULL_CONTENT;
 					LastErrorMessage = webContentErrorMessage;
 					IsActive = false;
@@ -309,6 +320,7 @@ namespace MultiThreadedDownloaderLib
 				if (requestResult.WebContent.Length == 0L)
 				{
 					requestResult.Dispose();
+					stopwatch.Stop();
 					LastErrorCode = DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT;
 					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
@@ -332,6 +344,8 @@ namespace MultiThreadedDownloaderLib
 						}
 					}
 					requestResult.Dispose();
+
+					WaitInterval(stopwatch, tryNumber, tryCountLimit);
 					continue;
 				}
 
@@ -343,6 +357,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 					Debug.WriteLine($"Downloader №{Id}: The 'GET' request is failed with error code {LastErrorCode}! Restarting...");
 #endif
+					WaitInterval(stopwatch, tryNumber, tryCountLimit);
 					continue;
 				}
 
@@ -361,6 +376,7 @@ namespace MultiThreadedDownloaderLib
 				if (HasErrors)
 				{
 					requestResult.Dispose();
+					stopwatch.Stop();
 					WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
 					return LastErrorCode;
@@ -369,6 +385,7 @@ namespace MultiThreadedDownloaderLib
 				if (contentLength == 0L)
 				{
 					requestResult.Dispose();
+					stopwatch.Stop();
 					LastErrorCode = DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT;
 					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
@@ -414,6 +431,7 @@ namespace MultiThreadedDownloaderLib
 
 				if (completed) { break; }
 			} while (!_cancellationTokenSource.IsCancellationRequested);
+			stopwatch.Stop();
 
 			if (_cancellationTokenSource.IsCancellationRequested)
 			{
@@ -648,6 +666,24 @@ namespace MultiThreadedDownloaderLib
 
 						Headers.Add(headerName, headerValue);
 					}
+				}
+			}
+		}
+
+		private void WaitInterval(Stopwatch stopwatch, int tryNumber, int tryCountLimit)
+		{
+			if (stopwatch != null && RetryIntervalMilliseconds > 0 &&
+				(tryCountLimit <= 0 || tryCountLimit > 0 && tryNumber < tryCountLimit))
+			{
+				TimeSpan interval = TimeSpan.FromMilliseconds(RetryIntervalMilliseconds);
+				TimeSpan elapsed = stopwatch.Elapsed;
+				if (elapsed < interval)
+				{
+					TimeSpan difference = interval - elapsed;
+#if DEBUG
+					Debug.WriteLine($"Downloader №{Id}: Waiting {(int)difference.TotalMilliseconds} milliseconds, then restarting...");
+#endif
+					Thread.Sleep(difference);
 				}
 			}
 		}

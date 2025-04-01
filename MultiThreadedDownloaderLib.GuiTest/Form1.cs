@@ -284,6 +284,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			singleThreadedDownloader.Proxy = proxy;
 			singleThreadedDownloader.UpdateIntervalMilliseconds = (int)numericUpDownUpdateInterval.Value;
 			singleThreadedDownloader.TryCountLimit = (int)numericUpDownTryCountInsideEachThread.Value;
+			singleThreadedDownloader.RetryIntervalMilliseconds = (int)numericUpDownRetryInterval.Value;
 			singleThreadedDownloader.ConnectionTimeout = (int)numericUpDownConnectionTimeout.Value;
 			singleThreadedDownloader.FakeDownloading = checkBoxFakeDownloading.Checked;
 
@@ -602,6 +603,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			multiThreadedDownloader.ThreadCount = (int)numericUpDownThreadCount.Value;
 			multiThreadedDownloader.TryCountLimitPerThread = (int)numericUpDownTryCountPerThread.Value;
 			multiThreadedDownloader.TryCountLimitInsideThread = (int)numericUpDownTryCountInsideEachThread.Value;
+			multiThreadedDownloader.RetryIntervalMilliseconds = (int)numericUpDownRetryInterval.Value;
 			multiThreadedDownloader.Url = editUrl.Text;
 			multiThreadedDownloader.Cookies = cookies;
 			multiThreadedDownloader.Proxy = proxy;
@@ -901,6 +903,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			numericUpDownUpdateInterval.Enabled = enable;
 			numericUpDownChunksMergingUpdateInterval.Enabled = enable;
 			numericUpDownConnectionTimeout.Enabled = enable;
+			numericUpDownRetryInterval.Enabled = enable;
 			textBoxProxyAddress.Enabled = enable;
 			numericUpDownProxyPort.Enabled = enable;
 			btnCookies.Enabled = enable;
