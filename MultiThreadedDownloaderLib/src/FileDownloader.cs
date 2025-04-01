@@ -224,6 +224,11 @@ namespace MultiThreadedDownloaderLib
 				Debug.WriteLine(isInfiniteRetries ?
 					$"Downloader №{Id}: Try №{tryNumber}" :
 					$"Downloader №{Id}: Try №{tryNumber} / {tryCountLimit}");
+				if (Cookies != null && Cookies.Count > 0)
+				{
+					Debug.WriteLine($"Downloader №{Id}: Using {Cookies.Count} {(Cookies.Count > 1 ? "cookies" : "cookie")}");
+				}
+
 				if (Proxy != null)
 				{
 					Debug.WriteLine($"Downloader №{Id}: Using a proxy server {Proxy.Address}");
