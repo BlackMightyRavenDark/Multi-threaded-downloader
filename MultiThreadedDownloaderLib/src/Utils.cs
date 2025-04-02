@@ -52,14 +52,14 @@ namespace MultiThreadedDownloaderLib
 			if (rangeTo < 0L) { rangeTo = contentLength; }
 			if (contentLength <= 0L || rangeTo < rangeFrom || chunkCount <= 1)
 			{
-				yield return new Tuple<long, long>(0L, -1L);
+				yield return new Tuple<long, long>(0L, contentLength - 1L);
 				yield break;
 			}
 
 			long contentLengthRanged = rangeTo >= 0L ? rangeTo - rangeFrom : contentLength - rangeFrom;
 			if (chunkCount <= 1 || contentLengthRanged <= ONE_MEGABYTE)
 			{
-				long byteTo = rangeTo >= 0L ? rangeTo : contentLengthRanged + rangeFrom - 1;
+				long byteTo = rangeTo >= 0L ? rangeTo : contentLengthRanged + rangeFrom - 1L;
 				yield return new Tuple<long, long>(rangeFrom, byteTo);
 				yield break;
 			}
@@ -69,11 +69,11 @@ namespace MultiThreadedDownloaderLib
 			for (int i = 0; i < chunkCount; ++i)
 			{
 				bool lastChunk = i == chunkCount - 1;
-				long endPos = lastChunk ? (rangeTo >= 0 ? rangeTo : contentLength - 1) : (startPos + chunkSize);
+				long endPos = lastChunk ? (rangeTo >= 0L ? rangeTo : contentLength - 1L) : (startPos + chunkSize);
 
 				yield return new Tuple<long, long>(startPos, endPos);
 
-				if (!lastChunk) { startPos += chunkSize + 1; }
+				if (!lastChunk) { startPos += chunkSize + 1L; }
 			}
 		}
 
