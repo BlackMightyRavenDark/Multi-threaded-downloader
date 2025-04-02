@@ -627,7 +627,7 @@ namespace MultiThreadedDownloaderLib
 					if (UseRamForTempFiles || downloadingTasks.Count > 1)
 					{
 						ChunkMergingStarted?.Invoke(this, downloadingTasks.Count);
-						LastErrorCode = MergeChunks(outputStream, downloadingTasks);
+						LastErrorCode = MergeChunks(downloadingTasks, outputStream);
 						ChunkMergingFinished?.Invoke(this, LastErrorCode);
 					}
 					else if (!UseRamForTempFiles && downloadingTasks.Count == 1)
@@ -723,7 +723,7 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		private int MergeChunks(Stream outputStream, IEnumerable<DownloadingTask> downloadingTasks)
+		private int MergeChunks(IEnumerable<DownloadingTask> downloadingTasks, Stream outputStream)
 		{
 			bool isSharedStream = outputStream != null;
 			string tmpFileName = !isSharedStream ? GetNumberedFileName(GetTempMergingFilePath()) : null;
@@ -841,43 +841,45 @@ namespace MultiThreadedDownloaderLib
 				return DOWNLOAD_ERROR_CANCELED_BY_USER;
 			}
 
-			if (KeepDownloadedFileInTempOrMergingDirectory &&
-				IsMergingDirectoryAvailable)
+			if (!isSharedStream)
 			{
-				string fn = Path.GetFileName(OutputFileName);
-				OutputFileName = Path.Combine(MergingDirectory, fn);
-			}
-
-			string outputFn = GetNumberedFileName(OutputFileName);
-			if (string.IsNullOrEmpty(outputFn) || string.IsNullOrWhiteSpace(outputFn))
-			{
-				ClearGarbage(downloadingTasks);
-				LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
-				LastErrorMessage = null;
-				return LastErrorCode;
-			}
-			OutputFileName = outputFn;
-
-			if (!isSharedStream &&
-				!string.IsNullOrEmpty(tmpFileName) &&
-				!string.IsNullOrWhiteSpace(tmpFileName))
-			{
-				try
+				if (KeepDownloadedFileInTempOrMergingDirectory &&
+					IsMergingDirectoryAvailable)
 				{
-					if (File.Exists(tmpFileName))
-					{
-						File.Move(tmpFileName, OutputFileName);
-					}
+					string fn = Path.GetFileName(OutputFileName);
+					OutputFileName = Path.Combine(MergingDirectory, fn);
 				}
+
+				string outputFn = GetNumberedFileName(OutputFileName);
+				if (string.IsNullOrEmpty(outputFn) || string.IsNullOrWhiteSpace(outputFn))
+				{
+					ClearGarbage(downloadingTasks);
+					LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
+					LastErrorMessage = null;
+					return LastErrorCode;
+				}
+				OutputFileName = outputFn;
+
+				if (!string.IsNullOrEmpty(tmpFileName) &&
+					!string.IsNullOrWhiteSpace(tmpFileName))
+				{
+					try
+					{
+						if (File.Exists(tmpFileName))
+						{
+							File.Move(tmpFileName, OutputFileName);
+						}
+					}
 #if DEBUG
-				catch (Exception ex)
-				{
-					System.Diagnostics.Debug.WriteLine(ex.Message);
+					catch (Exception ex)
+					{
+						System.Diagnostics.Debug.WriteLine(ex.Message);
 #else
-				catch
-				{
+					catch
+					{
 #endif
-					return DOWNLOAD_ERROR_MERGING_CHUNKS;
+						return DOWNLOAD_ERROR_MERGING_CHUNKS;
+					}
 				}
 			}
 
