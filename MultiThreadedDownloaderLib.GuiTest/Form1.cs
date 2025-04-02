@@ -672,6 +672,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					{
 						lblDownloadingProgress.Text = $"Код ошибки: {errorCode}";
 					}
+
+					lblMergingProgress.Left = lblDownloadingProgress.Left + lblDownloadingProgress.Width + 4;
+
 					ShowErrorMessage(errorCode, messageText);
 				}
 
