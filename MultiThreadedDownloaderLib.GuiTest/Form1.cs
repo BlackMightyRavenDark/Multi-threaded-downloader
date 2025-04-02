@@ -504,9 +504,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 								break;
 
 							default:
-								if (item.TotalBytes > 0L && item.ProcessedBytes >= 0L)
+								if (item.ChunkFileSize > 0L && item.ProcessedBytes >= 0L)
 								{
-									percentItem = 100.0 / item.TotalBytes * item.ProcessedBytes;
+									percentItem = 100.0 / item.ChunkFileSize * item.ProcessedBytes;
 									string percentItemFormatted = string.Format("{0:F3}", percentItem);
 									itemText = itemCount > 1 ? $"{item.TaskId}: {percentItemFormatted}%" : $"{percentItemFormatted}%";
 								}

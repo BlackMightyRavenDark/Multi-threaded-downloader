@@ -5,7 +5,7 @@ namespace MultiThreadedDownloaderLib
 	{
 		public DownloadingTask DownloadingTask { get; }
 		public int TaskId { get; }
-		public long TotalBytes { get; }
+		public long ChunkFileSize { get; }
 		public long ProcessedBytes { get; }
 		public int TryNumber { get; }
 		public int TryCountLimit { get; }
@@ -17,7 +17,7 @@ namespace MultiThreadedDownloaderLib
 		{
 			DownloadingTask = downloadingTask;
 			TaskId = taskId;
-			TotalBytes = downloadingTask != null && downloadingTask.ByteTo >= 0L ?
+			ChunkFileSize = downloadingTask != null && downloadingTask.ByteTo >= 0L ?
 				downloadingTask.ByteTo - downloadingTask.ByteFrom + 1L : -1L;
 			ProcessedBytes = processedBytes;
 			TryNumber = tryNumber;
