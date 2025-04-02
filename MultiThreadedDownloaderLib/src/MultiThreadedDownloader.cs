@@ -317,7 +317,7 @@ namespace MultiThreadedDownloaderLib
 					downloadingTask = new DownloadingTask(fd.DownloadingTask.OutputStream, byteFrom, byteTo);
 				}
 				DownloadableContentChunk contentChunk = new DownloadableContentChunk(
-					downloadingTask, fd.Id, processedBytes, tryNumber, TryCountLimitPerThread, state);
+					downloadingTask, fd.Id, fullContentLength, processedBytes, tryNumber, TryCountLimitPerThread, state);
 				OnProgressUpdatedFunc(contentChunk);
 			}
 
@@ -345,7 +345,7 @@ namespace MultiThreadedDownloaderLib
 			for (int i = 0; i < chunkCount; ++i)
 			{
 				contentChunks[i] = new DownloadableContentChunk(
-					null, i, 0L, -1, TryCountLimitPerThread, DownloadableContentChunkState.Preparing);
+					null, i, fullContentLength, 0L, -1, TryCountLimitPerThread, DownloadableContentChunkState.Preparing);
 			}
 
 			var tasks = chunkRanges.Select((range, taskId) => Task.Run(() =>
@@ -466,7 +466,7 @@ namespace MultiThreadedDownloaderLib
 					d.GetRange(out long byteFrom, out long byteTo);
 					DownloadingTask downloadingTask = new DownloadingTask(d.DownloadingTask.OutputStream, byteFrom, byteTo);
 					DownloadableContentChunk contentChunk = new DownloadableContentChunk(
-						downloadingTask, d.Id, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
+						downloadingTask, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(contentChunk);
 				};
 
