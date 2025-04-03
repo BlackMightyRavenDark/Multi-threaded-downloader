@@ -1,26 +1,26 @@
 ﻿
 namespace MultiThreadedDownloaderLib
 {
-	public sealed class DownloadableContentChunk
+	public sealed class DownloadableTask
 	{
-		public DownloadingTask DownloadingTask { get; }
+		public DownloadableChunk DownloadableChunk { get; }
 		public int TaskId { get; }
 		public long FullContentLength { get; }
 		public long ChunkFileSize { get; }
 		public long ProcessedBytes { get; }
 		public int TryNumber { get; }
 		public int TryCountLimit { get; }
-		public DownloadableContentChunkState State { get; }
+		public DownloadableTaskState State { get; }
 
-		public DownloadableContentChunk(DownloadingTask downloadingTask, int taskId,
+		public DownloadableTask(DownloadableChunk downloadableChunk, int taskId,
 			long fullContentLength, long processedBytes, int tryNumber, int tryCountLimit,
-			DownloadableContentChunkState state)
+			DownloadableTaskState state)
 		{
-			DownloadingTask = downloadingTask;
+			DownloadableChunk = downloadableChunk;
 			TaskId = taskId;
 			FullContentLength = fullContentLength;
-			ChunkFileSize = downloadingTask != null && downloadingTask.ByteTo >= 0L ?
-				downloadingTask.ByteTo - downloadingTask.ByteFrom + 1L : -1L;
+			ChunkFileSize = downloadableChunk != null && downloadableChunk.ByteTo >= 0L ?
+				downloadableChunk.ByteTo - downloadableChunk.ByteFrom + 1L : -1L;
 			ProcessedBytes = processedBytes;
 			TryNumber = tryNumber;
 			TryCountLimit = tryCountLimit;
@@ -28,7 +28,7 @@ namespace MultiThreadedDownloaderLib
 		}
 	}
 
-	public enum DownloadableContentChunkState
+	public enum DownloadableTaskState
 	{
 		Preparing, Connecting, Connected, Downloading, Finished, Errored
 	}

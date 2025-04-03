@@ -31,9 +31,9 @@ namespace MultiThreadedDownloaderLib
 		public bool IgnoreHeaderRequestErrors { get; set; } = true;
 		public bool SkipHeaderRequest { get; set; } = false;
 		public long DownloadedInLastSession { get; private set; } = 0L;
-		public long OutputStreamSize => DownloadingTask?.OutputStream?.Stream != null ?
-			DownloadingTask.OutputStream.Stream.Length : 0L;
-		public DownloadingTask DownloadingTask { get; private set; }
+		public long OutputStreamSize => DownloadableChunk?.OutputStream?.Stream != null ?
+			DownloadableChunk.OutputStream.Stream.Length : 0L;
+		public DownloadableChunk DownloadableChunk { get; private set; }
 
 		/// <summary>
 		/// Don't save downloaded data to anywhere.
@@ -67,11 +67,11 @@ namespace MultiThreadedDownloaderLib
 		public const int DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED = -13;
 		public const int DOWNLOAD_ERROR_UNSUPPORTED_COMPRESSION_ALGORITHM = -14;
 
-		public delegate void PreparingDelegate(object sender, string url, DownloadingTask downloadingTask);
-		public delegate void HeadersReceivingDelegate(object sender, string url, DownloadingTask downloadingTask,
+		public delegate void PreparingDelegate(object sender, string url, DownloadableChunk downloadableChunk);
+		public delegate void HeadersReceivingDelegate(object sender, string url, DownloadableChunk downloadableChunk,
 			int tryNumber, int tryCountLimit);
 		public delegate void HeadersReceivedDelegate(object sender, string url,
-			DownloadingTask downloadingTask, NameValueCollection headers,
+			DownloadableChunk downloadableChunk, NameValueCollection headers,
 			int tryNumber, int tryCountLimit, int errorCode);
 		public delegate void ConnectingDelegate(object sender, string url, int tryNumber, int tryCountLimit);
 		public delegate int ConnectedDelegate(object sender, string url, long contentLength,
@@ -105,22 +105,22 @@ namespace MultiThreadedDownloaderLib
 
 		public void DisposeOutputStream()
 		{
-			if (DownloadingTask != null)
+			if (DownloadableChunk != null)
 			{
-				DownloadingTask.OutputStream?.Dispose();
-				DownloadingTask = null;
+				DownloadableChunk.OutputStream?.Dispose();
+				DownloadableChunk = null;
 			}
 		}
 
-		public int Download(DownloadingTask downloadingTask, int bufferSize,
+		public int Download(DownloadableChunk downloadableChunk, int bufferSize,
 			CancellationTokenSource cancellationTokenSource)
 		{
-			Preparing?.Invoke(this, Url, downloadingTask);
+			Preparing?.Invoke(this, Url, downloadableChunk);
 
 			IsActive = true;
 			_isAborted = false;
 			LastErrorMessage = null;
-			DownloadingTask = downloadingTask;
+			DownloadableChunk = downloadableChunk;
 			bool fakeDownloading = FakeDownloading;
 			DownloadedInLastSession = 0L;
 
@@ -132,7 +132,7 @@ namespace MultiThreadedDownloaderLib
 				return LastErrorCode;
 			}
 
-			if (!IsRangeValid(downloadingTask.ByteFrom, downloadingTask.ByteTo))
+			if (!IsRangeValid(downloadableChunk.ByteFrom, downloadableChunk.ByteTo))
 			{
 				LastErrorCode = DOWNLOAD_ERROR_RANGE;
 				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
@@ -153,7 +153,7 @@ namespace MultiThreadedDownloaderLib
 				while (true)
 				{
 					tryNumber++;
-					HeadersReceiving?.Invoke(this, Url, downloadingTask, tryNumber, tryCountLimit);
+					HeadersReceiving?.Invoke(this, Url, downloadableChunk, tryNumber, tryCountLimit);
 					stopwatch.Restart();
 					LastErrorCode = GetUrlResponseHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
 						out responseHeaders, out string headersErrorText);
@@ -168,7 +168,7 @@ namespace MultiThreadedDownloaderLib
 					}
 					else if (IgnoreHeaderRequestErrors || LastErrorCode == 200 || LastErrorCode == 206)
 					{
-						HeadersReceived?.Invoke(this, Url, downloadingTask, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
+						HeadersReceived?.Invoke(this, Url, downloadableChunk, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
 						tryNumber = 0;
 						break;
 					}
@@ -178,7 +178,7 @@ namespace MultiThreadedDownloaderLib
 						stopwatch.Stop();
 						LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 						LastErrorMessage = "Не удалось получить HTTP-заголовки!";
-						HeadersReceived?.Invoke(this, Url, downloadingTask, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
+						HeadersReceived?.Invoke(this, Url, downloadableChunk, responseHeaders, tryNumber, tryCountLimit, LastErrorCode);
 						WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
 						IsActive = false;
 						return LastErrorCode;
@@ -202,10 +202,10 @@ namespace MultiThreadedDownloaderLib
 				ResetRange();
 			}
 
-			long outputStreamInitialPosition = fakeDownloading ? 0L : downloadingTask.OutputStream.Stream.Position;
+			long outputStreamInitialPosition = fakeDownloading ? 0L : downloadableChunk.OutputStream.Stream.Position;
 
 			if (!fakeDownloading && !IgnoreStreamSizeExceededError && contentLength > 0L &&
-				outputStreamInitialPosition + contentLength < downloadingTask.OutputStream.Stream.Length)
+				outputStreamInitialPosition + contentLength < downloadableChunk.OutputStream.Stream.Length)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED;
 				WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
@@ -244,9 +244,9 @@ namespace MultiThreadedDownloaderLib
 #endif
 				if (isRangeSupported)
 				{
-					long byteTo = downloadingTask.ByteTo >= 0L ? downloadingTask.ByteTo :
+					long byteTo = downloadableChunk.ByteTo >= 0L ? downloadableChunk.ByteTo :
 						(contentLength >= 0L ? contentLength - 1L : -1L);
-					if (!SetRange(DownloadedInLastSession + downloadingTask.ByteFrom, byteTo))
+					if (!SetRange(DownloadedInLastSession + downloadableChunk.ByteFrom, byteTo))
 					{
 						stopwatch.Stop();
 						LastErrorCode = DOWNLOAD_ERROR_RANGE;
@@ -260,7 +260,7 @@ namespace MultiThreadedDownloaderLib
 #endif
 					if (!fakeDownloading)
 					{
-						downloadingTask.OutputStream.Stream.Position =
+						downloadableChunk.OutputStream.Stream.Position =
 #if DEBUG
 							resumingPosition;
 #else
@@ -289,7 +289,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 						Debug.WriteLine($"Downloader №{Id}: Output stream position is {outputStreamInitialPosition}");
 #endif
-						downloadingTask.OutputStream.Stream.Position = outputStreamInitialPosition;
+						downloadableChunk.OutputStream.Stream.Position = outputStreamInitialPosition;
 					}
 				}
 
@@ -399,7 +399,7 @@ namespace MultiThreadedDownloaderLib
 				try
 				{
 					CancellationToken token = _cancellationTokenSource.Token;
-					Stream actualOutputStream = fakeDownloading ? null : downloadingTask.OutputStream.Stream;
+					Stream actualOutputStream = fakeDownloading ? null : downloadableChunk.OutputStream.Stream;
 					LastErrorCode = requestResult.WebContent.ContentToStream(
 						actualOutputStream, bufferSize, (long bytes) =>
 						{
@@ -438,7 +438,7 @@ namespace MultiThreadedDownloaderLib
 				LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
 			}
 			else if (!IgnoreStreamSizeExceededError && !fakeDownloading &&
-				contentLength > 0L && downloadingTask.OutputStream.Stream.Length > contentLength)
+				contentLength > 0L && downloadableChunk.OutputStream.Stream.Length > contentLength)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED;
 			}
@@ -452,23 +452,23 @@ namespace MultiThreadedDownloaderLib
 			return LastErrorCode;
 		}
 
-		public int Download(DownloadingTask downloadingTask,
+		public int Download(DownloadableChunk downloadableChunk,
 			CancellationTokenSource cancellationTokenSource)
 		{
-			return Download(downloadingTask, 4096, cancellationTokenSource);
+			return Download(downloadableChunk, 4096, cancellationTokenSource);
 		}
 
-		public int Download(DownloadingTask downloadingTask, int bufferSize = 4096)
+		public int Download(DownloadableChunk downloadableChunk, int bufferSize = 4096)
 		{
-			return Download(downloadingTask, bufferSize, null);
+			return Download(downloadableChunk, bufferSize, null);
 		}
 
 		public int Download(ContentChunkStream contentChunkStream,
 			long rangeFrom, long rangeTo, int bufferSize,
 			CancellationTokenSource cancellationTokenSource = null)
 		{
-			DownloadingTask downloadingTask = new DownloadingTask(contentChunkStream, rangeFrom, rangeTo);
-			return Download(downloadingTask, bufferSize, cancellationTokenSource);
+			DownloadableChunk downloadableChunk = new DownloadableChunk(contentChunkStream, rangeFrom, rangeTo);
+			return Download(downloadableChunk, bufferSize, cancellationTokenSource);
 		}
 
 		public int Download(ContentChunkStream contentChunkStream,
@@ -587,10 +587,10 @@ namespace MultiThreadedDownloaderLib
 
 		public void GetRange(out long rangeFrom, out long rangeTo)
 		{
-			if (DownloadingTask != null)
+			if (DownloadableChunk != null)
 			{
-				rangeFrom = DownloadingTask.ByteFrom;
-				rangeTo = DownloadingTask.ByteTo;
+				rangeFrom = DownloadableChunk.ByteFrom;
+				rangeTo = DownloadableChunk.ByteTo;
 			}
 			else
 			{

@@ -271,22 +271,22 @@ namespace MultiThreadedDownloaderLib
 			return rangeFrom >= 0L && (rangeTo < 0L || rangeTo >= rangeFrom);
 		}
 
-		internal static List<DownloadingTask> BuildChunkSequence(
-			ConcurrentDictionary<int, DownloadableContentChunk> contentChunks,
+		internal static List<DownloadableChunk> BuildChunkSequence(
+			ConcurrentDictionary<int, DownloadableTask> downloadableTasks,
 			int threadCount, out bool isValidSequence)
 		{
-			int elementCount = contentChunks.Count;
+			int elementCount = downloadableTasks.Count;
 			if (elementCount > 0 && elementCount == threadCount)
 			{
 				isValidSequence = true;
 				for (int i = 0; i < threadCount; ++i)
 				{
-					isValidSequence &= contentChunks.ContainsKey(i) &&
-						contentChunks[i]?.DownloadingTask?.OutputStream != null;
+					isValidSequence &= downloadableTasks.ContainsKey(i) &&
+						downloadableTasks[i]?.DownloadableChunk?.OutputStream != null;
 					if (!isValidSequence) { return null; }
 				}
 
-				List<DownloadingTask> taskList = contentChunks.Select(item => item.Value.DownloadingTask).ToList();
+				List<DownloadableChunk> taskList = downloadableTasks.Select(item => item.Value.DownloadableChunk).ToList();
 				taskList.Sort((x, y) => x.ByteFrom < y.ByteFrom ? -1 : 1);
 
 				return taskList;

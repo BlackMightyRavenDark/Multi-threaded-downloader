@@ -474,51 +474,51 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					lblDownloadingProgress.Text = $"Скачано 0 из {contentLengthString}";
 				}));
 			};
-			multiThreadedDownloader.DownloadProgress += (s, chunks) =>
+			multiThreadedDownloader.DownloadProgress += (s, taskDictionary) =>
 			{
 				Invoke(new MethodInvoker(() =>
 				{
-					var values = chunks.Values;
-					int itemCount = values.Count;
+					var tasks = taskDictionary.Values;
+					int taskCount = tasks.Count;
 					LinkedList<MultipleProgressBarItem> progressBarItems = new LinkedList<MultipleProgressBarItem>();
-					foreach (DownloadableContentChunk item in values)
+					foreach (DownloadableTask task in tasks)
 					{
 						string itemText;
 						double percentItem = 0.0;
-						switch (item.State)
+						switch (task.State)
 						{
-							case DownloadableContentChunkState.Preparing:
-								itemText = $"{item.TaskId}: Preparing...";
+							case DownloadableTaskState.Preparing:
+								itemText = $"{task.TaskId}: Preparing...";
 								break;
 
-							case DownloadableContentChunkState.Connecting:
-								itemText = $"{item.TaskId}: Connecting...";
+							case DownloadableTaskState.Connecting:
+								itemText = $"{task.TaskId}: Connecting...";
 								break;
 
-							case DownloadableContentChunkState.Connected:
-								itemText = $"{item.TaskId}: Connected!";
+							case DownloadableTaskState.Connected:
+								itemText = $"{task.TaskId}: Connected!";
 								break;
 
-							case DownloadableContentChunkState.Errored:
-								itemText = $"{item.TaskId}: Error!";
+							case DownloadableTaskState.Errored:
+								itemText = $"{task.TaskId}: Error!";
 								break;
 
 							default:
-								if (item.ChunkFileSize > 0L && item.ProcessedBytes >= 0L)
+								if (task.ChunkFileSize > 0L && task.ProcessedBytes >= 0L)
 								{
-									percentItem = 100.0 / item.ChunkFileSize * item.ProcessedBytes;
+									percentItem = 100.0 / task.ChunkFileSize * task.ProcessedBytes;
 									string percentItemFormatted = string.Format("{0:F3}", percentItem);
-									itemText = itemCount > 1 ? $"{item.TaskId}: {percentItemFormatted}%" : $"{percentItemFormatted}%";
+									itemText = taskCount > 1 ? $"{task.TaskId}: {percentItemFormatted}%" : $"{percentItemFormatted}%";
 								}
 								else
 								{
-									string processedBytesString = item.ProcessedBytes < 0L ? "0" : item.ProcessedBytes.ToString();
-									itemText = itemCount > 1 ? $"{item.TaskId}: {processedBytesString} / <Неизвестно>" :
+									string processedBytesString = task.ProcessedBytes < 0L ? "0" : task.ProcessedBytes.ToString();
+									itemText = taskCount > 1 ? $"{task.TaskId}: {processedBytesString} / <Неизвестно>" :
 										$"{processedBytesString} / <Неизвестно>";
 								}
 								break;
 						}
-						Color itemBackgroundColor = item.State == DownloadableContentChunkState.Errored ? Color.Orange : Color.Lime;
+						Color itemBackgroundColor = task.State == DownloadableTaskState.Errored ? Color.Orange : Color.Lime;
 						MultipleProgressBarItem mpi = new MultipleProgressBarItem(
 							0, 100, (int)percentItem, itemText, itemBackgroundColor);
 						progressBarItems.AddLast(mpi);
@@ -526,7 +526,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 					progressBar1.SetItems(progressBarItems);
 
-					long totalBytesTransferred = values.Where(item => item.ProcessedBytes >= 0L).Sum(item => item.ProcessedBytes);
+					long totalBytesTransferred = tasks.Where(item => item.ProcessedBytes >= 0L).Sum(item => item.ProcessedBytes);
 					long contentLength = (s as MultiThreadedDownloader).ContentLength;
 					if (contentLength > 0L)
 					{
@@ -688,11 +688,11 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 		}
 
-		private void OnPreparing(object sender, string url, DownloadingTask downloadingTask)
+		private void OnPreparing(object sender, string url, DownloadableChunk downloadableChunk)
 		{
 			if (InvokeRequired)
 			{
-				Invoke(new MethodInvoker(() => OnPreparing(sender, url, downloadingTask)));
+				Invoke(new MethodInvoker(() => OnPreparing(sender, url, downloadableChunk)));
 			}
 			else
 			{
@@ -703,11 +703,11 @@ namespace MultiThreadedDownloaderLib.GuiTest
 		}
 
 		private void OnHeadersReceiving(object sender, string url,
-			DownloadingTask downloadingTask, int tryNumber, int tryCountLimit)
+			DownloadableChunk downloadableChunk, int tryNumber, int tryCountLimit)
 		{
 			if (InvokeRequired)
 			{
-				Invoke(new MethodInvoker(() => OnHeadersReceiving(sender, url, downloadingTask, tryNumber, tryCountLimit)));
+				Invoke(new MethodInvoker(() => OnHeadersReceiving(sender, url, downloadableChunk, tryNumber, tryCountLimit)));
 			}
 			else
 			{
@@ -723,13 +723,13 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 #if DEBUG
 		private void OnHeadersReceived(object sender, string url,
-			DownloadingTask downloadingTask, NameValueCollection headers,
+			DownloadableChunk downloadableChunk, NameValueCollection headers,
 			int tryNumber, int tryCountLimit, int errorCode)
 		{
 			if (InvokeRequired)
 			{
 				Invoke(new MethodInvoker(() => OnHeadersReceived(sender, url,
-					downloadingTask, headers, tryNumber, tryCountLimit, errorCode)));
+					downloadableChunk, headers, tryNumber, tryCountLimit, errorCode)));
 			}
 			else
 			{
