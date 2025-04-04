@@ -46,13 +46,13 @@ namespace MultiThreadedDownloaderLib
 			return null;
 		}
 
-		internal static IEnumerable<Tuple<long, long>> SplitContentToChunks(
+		internal static IEnumerable<DownloadRange> SplitContentToChunks(
 			long contentLength, long rangeFrom, long rangeTo, int chunkCount)
 		{
 			if (rangeTo < 0L) { rangeTo = contentLength; }
 			if (contentLength <= 0L || rangeTo < rangeFrom || chunkCount <= 1)
 			{
-				yield return new Tuple<long, long>(0L, contentLength - 1L);
+				yield return new DownloadRange(0L, contentLength - 1L);
 				yield break;
 			}
 
@@ -60,7 +60,7 @@ namespace MultiThreadedDownloaderLib
 			if (chunkCount <= 1 || contentLengthRanged <= ONE_MEGABYTE)
 			{
 				long byteTo = rangeTo >= 0L ? rangeTo : contentLengthRanged + rangeFrom - 1L;
-				yield return new Tuple<long, long>(rangeFrom, byteTo);
+				yield return new DownloadRange(rangeFrom, byteTo);
 				yield break;
 			}
 
@@ -71,7 +71,7 @@ namespace MultiThreadedDownloaderLib
 				bool lastChunk = i == chunkCount - 1;
 				long endPos = lastChunk ? (rangeTo >= 0L ? rangeTo : contentLength - 1L) : (startPos + chunkSize);
 
-				yield return new Tuple<long, long>(startPos, endPos);
+				yield return new DownloadRange(startPos, endPos);
 
 				if (!lastChunk) { startPos += chunkSize + 1L; }
 			}
@@ -266,11 +266,6 @@ namespace MultiThreadedDownloaderLib
 			return result;
 		}
 
-		public static bool IsRangeValid(long rangeFrom, long rangeTo)
-		{
-			return rangeFrom >= 0L && (rangeTo < 0L || rangeTo >= rangeFrom);
-		}
-
 		internal static List<DownloadableChunk> BuildChunkSequence(
 			ConcurrentDictionary<int, DownloadableTask> downloadableTasks,
 			int threadCount, out bool isValidSequence)
@@ -287,7 +282,7 @@ namespace MultiThreadedDownloaderLib
 				}
 
 				List<DownloadableChunk> taskList = downloadableTasks.Select(item => item.Value.DownloadableChunk).ToList();
-				taskList.Sort((x, y) => x.ByteFrom < y.ByteFrom ? -1 : 1);
+				taskList.Sort((x, y) => x.Range.StartPosition < y.Range.StartPosition ? -1 : 1);
 
 				return taskList;
 			}

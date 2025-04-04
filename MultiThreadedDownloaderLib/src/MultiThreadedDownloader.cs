@@ -313,8 +313,8 @@ namespace MultiThreadedDownloaderLib
 				DownloadableChunk downloadableChunk = null;
 				if (state != DownloadableTaskState.Preparing)
 				{
-					fd.GetRange(out long byteFrom, out long byteTo);
-					downloadableChunk = new DownloadableChunk(fd.DownloadableChunk.OutputStream, byteFrom, byteTo);
+					fd.GetRange(out DownloadRange range);
+					downloadableChunk = new DownloadableChunk(fd.DownloadableChunk.OutputStream, range);
 				}
 				DownloadableTask downloadableTask = new DownloadableTask(
 					downloadableChunk, fd.Id, fullContentLength, processedBytes, tryNumber, TryCountLimitPerThread, state);
@@ -348,15 +348,13 @@ namespace MultiThreadedDownloaderLib
 					null, i, fullContentLength, 0L, -1, TryCountLimitPerThread, DownloadableTaskState.Preparing);
 			}
 
-			var tasks = chunkRanges.Select((range, taskId) => Task.Run(() =>
+			var tasks = chunkRanges.Select((taskDownloadRange, taskId) => Task.Run(() =>
 			{
-				long chunkFirstByte = range.Item1;
-				long chunkLastByte = range.Item2;
-
 				string chunkFileName = null;
 				if (!UseRamForTempFiles && !isFakeDownloading)
 				{
-					chunkFileName = GetNumberedFileName(FormatChunkTempFilePath(chunkCount, chunkFirstByte, chunkLastByte, fullContentLength));
+					chunkFileName = GetNumberedFileName(FormatChunkTempFilePath(chunkCount,
+						taskDownloadRange.StartPosition, taskDownloadRange.EndPosition, fullContentLength));
 					if (string.IsNullOrEmpty(chunkFileName) || string.IsNullOrWhiteSpace(chunkFileName))
 					{
 						LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
@@ -463,8 +461,8 @@ namespace MultiThreadedDownloaderLib
 						taskState = DownloadableTaskState.Finished;
 					}
 
-					d.GetRange(out long byteFrom, out long byteTo);
-					DownloadableChunk downloadableChunk = new DownloadableChunk(d.DownloadableChunk.OutputStream, byteFrom, byteTo);
+					d.GetRange(out DownloadRange range);
+					DownloadableChunk downloadableChunk = new DownloadableChunk(d.DownloadableChunk.OutputStream, range);
 					DownloadableTask downloadableTask = new DownloadableTask(
 						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
@@ -484,7 +482,7 @@ namespace MultiThreadedDownloaderLib
 						}
 						else
 						{
-							long bytesNeeded = chunkLastByte - chunkFirstByte + ONE_MEGABYTE;
+							long bytesNeeded = taskDownloadRange.Length + ONE_MEGABYTE;
 							if (!IsEnoughDiskSpace(chunkFileName[0], bytesNeeded, out string errorMsg))
 							{
 								LastErrorCode = DOWNLOAD_ERROR_ABORTED;
@@ -496,7 +494,7 @@ namespace MultiThreadedDownloaderLib
 
 						if (isRangeSupported)
 						{
-							downloader.SetRange(chunkFirstByte, chunkLastByte);
+							downloader.SetRange(taskDownloadRange);
 						}
 
 						LastErrorCode = downloader.Download(
@@ -1011,9 +1009,14 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
+		public bool SetRange(DownloadRange downloadRange)
+		{
+			return SetRange(downloadRange.StartPosition, downloadRange.EndPosition);
+		}
+
 		public bool SetRange(long rangeFrom, long rangeTo)
 		{
-			if (IsRangeValid(rangeFrom, rangeTo))
+			if (DownloadRange.IsValidRange(rangeFrom, rangeTo))
 			{
 				RangeFrom = rangeFrom;
 				RangeTo = rangeTo;

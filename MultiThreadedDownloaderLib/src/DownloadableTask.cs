@@ -19,8 +19,8 @@ namespace MultiThreadedDownloaderLib
 			DownloadableChunk = downloadableChunk;
 			TaskId = taskId;
 			FullContentLength = fullContentLength;
-			ChunkFileSize = downloadableChunk != null && downloadableChunk.ByteTo >= 0L ?
-				downloadableChunk.ByteTo - downloadableChunk.ByteFrom + 1L : -1L;
+			ChunkFileSize = downloadableChunk?.Range != null && downloadableChunk.Range.EndPosition >= 0L ?
+				downloadableChunk.Range.Length : -1L;
 			ProcessedBytes = processedBytes;
 			TryNumber = tryNumber;
 			TryCountLimit = tryCountLimit;

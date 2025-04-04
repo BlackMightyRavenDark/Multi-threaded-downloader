@@ -132,7 +132,7 @@ namespace MultiThreadedDownloaderLib
 				return LastErrorCode;
 			}
 
-			if (!IsRangeValid(downloadableChunk.ByteFrom, downloadableChunk.ByteTo))
+			if (!downloadableChunk.Range.IsValid)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_RANGE;
 				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
@@ -244,9 +244,9 @@ namespace MultiThreadedDownloaderLib
 #endif
 				if (isRangeSupported)
 				{
-					long byteTo = downloadableChunk.ByteTo >= 0L ? downloadableChunk.ByteTo :
+					long byteTo = downloadableChunk.Range.EndPosition >= 0L ? downloadableChunk.Range.EndPosition :
 						(contentLength >= 0L ? contentLength - 1L : -1L);
-					if (!SetRange(DownloadedInLastSession + downloadableChunk.ByteFrom, byteTo))
+					if (!SetRange(DownloadedInLastSession + downloadableChunk.Range.StartPosition, byteTo))
 					{
 						stopwatch.Stop();
 						LastErrorCode = DOWNLOAD_ERROR_RANGE;
@@ -464,11 +464,19 @@ namespace MultiThreadedDownloaderLib
 		}
 
 		public int Download(ContentChunkStream contentChunkStream,
+			DownloadRange downloadRange, int bufferSize,
+			CancellationTokenSource cancellationTokenSource = null)
+		{
+			DownloadableChunk downloadableChunk = new DownloadableChunk(contentChunkStream, downloadRange);
+			return Download(downloadableChunk, bufferSize, cancellationTokenSource);
+		}
+
+		public int Download(ContentChunkStream contentChunkStream,
 			long rangeFrom, long rangeTo, int bufferSize,
 			CancellationTokenSource cancellationTokenSource = null)
 		{
-			DownloadableChunk downloadableChunk = new DownloadableChunk(contentChunkStream, rangeFrom, rangeTo);
-			return Download(downloadableChunk, bufferSize, cancellationTokenSource);
+			DownloadRange range = new DownloadRange(rangeFrom, rangeTo);
+			return Download(contentChunkStream, range, bufferSize, cancellationTokenSource);
 		}
 
 		public int Download(ContentChunkStream contentChunkStream,
@@ -585,32 +593,44 @@ namespace MultiThreadedDownloaderLib
 			return _isAborted;
 		}
 
-		public void GetRange(out long rangeFrom, out long rangeTo)
+		public void GetRange(out DownloadRange downloadRange)
 		{
-			if (DownloadableChunk != null)
+			downloadRange = DownloadableChunk?.Range != null ?
+				DownloadableChunk.Range :
+				new DownloadRange(_rangeFrom, _rangeTo);
+		}
+
+		public void GetRange(out long startPosition, out long endPosition)
+		{
+			if (DownloadableChunk?.Range != null)
 			{
-				rangeFrom = DownloadableChunk.ByteFrom;
-				rangeTo = DownloadableChunk.ByteTo;
+				startPosition = DownloadableChunk.Range.StartPosition;
+				endPosition = DownloadableChunk.Range.EndPosition;
 			}
 			else
 			{
-				rangeFrom = _rangeFrom;
-				rangeTo = _rangeTo;
+				startPosition = _rangeFrom;
+				endPosition = _rangeTo;
 			}
 		}
 
-		public bool SetRange(long rangeFrom, long rangeTo)
+		public bool SetRange(DownloadRange downloadRange)
 		{
-			if (!IsRangeValid(rangeFrom, rangeTo))
+			return SetRange(downloadRange.StartPosition, downloadRange.EndPosition);
+		}
+
+		public bool SetRange(long startPosition, long endPosition)
+		{
+			if (!DownloadRange.IsValidRange(startPosition, endPosition))
 			{
 				return false;
 			}
 
 			ResetRange();
-			_rangeFrom = rangeFrom;
-			_rangeTo = rangeTo;
+			_rangeFrom = startPosition;
+			_rangeTo = endPosition;
 
-			string rangeValue = rangeTo >= 0L ? $"{rangeFrom}-{rangeTo}" : $"{rangeFrom}-";
+			string rangeValue = endPosition >= 0L ? $"{startPosition}-{endPosition}" : $"{startPosition}-";
 			Headers.Add("Range", rangeValue);
 
 			return true;

@@ -4,14 +4,12 @@ namespace MultiThreadedDownloaderLib
 	public sealed class DownloadableChunk
 	{
 		public ContentChunkStream OutputStream { get; }
-		public long ByteFrom { get; }
-		public long ByteTo { get; }
+		public DownloadRange Range { get; }
 
-		public DownloadableChunk(ContentChunkStream outputStream, long byteFrom, long byteTo)
+		public DownloadableChunk(ContentChunkStream outputStream, DownloadRange downloadRange)
 		{
 			OutputStream = outputStream;
-			ByteFrom = byteFrom;
-			ByteTo = byteTo;
+			Range = downloadRange;
 		}
 	}
 }
