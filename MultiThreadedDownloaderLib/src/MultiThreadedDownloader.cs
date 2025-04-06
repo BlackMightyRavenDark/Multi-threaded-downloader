@@ -160,6 +160,7 @@ namespace MultiThreadedDownloaderLib
 			{
 				LastErrorCode = DOWNLOAD_ERROR_CUSTOM;
 				LastErrorMessage = "Не указана или недоступна папка для временных файлов!";
+				IsActive = false;
 				return LastErrorCode;
 			}
 
