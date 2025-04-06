@@ -473,23 +473,12 @@ namespace MultiThreadedDownloaderLib
 					try
 					{
 						taskTryNumber++;
-						Stream streamChunk = null;
-						if (UseRamForTempFiles || isFakeDownloading)
+
+						if (!GetChunkStream(downloader, taskDownloadRange, chunkFileName,
+							UseRamForTempFiles, isFakeDownloading, out Stream streamChunk))
 						{
-							downloader.DisposeOutputStream();
-							GC.Collect();
-							streamChunk = isFakeDownloading ? null : new MemoryStream();
-						}
-						else
-						{
-							long bytesNeeded = taskDownloadRange.Length + ONE_MEGABYTE;
-							if (!IsEnoughDiskSpace(chunkFileName[0], bytesNeeded, out string errorMsg))
-							{
-								LastErrorCode = DOWNLOAD_ERROR_ABORTED;
-								LastErrorMessage = errorMsg;
-								return;
-							}
-							streamChunk = File.OpenWrite(chunkFileName);
+							AbortTasks(downloaders);
+							return;
 						}
 
 						if (isRangeSupported)
@@ -719,6 +708,33 @@ namespace MultiThreadedDownloaderLib
 			{
 				d.Stop();
 			}
+		}
+
+		private bool GetChunkStream(FileDownloader downloader, DownloadRange range,
+			string chunkFileName,
+			bool useRamForTempFiles, bool isFakeDownloading, out Stream outputStream)
+		{
+			if (useRamForTempFiles || isFakeDownloading)
+			{
+				downloader.DisposeOutputStream();
+				GC.Collect();
+				outputStream = isFakeDownloading ? null : new MemoryStream();
+			}
+			else
+			{
+				long bytesNeeded = range.Length + ONE_MEGABYTE;
+				if (!IsEnoughDiskSpace(chunkFileName[0], bytesNeeded, out string errorMsg))
+				{
+					LastErrorCode = DOWNLOAD_ERROR_ABORTED;
+					LastErrorMessage = errorMsg;
+					outputStream = null;
+					return false;
+				}
+
+				outputStream = File.OpenWrite(chunkFileName);
+			}
+
+			return true;
 		}
 
 		private int MergeChunks(IEnumerable<DownloadableChunk> downloadableChunks, Stream outputStream)
