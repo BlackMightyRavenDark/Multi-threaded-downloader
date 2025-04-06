@@ -497,9 +497,9 @@ namespace MultiThreadedDownloaderLib
 							downloader.SetRange(taskDownloadRange);
 						}
 
-						LastErrorCode = downloader.Download(
-							streamChunk, UseRamForTempFiles || isFakeDownloading ? null : chunkFileName,
-							bufferSize, _cancellationTokenSource);
+						ContentChunkStream chunkStream = new ContentChunkStream(
+							streamChunk, UseRamForTempFiles || isFakeDownloading ? null : chunkFileName);
+						LastErrorCode = downloader.Download(chunkStream, bufferSize, _cancellationTokenSource);
 
 						lock (downloaders)
 						{

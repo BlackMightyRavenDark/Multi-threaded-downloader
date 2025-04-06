@@ -479,17 +479,23 @@ namespace MultiThreadedDownloaderLib
 			return Download(contentChunkStream, range, bufferSize, cancellationTokenSource);
 		}
 
-		public int Download(ContentChunkStream contentChunkStream,
-			long rangeFrom, long rangeTo,
+		public int Download(ContentChunkStream contentChunkStream, int bufferSize,
 			CancellationTokenSource cancellationTokenSource = null)
 		{
-			return Download(contentChunkStream, rangeFrom, rangeTo, 4096, cancellationTokenSource);
+			return Download(contentChunkStream, _rangeFrom, _rangeTo, bufferSize, cancellationTokenSource);
 		}
 
 		public int Download(ContentChunkStream contentChunkStream,
 			CancellationTokenSource cancellationTokenSource = null)
 		{
-			return Download(contentChunkStream, _rangeFrom, _rangeTo, cancellationTokenSource);
+			return Download(contentChunkStream, 4096, cancellationTokenSource);
+		}
+
+		public int Download(ContentChunkStream contentChunkStream,
+			long rangeFrom, long rangeTo,
+			CancellationTokenSource cancellationTokenSource = null)
+		{
+			return Download(contentChunkStream, rangeFrom, rangeTo, 4096, cancellationTokenSource);
 		}
 
 		public int Download(Stream outputStream, string outputFilePath,
