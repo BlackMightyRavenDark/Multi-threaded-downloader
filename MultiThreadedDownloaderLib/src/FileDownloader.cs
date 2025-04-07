@@ -38,7 +38,7 @@ namespace MultiThreadedDownloaderLib
 		/// <summary>
 		/// Don't save downloaded data to anywhere.
 		/// </summary>
-		public bool FakeDownloading { get; set;} = false;
+		public bool FakeDownloading { get; set; } = false;
 
 		public bool IsActive { get; private set; } = false;
 		public int LastErrorCode { get; private set; } = 200;
@@ -121,7 +121,6 @@ namespace MultiThreadedDownloaderLib
 			_isAborted = false;
 			LastErrorMessage = null;
 			DownloadableChunk = downloadableChunk;
-			bool fakeDownloading = FakeDownloading;
 			DownloadedInLastSession = 0L;
 
 			if (string.IsNullOrEmpty(Url) || string.IsNullOrWhiteSpace(Url))
@@ -202,9 +201,10 @@ namespace MultiThreadedDownloaderLib
 				ResetRange();
 			}
 
-			long outputStreamInitialPosition = fakeDownloading ? 0L : downloadableChunk.OutputStream.Stream.Position;
+			bool isFakeDownloading = FakeDownloading || downloadableChunk?.OutputStream?.Stream == null;
+			long outputStreamInitialPosition = isFakeDownloading ? 0L : downloadableChunk.OutputStream.Stream.Position;
 
-			if (!fakeDownloading && !IgnoreStreamSizeExceededError && contentLength > 0L &&
+			if (!isFakeDownloading && !IgnoreStreamSizeExceededError && contentLength > 0L &&
 				outputStreamInitialPosition + contentLength < downloadableChunk.OutputStream.Stream.Length)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED;
@@ -258,7 +258,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 					long resumingPosition = outputStreamInitialPosition + DownloadedInLastSession;
 #endif
-					if (!fakeDownloading)
+					if (!isFakeDownloading)
 					{
 						downloadableChunk.OutputStream.Stream.Position =
 #if DEBUG
@@ -284,7 +284,7 @@ namespace MultiThreadedDownloaderLib
 #endif
 					chunkProcessingDict.Clear();
 					DownloadedInLastSession = 0L;
-					if (!fakeDownloading)
+					if (!isFakeDownloading)
 					{
 #if DEBUG
 						Debug.WriteLine($"Downloader №{Id}: Output stream position is {outputStreamInitialPosition}");
@@ -399,7 +399,7 @@ namespace MultiThreadedDownloaderLib
 				try
 				{
 					CancellationToken token = _cancellationTokenSource.Token;
-					Stream actualOutputStream = fakeDownloading ? null : downloadableChunk.OutputStream.Stream;
+					Stream actualOutputStream = isFakeDownloading ? null : downloadableChunk.OutputStream.Stream;
 					LastErrorCode = requestResult.WebContent.ContentToStream(
 						actualOutputStream, bufferSize, (long bytes) =>
 						{
@@ -437,7 +437,7 @@ namespace MultiThreadedDownloaderLib
 			{
 				LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
 			}
-			else if (!IgnoreStreamSizeExceededError && !fakeDownloading &&
+			else if (!IgnoreStreamSizeExceededError && !isFakeDownloading &&
 				contentLength > 0L && downloadableChunk.OutputStream.Stream.Length > contentLength)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED;
