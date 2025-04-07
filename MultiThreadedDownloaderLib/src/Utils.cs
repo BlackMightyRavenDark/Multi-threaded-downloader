@@ -315,6 +315,25 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
+		public static bool IsValidUrl(string url, out string errorMessage)
+		{
+			try
+			{
+				Uri uri = new Uri(url);
+				errorMessage = null;
+				return true;
+			}
+			catch (Exception ex)
+			{
+#if DEBUG
+				System.Diagnostics.Debug.WriteLine(ex.Message);
+#endif
+				errorMessage = ex.Message;
+			}
+
+			return false;
+		}
+
 		public static void SetRequestHeaders(HttpWebRequest request, NameValueCollection headers)
 		{
 			request.Headers.Clear();

@@ -132,6 +132,15 @@ namespace MultiThreadedDownloaderLib
 				return LastErrorCode;
 			}
 
+			if (!IsValidUrl(Url, out string urlErrorMessage))
+			{
+				LastErrorCode = DOWNLOAD_ERROR_INVALID_URL;
+				LastErrorMessage = urlErrorMessage;
+				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
+				IsActive = false;
+				return LastErrorCode;
+			}
+
 			if (!FakeDownloading && downloadableChunk?.OutputStream?.Stream == null)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_OUTPUT_STREAM_NOT_ASSIGNED;
