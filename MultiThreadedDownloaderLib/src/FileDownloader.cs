@@ -66,6 +66,7 @@ namespace MultiThreadedDownloaderLib
 		public const int DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED = -12;
 		public const int DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED = -13;
 		public const int DOWNLOAD_ERROR_UNSUPPORTED_COMPRESSION_ALGORITHM = -14;
+		public const int DOWNLOAD_ERROR_OUTPUT_STREAM_NOT_ASSIGNED = -15;
 
 		public delegate void PreparingDelegate(object sender, string url, DownloadableChunk downloadableChunk);
 		public delegate void HeadersReceivingDelegate(object sender, string url, DownloadableChunk downloadableChunk,
@@ -126,6 +127,14 @@ namespace MultiThreadedDownloaderLib
 			if (string.IsNullOrEmpty(Url) || string.IsNullOrWhiteSpace(Url))
 			{
 				LastErrorCode = DOWNLOAD_ERROR_URL_NOT_DEFINED;
+				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
+				IsActive = false;
+				return LastErrorCode;
+			}
+
+			if (!FakeDownloading && downloadableChunk?.OutputStream?.Stream == null)
+			{
+				LastErrorCode = DOWNLOAD_ERROR_OUTPUT_STREAM_NOT_ASSIGNED;
 				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
 				IsActive = false;
 				return LastErrorCode;
@@ -201,7 +210,7 @@ namespace MultiThreadedDownloaderLib
 				ResetRange();
 			}
 
-			bool isFakeDownloading = FakeDownloading || downloadableChunk?.OutputStream?.Stream == null;
+			bool isFakeDownloading = FakeDownloading;
 			long outputStreamInitialPosition = isFakeDownloading ? 0L : downloadableChunk.OutputStream.Stream.Position;
 
 			if (!isFakeDownloading && !IgnoreStreamSizeExceededError && contentLength > 0L &&
@@ -775,6 +784,9 @@ namespace MultiThreadedDownloaderLib
 
 				case DOWNLOAD_ERROR_UNSUPPORTED_COMPRESSION_ALGORITHM:
 					return "Алгоритм сжатия данных не поддерживается!";
+
+				case DOWNLOAD_ERROR_OUTPUT_STREAM_NOT_ASSIGNED:
+					return "Не указан поток для сохранения данных!";
 
 				default:
 					return $"Код ошибки: {errorCode}";
