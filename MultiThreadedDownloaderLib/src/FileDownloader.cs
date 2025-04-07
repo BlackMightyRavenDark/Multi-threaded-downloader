@@ -149,7 +149,12 @@ namespace MultiThreadedDownloaderLib
 				return LastErrorCode;
 			}
 
-			if (!downloadableChunk.Range.IsValid)
+			bool isRangeAssigned = downloadableChunk.Range != null;
+			if (!isRangeAssigned)
+			{
+				ResetRange();
+			}
+			else if (!downloadableChunk.Range.IsValid)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_RANGE;
 				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
@@ -260,7 +265,7 @@ namespace MultiThreadedDownloaderLib
 					Debug.WriteLine($"Downloader №{Id}: Using a proxy server {Proxy.Address}");
 				}
 #endif
-				if (isRangeSupported)
+				if (isRangeSupported && isRangeAssigned)
 				{
 					long byteTo = downloadableChunk.Range.EndPosition >= 0L ? downloadableChunk.Range.EndPosition :
 						(contentLength >= 0L ? contentLength - 1L : -1L);
