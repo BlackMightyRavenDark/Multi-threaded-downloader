@@ -378,7 +378,7 @@ namespace MultiThreadedDownloaderLib
 				};
 				lock (downloaders) { downloaders.Add(downloader); }
 
-				int lastTime = Environment.TickCount;
+				#region Downloader event handlers
 #if DEBUG
 				downloader.Preparing += (object sender, string url, DownloadableChunk downloadableChunk) =>
 				{
@@ -422,6 +422,8 @@ namespace MultiThreadedDownloaderLib
 
 					return errCode;
 				};
+
+				int lastTime = Environment.TickCount;
 				downloader.WorkProgress += (object sender, long transferred, long contentLen, int tryNumber, int tryCountLimit) =>
 				{
 					int currentTime = Environment.TickCount;
@@ -468,6 +470,7 @@ namespace MultiThreadedDownloaderLib
 						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
 				};
+				#endregion
 
 				while (true)
 				{
