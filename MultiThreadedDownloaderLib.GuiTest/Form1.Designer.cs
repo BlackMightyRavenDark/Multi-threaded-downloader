@@ -30,9 +30,9 @@
 		{
 			this.components = new System.ComponentModel.Container();
 			this.btnDownloadSingleThreaded = new System.Windows.Forms.Button();
-			this.editUrl = new System.Windows.Forms.TextBox();
+			this.textBoxUrl = new System.Windows.Forms.TextBox();
 			this.btnDownloadMultiThreaded = new System.Windows.Forms.Button();
-			this.lblDownloadingProgress = new System.Windows.Forms.Label();
+			this.lblDownloadProgress = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
@@ -45,7 +45,7 @@
 			this.btnSelectMergingDir = new System.Windows.Forms.Button();
 			this.numericUpDownThreadCount = new System.Windows.Forms.NumericUpDown();
 			this.label5 = new System.Windows.Forms.Label();
-			this.lblMergingProgress = new System.Windows.Forms.Label();
+			this.lblMergeProgress = new System.Windows.Forms.Label();
 			this.cbKeepDownloadedFileInTempOrMergingDirectory = new System.Windows.Forms.CheckBox();
 			this.btnHeaders = new System.Windows.Forms.Button();
 			this.checkBoxUseRamForTempFiles = new System.Windows.Forms.CheckBox();
@@ -66,7 +66,7 @@
 			this.checkBoxFakeDownloading = new System.Windows.Forms.CheckBox();
 			this.textBoxProxyAddress = new System.Windows.Forms.TextBox();
 			this.numericUpDownProxyPort = new System.Windows.Forms.NumericUpDown();
-			this.progressBar1 = new MultiThreadedDownloaderLib.MultipleProgressBar();
+			this.progressBarDownloading = new MultiThreadedDownloaderLib.MultipleProgressBar();
 			this.groupBoxProxy = new System.Windows.Forms.GroupBox();
 			this.label12 = new System.Windows.Forms.Label();
 			this.label11 = new System.Windows.Forms.Label();
@@ -98,12 +98,12 @@
 			this.btnDownloadSingleThreaded.UseVisualStyleBackColor = true;
 			this.btnDownloadSingleThreaded.Click += new System.EventHandler(this.btnDownloadSingleThreaded_Click);
 			// 
-			// editUrl
+			// textBoxUrl
 			// 
-			this.editUrl.Location = new System.Drawing.Point(64, 8);
-			this.editUrl.Name = "editUrl";
-			this.editUrl.Size = new System.Drawing.Size(693, 20);
-			this.editUrl.TabIndex = 1;
+			this.textBoxUrl.Location = new System.Drawing.Point(64, 8);
+			this.textBoxUrl.Name = "textBoxUrl";
+			this.textBoxUrl.Size = new System.Drawing.Size(693, 20);
+			this.textBoxUrl.TabIndex = 1;
 			// 
 			// btnDownloadMultiThreaded
 			// 
@@ -116,15 +116,15 @@
 			this.btnDownloadMultiThreaded.UseVisualStyleBackColor = true;
 			this.btnDownloadMultiThreaded.Click += new System.EventHandler(this.btnDownloadMultiThreaded_Click);
 			// 
-			// lblDownloadingProgress
+			// lblDownloadProgress
 			// 
-			this.lblDownloadingProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.lblDownloadingProgress.AutoSize = true;
-			this.lblDownloadingProgress.Location = new System.Drawing.Point(9, 428);
-			this.lblDownloadingProgress.Name = "lblDownloadingProgress";
-			this.lblDownloadingProgress.Size = new System.Drawing.Size(58, 13);
-			this.lblDownloadingProgress.TabIndex = 4;
-			this.lblDownloadingProgress.Text = "lblProgress";
+			this.lblDownloadProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.lblDownloadProgress.AutoSize = true;
+			this.lblDownloadProgress.Location = new System.Drawing.Point(9, 428);
+			this.lblDownloadProgress.Name = "lblDownloadProgress";
+			this.lblDownloadProgress.Size = new System.Drawing.Size(58, 13);
+			this.lblDownloadProgress.TabIndex = 4;
+			this.lblDownloadProgress.Text = "lblProgress";
 			// 
 			// label1
 			// 
@@ -244,15 +244,15 @@
 			this.label5.TabIndex = 16;
 			this.label5.Text = "Количество потоков:";
 			// 
-			// lblMergingProgress
+			// lblMergeProgress
 			// 
-			this.lblMergingProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.lblMergingProgress.AutoSize = true;
-			this.lblMergingProgress.Location = new System.Drawing.Point(73, 428);
-			this.lblMergingProgress.Name = "lblMergingProgress";
-			this.lblMergingProgress.Size = new System.Drawing.Size(96, 13);
-			this.lblMergingProgress.TabIndex = 17;
-			this.lblMergingProgress.Text = "lblMergingProgress";
+			this.lblMergeProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+			this.lblMergeProgress.AutoSize = true;
+			this.lblMergeProgress.Location = new System.Drawing.Point(73, 428);
+			this.lblMergeProgress.Name = "lblMergeProgress";
+			this.lblMergeProgress.Size = new System.Drawing.Size(88, 13);
+			this.lblMergeProgress.TabIndex = 17;
+			this.lblMergeProgress.Text = "lblMergeProgress";
 			// 
 			// cbKeepDownloadedFileInTempOrMergingDirectory
 			// 
@@ -510,15 +510,15 @@
 			this.numericUpDownProxyPort.TabIndex = 2;
 			this.toolTip1.SetToolTip(this.numericUpDownProxyPort, "Введите 0, чтобы не использовать прокси-сервер");
 			// 
-			// progressBar1
+			// progressBarDownloading
 			// 
-			this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+			this.progressBarDownloading.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
 			| System.Windows.Forms.AnchorStyles.Right)));
-			this.progressBar1.Location = new System.Drawing.Point(12, 444);
-			this.progressBar1.Name = "progressBar1";
-			this.progressBar1.Size = new System.Drawing.Size(744, 23);
-			this.progressBar1.TabIndex = 27;
-			this.progressBar1.Text = "multipleProgressBar1";
+			this.progressBarDownloading.Location = new System.Drawing.Point(12, 444);
+			this.progressBarDownloading.Name = "progressBarDownloading";
+			this.progressBarDownloading.Size = new System.Drawing.Size(744, 23);
+			this.progressBarDownloading.TabIndex = 27;
+			this.progressBarDownloading.Text = "multipleProgressBar1";
 			// 
 			// groupBoxProxy
 			// 
@@ -638,7 +638,7 @@
 			this.Controls.Add(this.numericUpDownTryCountInsideEachThread);
 			this.Controls.Add(this.numericUpDownTryCountPerThread);
 			this.Controls.Add(this.label8);
-			this.Controls.Add(this.progressBar1);
+			this.Controls.Add(this.progressBarDownloading);
 			this.Controls.Add(this.numericUpDownChunksMergingUpdateInterval);
 			this.Controls.Add(this.label7);
 			this.Controls.Add(this.numericUpDownUpdateInterval);
@@ -646,7 +646,7 @@
 			this.Controls.Add(this.checkBoxUseRamForTempFiles);
 			this.Controls.Add(this.btnHeaders);
 			this.Controls.Add(this.cbKeepDownloadedFileInTempOrMergingDirectory);
-			this.Controls.Add(this.lblMergingProgress);
+			this.Controls.Add(this.lblMergeProgress);
 			this.Controls.Add(this.label5);
 			this.Controls.Add(this.numericUpDownThreadCount);
 			this.Controls.Add(this.btnSelectMergingDir);
@@ -659,9 +659,9 @@
 			this.Controls.Add(this.label3);
 			this.Controls.Add(this.label2);
 			this.Controls.Add(this.label1);
-			this.Controls.Add(this.lblDownloadingProgress);
+			this.Controls.Add(this.lblDownloadProgress);
 			this.Controls.Add(this.btnDownloadMultiThreaded);
-			this.Controls.Add(this.editUrl);
+			this.Controls.Add(this.textBoxUrl);
 			this.Controls.Add(this.btnDownloadSingleThreaded);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
 			this.MaximizeBox = false;
@@ -689,9 +689,9 @@
 		#endregion
 
 		private System.Windows.Forms.Button btnDownloadSingleThreaded;
-		private System.Windows.Forms.TextBox editUrl;
+		private System.Windows.Forms.TextBox textBoxUrl;
 		private System.Windows.Forms.Button btnDownloadMultiThreaded;
-		private System.Windows.Forms.Label lblDownloadingProgress;
+		private System.Windows.Forms.Label lblDownloadProgress;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Label label3;
@@ -704,7 +704,7 @@
 		private System.Windows.Forms.Button btnSelectMergingDir;
 		private System.Windows.Forms.NumericUpDown numericUpDownThreadCount;
 		private System.Windows.Forms.Label label5;
-		private System.Windows.Forms.Label lblMergingProgress;
+		private System.Windows.Forms.Label lblMergeProgress;
 		private System.Windows.Forms.CheckBox cbKeepDownloadedFileInTempOrMergingDirectory;
 		private System.Windows.Forms.Button btnHeaders;
 		private System.Windows.Forms.CheckBox checkBoxUseRamForTempFiles;
@@ -712,7 +712,7 @@
 		private System.Windows.Forms.NumericUpDown numericUpDownUpdateInterval;
 		private System.Windows.Forms.Label label7;
 		private System.Windows.Forms.NumericUpDown numericUpDownChunksMergingUpdateInterval;
-		private MultipleProgressBar progressBar1;
+		private MultipleProgressBar progressBarDownloading;
 		private System.Windows.Forms.Label label8;
 		private System.Windows.Forms.NumericUpDown numericUpDownTryCountPerThread;
 		private System.Windows.Forms.NumericUpDown numericUpDownTryCountInsideEachThread;

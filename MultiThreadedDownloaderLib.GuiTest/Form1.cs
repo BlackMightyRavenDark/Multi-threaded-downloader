@@ -28,8 +28,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 		private void Form1_Load(object sender, EventArgs e)
 		{
 			Utils.SetDefaultMaximumConnectionLimit(100);
-			lblDownloadingProgress.Text = null;
-			lblMergingProgress.Text = null;
+			lblDownloadProgress.Text = null;
+			lblMergeProgress.Text = null;
 			cbKeepDownloadedFileInTempOrMergingDirectory.Enabled = checkBoxMergeChunksAutomatically.Checked;
 			numericUpDownProxyPort.Maximum = ushort.MaxValue;
 
@@ -200,8 +200,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnDownloadMultiThreaded.Enabled = false;
 			EnableControls(false);
 
-			string url = editUrl.Text;
-			if (string.IsNullOrEmpty(url) || string.IsNullOrWhiteSpace(url))
+			string downloadUrl = textBoxUrl.Text;
+			if (string.IsNullOrEmpty(downloadUrl) || string.IsNullOrWhiteSpace(downloadUrl))
 			{
 				MessageBox.Show("Не указана ссылка!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -224,7 +224,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			isDownloading = true;
 
 			btnDownloadSingleThreaded.Text = "Stop";
-			lblMergingProgress.Text = null;
+			lblMergeProgress.Text = null;
 
 			string actualOutputFilePath = null;
 			try
@@ -267,18 +267,169 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 
 			singleThreadedDownloader = new FileDownloader();
-			singleThreadedDownloader.Preparing += OnPreparing;
-			singleThreadedDownloader.HeadersReceiving += OnHeadersReceiving;
+			singleThreadedDownloader.Preparing += (s, url, downloadableChunk) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					lblDownloadProgress.Text = "Подготовка к скачиванию...";
+					lblMergeProgress.Text = null;
+					progressBarDownloading.SetItem("Подготовка...");
+				}));
+			};
+			singleThreadedDownloader.HeadersReceiving += (s, url,
+				downloadableChunk, tryNumber, tryCountLimit) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string t = $"Получение заголовков... Попытка №{tryNumber}";
+					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+					lblDownloadProgress.Text = t;
+					progressBarDownloading.ClearItems();
 #if DEBUG
-			singleThreadedDownloader.HeadersReceived += OnHeadersReceived;
+					System.Diagnostics.Debug.WriteLine($"{t} {url}");
 #endif
-			singleThreadedDownloader.Connecting += OnConnecting;
-			singleThreadedDownloader.Connected += OnConnected;
-			singleThreadedDownloader.WorkStarted += OnWorkStarted;
-			singleThreadedDownloader.WorkProgress += OnWorkProgress;
-			singleThreadedDownloader.WorkFinished += OnWorkFinished;
+				}));
+			};
+#if DEBUG
+			singleThreadedDownloader.HeadersReceived += (s, url, downloadableChunk, headers,
+				tryNumber, tryCountLimit, errCode) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					if (headers != null)
+					{
+						{
+							string t = tryCountLimit > 0 ?
+								$"Заголовки получены (попытка №{tryNumber} / {tryCountLimit}):" :
+								$"Заголовки получены (попытка №{tryNumber}):";
+							System.Diagnostics.Debug.WriteLine(t);
+						}
+						{
+							string t = Utils.HeadersToString(headers);
+							System.Diagnostics.Debug.WriteLine(t);
+						}
+					}
+					else
+					{
+						System.Diagnostics.Debug.WriteLine($"Ошибка при получении заголовков! Код: {errCode}");
+						if (!(sender as FileDownloader).IgnoreHeaderRequestErrors)
+						{
+							System.Diagnostics.Debug.WriteLine("Скачивание прервано!");
+						}
+					}
+				}));
+			};
+#endif
+			singleThreadedDownloader.Connecting += (s, url, tryNumber, tryCountLimit) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string t = $"Подключение... Попытка №{tryNumber}";
+					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+					lblDownloadProgress.Text = t;
 
-			singleThreadedDownloader.Url = editUrl.Text;
+					progressBarDownloading.SetItem(t);
+				}));
+			};
+			singleThreadedDownloader.Connected += (s, url, contentLength, headers,
+				tryNumber, tryCountLimit, errCode) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					if (errCode == 200 || errCode == 206)
+					{
+						string t = tryCountLimit > 0 ?
+							$"Подключено! (попытка №{tryNumber} / {tryCountLimit})" :
+							$"Подключено! (попытка №{tryNumber})";
+						lblDownloadProgress.Text = t;
+						if (!checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked && contentLength > 0L)
+						{
+							string fn = editFileName.Text;
+							char driveLetter = fn.Length > 2 && fn[1] == ':' && fn[2] == '\\' ? fn[0] : Application.ExecutablePath[0];
+							if (driveLetter != '\\')
+							{
+								DriveInfo driveInfo = new DriveInfo(driveLetter.ToString());
+								if (!driveInfo.IsReady)
+								{
+									errCode = FileDownloader.DOWNLOAD_ERROR_DRIVE_NOT_READY;
+									return;
+								}
+
+								long minimumFreeSpaceRequired = (long)(contentLength * 1.1);
+								if (driveInfo.AvailableFreeSpace <= minimumFreeSpaceRequired)
+								{
+									errCode = FileDownloader.DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE;
+									return;
+								}
+							}
+						}
+
+						progressBarDownloading.SetItem("Подключено!");
+					}
+					else
+					{
+						lblDownloadProgress.Text = $"Ошибка {errCode}";
+						progressBarDownloading.SetItems(null);
+					}
+				}));
+				return errCode;
+			};
+
+			singleThreadedDownloader.WorkStarted += (s, contentLength, tryNumber, tryCountLimit) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string contentLengthString = contentLength > 0L ? contentLength.ToString() : "<Неизвестно>";
+					string t = $"Скачано: 0 из {contentLengthString}, Попытка №{tryNumber}";
+					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+					lblDownloadProgress.Text = t;
+
+					progressBarDownloading.SetItem("0,000%");
+				}));
+			};
+			singleThreadedDownloader.WorkProgress += (s, bytesTransferred, contentLength, tryNumber, tryCountLimit) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					if (contentLength > 0L)
+					{
+						double percent = 100.0 / contentLength * bytesTransferred;
+						string percentFormatted = string.Format("{0:F3}", percent);
+						string t = $"Скачано {bytesTransferred} из {contentLength} ({percentFormatted}%), Попытка №{tryNumber}";
+						if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+						lblDownloadProgress.Text = t;
+						progressBarDownloading.SetItem(0, 100, (int)percent, $"{percentFormatted}%");
+					}
+					else
+					{
+						lblDownloadProgress.Text = $"Скачано {bytesTransferred} из <Неизвестно>";
+						progressBarDownloading.SetItem($"Скачано {bytesTransferred} байт");
+					}
+				}));
+			};
+
+			singleThreadedDownloader.WorkFinished += (s, bytesTransferred, contentLength, tryNumber, tryCountLimit, errCode) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					if (contentLength > 0L)
+					{
+						double percent = 100.0 / contentLength * bytesTransferred;
+						string percentFormatted = string.Format("{0:F3}", percent);
+						string t = $"Скачано {bytesTransferred} из {contentLength} ({percentFormatted}%), Попытка №{tryNumber}";
+						if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+						lblDownloadProgress.Text = t;
+						progressBarDownloading.SetItem(0, 100, (int)percent, $"{percentFormatted}%");
+					}
+					else
+					{
+						lblDownloadProgress.Text = $"Скачано {bytesTransferred} из <Неизвестно>";
+						progressBarDownloading.SetItem($"Скачано {bytesTransferred} байт");
+					}
+				}));
+			};
+
+			singleThreadedDownloader.Url = downloadUrl;
 			singleThreadedDownloader.Headers = headerCollection;
 			singleThreadedDownloader.Cookies = cookies;
 			singleThreadedDownloader.Proxy = proxy;
@@ -305,26 +456,26 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				}
 				else
 				{
-					progressBar1.ClearItems();
+					progressBarDownloading.ClearItems();
 
 					switch (errorCode)
 					{
 						case FileDownloader.DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE:
-							lblDownloadingProgress.Text = "Ошибка: Недостаточно места на диске!";
+							lblDownloadProgress.Text = "Ошибка: Недостаточно места на диске!";
 							break;
 
 						case FileDownloader.DOWNLOAD_ERROR_DRIVE_NOT_READY:
-							lblDownloadingProgress.Text = "Ошибка: Диск не готов!";
+							lblDownloadProgress.Text = "Ошибка: Диск не готов!";
 							break;
 
 						case FileDownloader.DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT:
-							lblDownloadingProgress.Text = "Ошибка: Закончились попытки! Скачивание прервано!";
+							lblDownloadProgress.Text = "Ошибка: Закончились попытки! Скачивание прервано!";
 							break;
 
 						case FileDownloader.DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED:
 							{
 								string t = FileDownloader.ErrorCodeToString(errorCode);
-								lblDownloadingProgress.Text = t;
+								lblDownloadProgress.Text = t;
 								MessageBox.Show($"Попытка скачивания в уже существующий не пустой файл!\n{t} ", "Ошибка!",
 									MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 							}
@@ -333,7 +484,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 						default:
 							if (singleThreadedDownloader.HasErrorMessage)
 							{
-								lblDownloadingProgress.Text =
+								lblDownloadProgress.Text =
 									$"Ошибка: {singleThreadedDownloader.LastErrorMessage} (Код: {errorCode})";
 							}
 							break;
@@ -383,7 +534,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			btnDownloadMultiThreaded.Text = "Stop";
 			btnDownloadSingleThreaded.Enabled = false;
 			EnableControls(false);
-			lblMergingProgress.Text = null;
+			lblMergeProgress.Text = null;
 
 			if (!CreateProxy(out WebProxy proxy, out string proxyError))
 			{
@@ -406,8 +557,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			{
 				Invoke(new MethodInvoker(() =>
 				{
-					lblDownloadingProgress.Text = "Подготовка...";
-					progressBar1.SetItem("Подготовка...");
+					lblDownloadProgress.Text = "Подготовка...";
+					progressBarDownloading.SetItem("Подготовка...");
 				}));
 			};
 			multiThreadedDownloader.Connecting += (s, url, tryNumber, tryCountLimit) =>
@@ -416,7 +567,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				{
 					string t = $"Подключение... Попытка №{tryNumber}";
 					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
-					lblDownloadingProgress.Text = t;
+					lblDownloadProgress.Text = t;
 				}));
 			};
 			multiThreadedDownloader.Connected += (object s, string url, long contentLength,
@@ -433,7 +584,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 						string connectedString = tryCountLimit > 0 ?
 							$"Подключено! (попытка №{tryNumber} / {tryCountLimit}" :
 							$"Подключено! (попытка №{tryNumber}";
-						lblDownloadingProgress.Text = connectedString;
+						lblDownloadProgress.Text = connectedString;
 						isPreparing = false;
 						if (!checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked && contentLength > 0L)
 						{
@@ -459,7 +610,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					}
 					else
 					{
-						lblDownloadingProgress.Text = multiThreadedDownloader.HasErrorMessage ?
+						lblDownloadProgress.Text = multiThreadedDownloader.HasErrorMessage ?
 							$"Ошибка: {customError.ErrorMessage} (Код: {customError.ErrorCode})" :
 							$"Код ошибки: {customError.ErrorCode}";
 					}
@@ -469,9 +620,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			{
 				Invoke(new MethodInvoker(() =>
 				{
-					progressBar1.SetItem(0, 100, 0);
+					progressBarDownloading.SetItem(0, 100, 0);
 					string contentLengthString = contentLength > 0L ? contentLength.ToString() : "<Неизвестно>";
-					lblDownloadingProgress.Text = $"Скачано 0 из {contentLengthString}";
+					lblDownloadProgress.Text = $"Скачано 0 из {contentLengthString}";
 				}));
 			};
 			multiThreadedDownloader.DownloadProgress += (s, taskDictionary) =>
@@ -524,7 +675,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 						progressBarItems.AddLast(mpi);
 					}
 
-					progressBar1.SetItems(progressBarItems);
+					progressBarDownloading.SetItems(progressBarItems);
 
 					long totalBytesTransferred = tasks.Where(item => item.ProcessedBytes >= 0L).Sum(item => item.ProcessedBytes);
 					long contentLength = (s as MultiThreadedDownloader).ContentLength;
@@ -532,11 +683,11 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					{
 						double percent = 100.0 / contentLength * totalBytesTransferred;
 						string percentFormatted = string.Format("{0:F3}", percent);
-						lblDownloadingProgress.Text = $"Скачано {totalBytesTransferred} из {contentLength} ({percentFormatted}%)";
+						lblDownloadProgress.Text = $"Скачано {totalBytesTransferred} из {contentLength} ({percentFormatted}%)";
 					}
 					else
 					{
-						lblDownloadingProgress.Text = $"Скачано {totalBytesTransferred} из <Неизвестно>";
+						lblDownloadProgress.Text = $"Скачано {totalBytesTransferred} из <Неизвестно>";
 					}
 				}));
 			};
@@ -544,13 +695,13 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			{
 				if ((s as MultiThreadedDownloader).FakeDownloading)
 				{
-					Invoke(new MethodInvoker(() => progressBar1.ClearItems()));
+					Invoke(new MethodInvoker(() => progressBarDownloading.ClearItems()));
 					const string msg = "No need to merge chunks while using fake downloading!";
 					return new CustomError(msg);
 				}
 				{
 					const string msg = "Manual chunk merging is not implemented";
-					Invoke(new MethodInvoker(() => progressBar1.SetItem($"{msg}!")));
+					Invoke(new MethodInvoker(() => progressBarDownloading.SetItem($"{msg}!")));
 					return new CustomError(msg);
 				}
 			};
@@ -575,9 +726,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			{
 				Invoke(new MethodInvoker(() =>
 				{
-					progressBar1.SetItem(0, chunkCount, 0);
-					lblMergingProgress.Left = lblDownloadingProgress.Left + lblDownloadingProgress.Width;
-					lblMergingProgress.Text = $"Объединение чанков: 0 / {chunkCount}";
+					progressBarDownloading.SetItem(0, chunkCount, 0);
+					lblMergeProgress.Left = lblDownloadProgress.Left + lblDownloadProgress.Width;
+					lblMergeProgress.Text = $"Объединение чанков: 0 / {chunkCount}";
 				}));
 			};
 			multiThreadedDownloader.ChunkMergingProgress += (s, chunkId, chunkCount, chunkPosition, chunkSize) =>
@@ -586,17 +737,17 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				{
 					double percent = 100.0 / chunkSize * chunkPosition;
 					string percentFormatted = string.Format("{0:F3}", percent);
-					lblMergingProgress.Text = $"Объединение чанков: {chunkId + 1} / {chunkCount}, " +
+					lblMergeProgress.Text = $"Объединение чанков: {chunkId + 1} / {chunkCount}, " +
 						$"{chunkPosition} / {chunkSize} ({percentFormatted}%)";
 
 					MultipleProgressBarItem[] progressBarItems = GenerateChunkMergingProgressVisualizationItems(chunkCount, chunkId, percent);
-					progressBar1.SetItems(progressBarItems);
+					progressBarDownloading.SetItems(progressBarItems);
 				}));
 			};
 			multiThreadedDownloader.ChunkMergingFinished += (s, errCode) =>
 			{
 				Invoke(new MethodInvoker(() =>
-					lblMergingProgress.Text = errCode == 200 || errCode == 206 ? null : $"Ошибка объединения чанков! Код: {errCode}"));
+					lblMergeProgress.Text = errCode == 200 || errCode == 206 ? null : $"Ошибка объединения чанков! Код: {errCode}"));
 			};
 
 			multiThreadedDownloader.Headers = headerCollection;
@@ -604,7 +755,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			multiThreadedDownloader.TryCountLimitPerThread = (int)numericUpDownTryCountPerThread.Value;
 			multiThreadedDownloader.TryCountLimitInsideThread = (int)numericUpDownTryCountInsideEachThread.Value;
 			multiThreadedDownloader.RetryIntervalMilliseconds = (int)numericUpDownRetryInterval.Value;
-			multiThreadedDownloader.Url = editUrl.Text;
+			multiThreadedDownloader.Url = textBoxUrl.Text;
 			multiThreadedDownloader.Cookies = cookies;
 			multiThreadedDownloader.Proxy = proxy;
 			multiThreadedDownloader.OutputFileName = editFileName.Text;
@@ -635,24 +786,24 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			{
 				if (errorCode != 200 && errorCode != 206)
 				{
-					if (isPreparing) { progressBar1.ClearItems(); }
+					if (isPreparing) { progressBarDownloading.ClearItems(); }
 
 					switch (errorCode)
 					{
 						case FileDownloader.DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE:
-							lblDownloadingProgress.Text = "Ошибка: Недостаточно места на диске!";
+							lblDownloadProgress.Text = "Ошибка: Недостаточно места на диске!";
 							break;
 
 						case FileDownloader.DOWNLOAD_ERROR_DRIVE_NOT_READY:
-							lblDownloadingProgress.Text = "Ошибка: Диск не готов!";
+							lblDownloadProgress.Text = "Ошибка: Диск не готов!";
 							break;
 
 						case FileDownloader.DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT:
-							lblDownloadingProgress.Text = "Ошибка: Скачивание прервано! Закончились попытки!";
+							lblDownloadProgress.Text = "Ошибка: Скачивание прервано! Закончились попытки!";
 							break;
 
 						case MultiThreadedDownloader.DOWNLOAD_ERROR_CUSTOM:
-							lblDownloadingProgress.Text = multiThreadedDownloader.HasErrorMessage ?
+							lblDownloadProgress.Text = multiThreadedDownloader.HasErrorMessage ?
 								"Ошибка!" : $"Ошибка: {multiThreadedDownloader.LastErrorMessage}";
 							break;
 					}
@@ -660,20 +811,20 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					string messageText = MultiThreadedDownloader.ErrorCodeToString(errorCode);
 					if (errorCode == FileDownloader.DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT)
 					{
-						lblDownloadingProgress.Text = "Ошибка: Скачивание прервано! Закончились попытки!";
+						lblDownloadProgress.Text = "Ошибка: Скачивание прервано! Закончились попытки!";
 						messageText = $"Скачивание прервано!{Environment.NewLine}{messageText}";
 					}
 					else if (multiThreadedDownloader.HasErrorMessage)
 					{
-						lblDownloadingProgress.Text = $"Ошибка: {multiThreadedDownloader.LastErrorMessage} (Код: {errorCode})";
+						lblDownloadProgress.Text = $"Ошибка: {multiThreadedDownloader.LastErrorMessage} (Код: {errorCode})";
 						messageText += $"{Environment.NewLine}Текст ошибки: {multiThreadedDownloader.LastErrorMessage}";
 					}
 					else
 					{
-						lblDownloadingProgress.Text = $"Код ошибки: {errorCode}";
+						lblDownloadProgress.Text = $"Код ошибки: {errorCode}";
 					}
 
-					lblMergingProgress.Left = lblDownloadingProgress.Left + lblDownloadingProgress.Width + 4;
+					lblMergeProgress.Left = lblDownloadProgress.Left + lblDownloadProgress.Width + 4;
 
 					ShowErrorMessage(errorCode, messageText);
 				}
@@ -688,205 +839,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 		}
 
-		private void OnPreparing(object sender, string url, DownloadableChunk downloadableChunk)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new MethodInvoker(() => OnPreparing(sender, url, downloadableChunk)));
-			}
-			else
-			{
-				lblDownloadingProgress.Text = "Подготовка к скачиванию...";
-				lblMergingProgress.Text = null;
-				progressBar1.SetItem("Подготовка...");
-			}
-		}
-
-		private void OnHeadersReceiving(object sender, string url,
-			DownloadableChunk downloadableChunk, int tryNumber, int tryCountLimit)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new MethodInvoker(() => OnHeadersReceiving(sender, url, downloadableChunk, tryNumber, tryCountLimit)));
-			}
-			else
-			{
-				string t = $"Получение заголовков... Попытка №{tryNumber}";
-				if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
-				lblDownloadingProgress.Text = t;
-				progressBar1.ClearItems();
-#if DEBUG
-				System.Diagnostics.Debug.WriteLine($"{t} {url}");
-#endif
-			}
-		}
-
-#if DEBUG
-		private void OnHeadersReceived(object sender, string url,
-			DownloadableChunk downloadableChunk, NameValueCollection headers,
-			int tryNumber, int tryCountLimit, int errorCode)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new MethodInvoker(() => OnHeadersReceived(sender, url,
-					downloadableChunk, headers, tryNumber, tryCountLimit, errorCode)));
-			}
-			else
-			{
-				if ((errorCode == 200 || errorCode == 206) && headers != null)
-				{
-					string s = tryCountLimit > 0 ?
-						$"Заголовки получены (попытка №{tryNumber} / {tryCountLimit}):" :
-						$"Заголовки получены (попытка №{tryNumber}):";
-					System.Diagnostics.Debug.WriteLine(s);
-					string t = Utils.HeadersToString(headers);
-					System.Diagnostics.Debug.WriteLine(t);
-				}
-				else
-				{
-					System.Diagnostics.Debug.WriteLine($"Ошибка при получении заголовков! Код: {errorCode}");
-					if (!(sender as FileDownloader).IgnoreHeaderRequestErrors)
-					{
-						System.Diagnostics.Debug.WriteLine("Скачивание прервано!");
-					}
-				}
-			}
-		}
-#endif
-
-		private void OnConnecting(object sender, string url, int tryNumber, int tryCountLimit)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new MethodInvoker(() => OnConnecting(sender, url, tryNumber, tryCountLimit)));
-			}
-			else
-			{
-				string t = $"Подключение... Попытка №{tryNumber}";
-				if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
-				lblDownloadingProgress.Text = t;
-
-				progressBar1.SetItem(t);
-			}
-		}
-
-		private int OnConnected(object sender, string url, long contentLength, NameValueCollection headers,
-			int tryNumber, int tryCountLimit, int errorCode)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new MethodInvoker(() => OnConnected(sender, url, contentLength,
-					headers, tryNumber, tryCountLimit, errorCode)));
-			}
-			else
-			{
-				if (errorCode == 200 || errorCode == 206)
-				{
-					string s = tryCountLimit > 0 ?
-						$"Подключено! (попытка №{tryNumber} / {tryCountLimit})" :
-						$"Подключено! (попытка №{tryNumber})";
-					lblDownloadingProgress.Text = s;
-					if (!checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked && contentLength > 0L)
-					{
-						string fn = editFileName.Text;
-						char driveLetter = fn.Length > 2 && fn[1] == ':' && fn[2] == '\\' ? fn[0] : Application.ExecutablePath[0];
-						if (driveLetter != '\\')
-						{
-							DriveInfo driveInfo = new DriveInfo(driveLetter.ToString());
-							if (!driveInfo.IsReady)
-							{
-								return FileDownloader.DOWNLOAD_ERROR_DRIVE_NOT_READY;
-							}
-							long minimumFreeSpaceRequired = (long)(contentLength * 1.1);
-							if (driveInfo.AvailableFreeSpace <= minimumFreeSpaceRequired)
-							{
-								return FileDownloader.DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE;
-							}
-						}
-					}
-
-					progressBar1.SetItem("Подключено!");
-				}
-				else
-				{
-					lblDownloadingProgress.Text = $"Ошибка {errorCode}";
-					progressBar1.SetItems(null);
-				}
-			};
-
-			return errorCode;
-		}
-
-		private void OnWorkStarted(object sender, long contentLength, int tryNumber, int tryCountLimit)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new MethodInvoker(() => OnWorkStarted(sender, contentLength, tryNumber, tryCountLimit)));
-			}
-			else
-			{
-				string contentLengthString = contentLength > 0L ? contentLength.ToString() : "<Неизвестно>";
-				string t = $"Скачано: 0 из {contentLengthString}, Попытка №{tryNumber}";
-				if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
-				lblDownloadingProgress.Text = t;
-
-				progressBar1.SetItem("0,000%");
-			}
-		}
-
-		private void OnWorkProgress(object sender, long bytesTransferred, long contentLength, int tryNumber, int tryCountLimit)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new MethodInvoker(() => OnWorkProgress(sender, bytesTransferred, contentLength, tryNumber, tryCountLimit)));
-			}
-			else
-			{
-				if (contentLength > 0L)
-				{
-					double percent = 100.0 / contentLength * bytesTransferred;
-					string percentFormatted = string.Format("{0:F3}", percent);
-					string t = $"Скачано {bytesTransferred} из {contentLength} ({percentFormatted}%), Попытка №{tryNumber}";
-					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
-					lblDownloadingProgress.Text = t;
-					progressBar1.SetItem(0, 100, (int)percent, $"{percentFormatted}%");
-				}
-				else
-				{
-					lblDownloadingProgress.Text = $"Скачано {bytesTransferred} из <Неизвестно>";
-					progressBar1.SetItem($"Скачано {bytesTransferred} байт");
-				}
-			}
-		}
-
-		private void OnWorkFinished(object sender, long bytesTransferred, long contentLength, int tryNumber, int tryCountLimit, int errorCode)
-		{
-			if (InvokeRequired)
-			{
-				Invoke(new MethodInvoker(() => OnWorkFinished(sender, bytesTransferred, contentLength, tryNumber, tryCountLimit, errorCode)));
-			}
-			else
-			{
-				if (contentLength > 0L)
-				{
-					double percent = 100.0 / contentLength * bytesTransferred;
-					string percentFormatted = string.Format("{0:F3}", percent);
-					string t = $"Скачано {bytesTransferred} из {contentLength} ({percentFormatted}%), Попытка №{tryNumber}";
-					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
-					lblDownloadingProgress.Text = t;
-					progressBar1.SetItem(0, 100, (int)percent, $"{percentFormatted}%");
-				}
-				else
-				{
-					lblDownloadingProgress.Text = $"Скачано {bytesTransferred} из <Неизвестно>";
-					progressBar1.SetItem($"Скачано {bytesTransferred} байт");
-				}
-			}
-		}
-
 		private void EnableControls(bool enable)
 		{
-			editUrl.Enabled = enable;
+			textBoxUrl.Enabled = enable;
 			editFileName.Enabled = enable;
 			editTempPath.Enabled = enable;
 			editMergingPath.Enabled = enable;
