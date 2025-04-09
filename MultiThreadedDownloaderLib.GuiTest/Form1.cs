@@ -694,6 +694,20 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			multiThreadedDownloader.ChunksDownloaded += (s, chunks, contentLength) =>
 			{
 				MultiThreadedDownloader mtd = s as MultiThreadedDownloader;
+#if DEBUG
+				string t = "Chunks downloaded:\n";
+				foreach (DownloadableChunk chunk in chunks)
+				{
+					string rangeString = chunk.Range != null ?
+						$"{chunk.Range.StartPosition}-{chunk.Range.EndPosition}" :
+						$"0-{contentLength}";
+					t += contentLength >= 0 ? $"{rangeString}/{contentLength}" : rangeString;
+					string filePath = chunk.OutputStream?.FilePath;
+					t += !string.IsNullOrEmpty(filePath) && !string.IsNullOrWhiteSpace(filePath) ? $" | {filePath}\n" :
+						(mtd.FakeDownloading ? " | <fake stream>\n" : " | <memory stream>\n");
+				}
+				System.Diagnostics.Debug.WriteLine(t);
+#endif
 				if (mtd.FakeDownloading)
 				{
 					Invoke(new MethodInvoker(() => progressBarDownloading.ClearItems()));
