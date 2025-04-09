@@ -596,6 +596,21 @@ namespace MultiThreadedDownloaderLib
 			}
 
 			List<DownloadableChunk> downloadableChunks = BuildChunkSequence(downloadableTasks, chunkCount, out bool isValidChunkSequence);
+			if (downloadableChunks != null && ChunksDownloaded != null && isValidChunkSequence)
+			{
+				customError = ChunksDownloaded.Invoke(this, downloadableChunks, ContentLength);
+				if (customError != null && customError.ErrorCode != 200)
+				{
+					ClearGarbage(downloadableTasks);
+					LastErrorCode = customError.ErrorCode;
+					LastErrorMessage = customError.ErrorMessage;
+					_cancellationTokenSource.Dispose();
+					_cancellationTokenSource = null;
+					DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
+					IsActive = false;
+					return LastErrorCode;
+				}
+			}
 
 			if (!isFakeDownloading)
 			{
@@ -660,23 +675,7 @@ namespace MultiThreadedDownloaderLib
 
 			if (downloadableChunks != null)
 			{
-				if (ChunksDownloaded != null && isValidChunkSequence)
-				{
-					customError = ChunksDownloaded.Invoke(this, downloadableChunks, ContentLength);
-					if (customError != null)
-					{
-						LastErrorCode = customError.ErrorCode;
-						LastErrorMessage = customError.ErrorMessage;
-					}
-					else
-					{
-						LastErrorCode = DOWNLOAD_ERROR_UNDEFINED;
-						LastErrorMessage = "'customError' is NULL";
-					}
-				}
-
 				ClearGarbage(downloadableChunks);
-
 				downloadableChunks = null;
 			}
 

@@ -693,17 +693,21 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			};
 			multiThreadedDownloader.ChunksDownloaded += (s, chunks, contentLength) =>
 			{
-				if ((s as MultiThreadedDownloader).FakeDownloading)
+				MultiThreadedDownloader mtd = s as MultiThreadedDownloader;
+				if (mtd.FakeDownloading)
 				{
 					Invoke(new MethodInvoker(() => progressBarDownloading.ClearItems()));
 					const string msg = "No need to merge chunks while using fake downloading!";
 					return new CustomError(msg);
 				}
+				else if (!mtd.MergeChunksAutomatically)
 				{
 					const string msg = "Manual chunk merging is not implemented";
 					Invoke(new MethodInvoker(() => progressBarDownloading.SetItem($"{msg}!")));
 					return new CustomError(msg);
 				}
+
+				return null;
 			};
 			multiThreadedDownloader.DownloadFinished += (s, bytesTransferred, errCode, fileName) =>
 			{
