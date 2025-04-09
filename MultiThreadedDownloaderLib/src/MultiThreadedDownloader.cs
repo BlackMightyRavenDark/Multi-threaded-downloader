@@ -595,10 +595,11 @@ namespace MultiThreadedDownloaderLib
 				return LastErrorCode;
 			}
 
+			List<DownloadableChunk> downloadableChunks = BuildChunkSequence(downloadableTasks, chunkCount, out bool isValidChunkSequence);
+
 			if (!isFakeDownloading)
 			{
-				List<DownloadableChunk> downloadableChunks = BuildChunkSequence(downloadableTasks, chunkCount, out bool isValid);
-				if (!isValid || downloadableChunks == null || downloadableChunks.Count <= 0)
+				if (!isValidChunkSequence || downloadableChunks == null || downloadableChunks.Count <= 0)
 				{
 					downloadableTasks = null;
 					if (UseRamForTempFiles && downloadableChunks != null) { ClearGarbage(downloadableChunks); }
@@ -655,7 +656,11 @@ namespace MultiThreadedDownloaderLib
 						LastErrorCode = 400;
 					}
 				}
-				else if (ChunksDownloaded != null)
+			}
+
+			if (downloadableChunks != null)
+			{
+				if (ChunksDownloaded != null && isValidChunkSequence)
 				{
 					customError = ChunksDownloaded.Invoke(this, downloadableChunks, ContentLength);
 					if (customError != null)
@@ -669,10 +674,10 @@ namespace MultiThreadedDownloaderLib
 						LastErrorMessage = "'customError' is NULL";
 					}
 				}
-				else
-				{
-					ClearGarbage(downloadableChunks);
-				}
+
+				ClearGarbage(downloadableChunks);
+
+				downloadableChunks = null;
 			}
 
 			_cancellationTokenSource.Dispose();
