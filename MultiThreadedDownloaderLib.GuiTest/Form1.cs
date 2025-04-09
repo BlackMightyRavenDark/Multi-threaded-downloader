@@ -691,7 +691,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					}
 				}));
 			};
-			multiThreadedDownloader.ChunksDownloaded += (s, taskList, contentLength) =>
+			multiThreadedDownloader.ChunksDownloaded += (s, chunks, contentLength) =>
 			{
 				if ((s as MultiThreadedDownloader).FakeDownloading)
 				{
