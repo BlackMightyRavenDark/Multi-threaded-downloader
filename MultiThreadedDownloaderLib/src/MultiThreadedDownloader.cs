@@ -75,6 +75,7 @@ namespace MultiThreadedDownloaderLib
 
 		private NameValueCollection _headers = new NameValueCollection();
 		private bool _isCanceled = false;
+		private bool _isAborted = false;
 		private bool _isDisposed = false;
 
 		private CancellationTokenSource _cancellationTokenSource;
@@ -119,7 +120,7 @@ namespace MultiThreadedDownloaderLib
 			if (!_isDisposed)
 			{
 				_isDisposed = true;
-				Stop();
+				Abort();
 			}
 		}
 
@@ -142,7 +143,7 @@ namespace MultiThreadedDownloaderLib
 			IsActive = true;
 			Preparing?.Invoke(this);
 
-			_isCanceled = false;
+			_isAborted = _isCanceled = false;
 			LastErrorMessage = null;
 			DownloadedBytes = 0L;
 
@@ -228,8 +229,8 @@ namespace MultiThreadedDownloaderLib
 				if (_cancellationTokenSource.IsCancellationRequested)
 				{
 					stopwatch.Stop();
-					LastErrorCode = DOWNLOAD_ERROR_CANCELED_BY_USER;
-					LastErrorMessage = null;
+					LastErrorCode = GetCancellationErrorCode();
+					LastErrorMessage = LastErrorCode != DOWNLOAD_ERROR_UNDEFINED ? null : "Aborted by unknown reason";
 					IsActive = false;
 					return LastErrorCode;
 				}
@@ -450,9 +451,9 @@ namespace MultiThreadedDownloaderLib
 								{
 #if DEBUG
 									System.Diagnostics.Debug.WriteLine($"Task №{d.Id}: Out of tries");
-									System.Diagnostics.Debug.WriteLine("Aborting other tasks...");
+									System.Diagnostics.Debug.WriteLine($"Task №{d.Id}: Aborting all tasks...");
 #endif
-									AbortTasks(downloaders);
+									Abort();
 								}
 							}
 						}
@@ -481,7 +482,7 @@ namespace MultiThreadedDownloaderLib
 						if (!GetChunkStream(downloader, taskDownloadRange, chunkFileName,
 							UseRamForTempFiles, isFakeDownloading, out Stream streamChunk))
 						{
-							AbortTasks(downloaders);
+							Abort();
 							return;
 						}
 
@@ -504,7 +505,7 @@ namespace MultiThreadedDownloaderLib
 							downloader.DisposeOutputStream();
 							if (UseRamForTempFiles) { GC.Collect(); }
 
-							if (_isCanceled || isOutOfTries) { break; }
+							if (_isCanceled || _isAborted || isOutOfTries) { break; }
 #if DEBUG
 							else
 							{
@@ -529,9 +530,9 @@ namespace MultiThreadedDownloaderLib
 						LastErrorMessage = ex.Message;
 						isExceptionRaised = true;
 #if DEBUG
-						System.Diagnostics.Debug.WriteLine("Aborting other tasks...");
+						System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id}: Aborting all tasks...");
 #endif
-						AbortTasks(downloaders);
+						Abort();
 						break;
 					}
 				}
@@ -566,7 +567,7 @@ namespace MultiThreadedDownloaderLib
 				System.Diagnostics.Debug.WriteLine(ex.Message);
 #endif
 				LastErrorMessage = ex.Message;
-				AbortTasks(downloaders);
+				Abort();
 				ClearGarbage(downloadableTasks);
 				_cancellationTokenSource.Dispose();
 				_cancellationTokenSource = null;
@@ -703,6 +704,7 @@ namespace MultiThreadedDownloaderLib
 			if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
 			{
 				_cancellationTokenSource.Cancel();
+				_isAborted = false;
 				_isCanceled = true;
 				return true;
 			}
@@ -710,12 +712,25 @@ namespace MultiThreadedDownloaderLib
 			return false;
 		}
 
-		private void AbortTasks(IEnumerable<FileDownloader> downloaders)
+		public bool Abort()
 		{
-			foreach (FileDownloader d in downloaders)
+			bool b = Stop();
+#if DEBUG
+			if (b)
 			{
-				d.Stop();
+				System.Diagnostics.Debug.WriteLine("All tasks is aborted!");
 			}
+#endif
+			_isCanceled = false;
+			_isAborted = true;
+			return b;
+		}
+
+		private int GetCancellationErrorCode()
+		{
+			if (_isAborted) { return DOWNLOAD_ERROR_ABORTED; }
+			else if (_isCanceled) { return DOWNLOAD_ERROR_CANCELED_BY_USER; }
+			return DOWNLOAD_ERROR_UNDEFINED;
 		}
 
 		private bool GetChunkStream(FileDownloader downloader, DownloadRange range,

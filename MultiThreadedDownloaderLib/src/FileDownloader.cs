@@ -634,6 +634,7 @@ namespace MultiThreadedDownloaderLib
 			if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
 			{
 				_cancellationTokenSource.Cancel();
+				_isAborted = false;
 				return true;
 			}
 
@@ -642,8 +643,9 @@ namespace MultiThreadedDownloaderLib
 
 		public bool Abort()
 		{
-			_isAborted = Stop();
-			return _isAborted;
+			bool b = Stop();
+			_isAborted = true;
+			return b;
 		}
 
 		public void GetRange(out DownloadRange downloadRange)

@@ -650,10 +650,6 @@ namespace MultiThreadedDownloaderLib.GuiTest
 								itemText = $"{task.TaskId}: Connected!";
 								break;
 
-							case DownloadableTaskState.Errored:
-								itemText = $"{task.TaskId}: Error!";
-								break;
-
 							default:
 								if (task.ChunkFileSize > 0L && task.ProcessedBytes >= 0L)
 								{
@@ -667,6 +663,12 @@ namespace MultiThreadedDownloaderLib.GuiTest
 									itemText = taskCount > 1 ? $"{task.TaskId}: {processedBytesString} / <Неизвестно>" :
 										$"{processedBytesString} / <Неизвестно>";
 								}
+
+								if (task.State == DownloadableTaskState.Errored)
+								{
+									itemText += ", Error!";
+								}
+
 								break;
 						}
 						Color itemBackgroundColor = task.State == DownloadableTaskState.Errored ? Color.Orange : Color.Lime;
