@@ -210,18 +210,26 @@ namespace MultiThreadedDownloaderLib
 				}
 			}
 
-			Dictionary<int, long> chunkProcessingDict = new Dictionary<int, long>();
-
 			bool isRangeSupported = responseHeaders != null && IsRangeSupported(responseHeaders);
 			long contentLength;
 			if (isRangeSupported && responseHeaders != null)
 			{
 				ExtractContentLengthFromHeaders(responseHeaders, out contentLength);
+				if (isRangeAssigned) { downloadableChunk.Range.ContentLength = contentLength; }
 			}
 			else
 			{
+				if (isRangeAssigned) { downloadableChunk.Range.ContentLength = -1L; }
 				contentLength = -1L;
 				ResetRange();
+			}
+
+			if (isRangeAssigned && !downloadableChunk.Range.IsValid)
+			{
+				LastErrorCode = DOWNLOAD_ERROR_RANGE;
+				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
+				IsActive = false;
+				return LastErrorCode;
 			}
 
 			bool isFakeDownloading = FakeDownloading;
@@ -235,6 +243,8 @@ namespace MultiThreadedDownloaderLib
 				IsActive = false;
 				return LastErrorCode;
 			}
+
+			Dictionary<int, long> chunkProcessingDict = new Dictionary<int, long>();
 
 			do
 			{
@@ -626,7 +636,8 @@ namespace MultiThreadedDownloaderLib
 		{
 			downloadRange = DownloadableChunk?.Range != null ?
 				DownloadableChunk.Range :
-				new DownloadRange(_rangeFrom, _rangeTo);
+				new DownloadRange(_rangeFrom, _rangeTo,
+				DownloadableChunk?.Range != null ? DownloadableChunk.Range.ContentLength : -1L);
 		}
 
 		public void GetRange(out long startPosition, out long endPosition)

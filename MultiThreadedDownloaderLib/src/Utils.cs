@@ -52,7 +52,7 @@ namespace MultiThreadedDownloaderLib
 			if (rangeTo < 0L) { rangeTo = contentLength; }
 			if (contentLength <= 0L || rangeTo < rangeFrom || chunkCount <= 1)
 			{
-				yield return new DownloadRange(0L, contentLength - 1L);
+				yield return new DownloadRange(0L, contentLength - 1L, contentLength);
 				yield break;
 			}
 
@@ -60,7 +60,7 @@ namespace MultiThreadedDownloaderLib
 			if (chunkCount <= 1 || contentLengthRanged <= ONE_MEGABYTE)
 			{
 				long byteTo = rangeTo >= 0L ? rangeTo : contentLengthRanged + rangeFrom - 1L;
-				yield return new DownloadRange(rangeFrom, byteTo);
+				yield return new DownloadRange(rangeFrom, byteTo, contentLength);
 				yield break;
 			}
 
@@ -71,7 +71,7 @@ namespace MultiThreadedDownloaderLib
 				bool lastChunk = i == chunkCount - 1;
 				long endPos = lastChunk ? (rangeTo >= 0L ? rangeTo : contentLength - 1L) : (startPos + chunkSize);
 
-				yield return new DownloadRange(startPos, endPos);
+				yield return new DownloadRange(startPos, endPos, contentLength);
 
 				if (!lastChunk) { startPos += chunkSize + 1L; }
 			}
