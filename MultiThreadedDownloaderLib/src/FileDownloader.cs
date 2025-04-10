@@ -41,6 +41,7 @@ namespace MultiThreadedDownloaderLib
 		public bool FakeDownloading { get; set; } = false;
 
 		public bool IsActive { get; private set; } = false;
+		public MultiThreadedDownloader Owner { get; }
 		public int LastErrorCode { get; private set; } = 200;
 		public string LastErrorMessage { get; private set; }
 		public bool HasErrors => LastErrorCode != 200 && LastErrorCode != 206;
@@ -93,6 +94,8 @@ namespace MultiThreadedDownloaderLib
 
 		public FileDownloader(int id) { Id = id; }
 		public FileDownloader() : this(0) { }
+		internal FileDownloader(MultiThreadedDownloader owner, int id)
+			: this(id) { Owner = owner; }
 
 		public void Dispose()
 		{
@@ -149,17 +152,21 @@ namespace MultiThreadedDownloaderLib
 				return LastErrorCode;
 			}
 
+			bool isIndependent = Owner == null;
 			bool isRangeAssigned = downloadableChunk.Range != null;
-			if (!isRangeAssigned)
+			if (isIndependent)
 			{
-				ResetRange();
-			}
-			else if (!downloadableChunk.Range.IsValid)
-			{
-				LastErrorCode = DOWNLOAD_ERROR_RANGE;
-				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
-				IsActive = false;
-				return LastErrorCode;
+				if (!isRangeAssigned)
+				{
+					ResetRange();
+				}
+				else if (!downloadableChunk.Range.IsValid)
+				{
+					LastErrorCode = DOWNLOAD_ERROR_RANGE;
+					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
+					IsActive = false;
+					return LastErrorCode;
+				}
 			}
 
 			_cancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
@@ -170,7 +177,7 @@ namespace MultiThreadedDownloaderLib
 
 			Stopwatch stopwatch = new Stopwatch();
 			NameValueCollection responseHeaders = null;
-			if (!SkipHeaderRequest)
+			if (!SkipHeaderRequest && isIndependent)
 			{
 				while (true)
 				{
@@ -212,30 +219,37 @@ namespace MultiThreadedDownloaderLib
 
 			bool isRangeSupported = responseHeaders != null && IsRangeSupported(responseHeaders);
 			long contentLength;
-			if (isRangeSupported && responseHeaders != null)
+			if (isIndependent)
 			{
-				ExtractContentLengthFromHeaders(responseHeaders, out contentLength);
-				if (isRangeAssigned) { downloadableChunk.Range.ContentLength = contentLength; }
+				if (isRangeSupported && responseHeaders != null)
+				{
+					ExtractContentLengthFromHeaders(responseHeaders, out contentLength);
+					if (isRangeAssigned) { downloadableChunk.Range.ContentLength = contentLength; }
+				}
+				else
+				{
+					if (isRangeAssigned) { downloadableChunk.Range.ContentLength = -1L; }
+					contentLength = -1L;
+					ResetRange();
+				}
+
+				if (isRangeAssigned && !downloadableChunk.Range.IsValid)
+				{
+					LastErrorCode = DOWNLOAD_ERROR_RANGE;
+					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
+					IsActive = false;
+					return LastErrorCode;
+				}
 			}
 			else
 			{
-				if (isRangeAssigned) { downloadableChunk.Range.ContentLength = -1L; }
-				contentLength = -1L;
-				ResetRange();
-			}
-
-			if (isRangeAssigned && !downloadableChunk.Range.IsValid)
-			{
-				LastErrorCode = DOWNLOAD_ERROR_RANGE;
-				WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
-				IsActive = false;
-				return LastErrorCode;
+				contentLength = Owner.ContentLength;
 			}
 
 			bool isFakeDownloading = FakeDownloading;
 			long outputStreamInitialPosition = isFakeDownloading ? 0L : downloadableChunk.OutputStream.Stream.Position;
 
-			if (!isFakeDownloading && !IgnoreStreamSizeExceededError && contentLength > 0L &&
+			if (isIndependent && !isFakeDownloading && !IgnoreStreamSizeExceededError && contentLength > 0L &&
 				outputStreamInitialPosition + contentLength < downloadableChunk.OutputStream.Stream.Length)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED;
@@ -394,7 +408,7 @@ namespace MultiThreadedDownloaderLib
 					continue;
 				}
 
-				if (contentLength == -1L)
+				if (contentLength == -1L && isIndependent)
 				{
 					contentLength = requestResult.WebContent.Length;
 				}

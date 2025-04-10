@@ -365,7 +365,7 @@ namespace MultiThreadedDownloaderLib
 
 				int taskTryNumber = 0;
 
-				FileDownloader downloader = new FileDownloader(taskId)
+				FileDownloader downloader = new FileDownloader(this, taskId)
 				{
 					Url = Url,
 					ConnectionTimeout = ConnectionTimeout,
