@@ -700,9 +700,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				string t = "Chunks downloaded:\n";
 				foreach (DownloadableChunk chunk in chunks)
 				{
-					string rangeString = chunk.Range != null ?
-						$"{chunk.Range.StartPosition}-{chunk.Range.EndPosition}" :
-						$"0-{contentLength}";
+					string rangeString = chunk.Range != null ? chunk.Range.GetFormattedString() : $"0-{contentLength}";
 					t += contentLength >= 0 ? $"{rangeString}/{contentLength}" : rangeString;
 					string filePath = chunk.OutputStream?.FilePath;
 					t += !string.IsNullOrEmpty(filePath) && !string.IsNullOrWhiteSpace(filePath) ? $" | {filePath}\n" :

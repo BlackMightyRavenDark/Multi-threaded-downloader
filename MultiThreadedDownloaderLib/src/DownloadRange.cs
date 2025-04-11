@@ -16,6 +16,12 @@ namespace MultiThreadedDownloaderLib
 			ContentLength = contentLength;
 		}
 
+		public string GetFormattedString()
+		{
+			return ContentLength >= 0 && EndPosition < 0L ?
+				$"{StartPosition}-{ContentLength}" : $"{StartPosition}-{EndPosition}";
+		}
+
 		public static bool IsValidRange(long startPosition, long endPosition, long contentLength = -1L)
 		{
 			if (contentLength > 0L)
