@@ -474,6 +474,20 @@ namespace MultiThreadedDownloaderLib
 						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
 				};
+				downloader.WorkError += (object sender, int errCode, string errorMessage,
+					long transferred, long contentLen, int tryNumber, int tryCountLimit) =>
+				{
+					if (errCode != 200 && errCode != 206)
+					{
+						FileDownloader d = sender as FileDownloader;
+						d.GetRange(out DownloadRange range);
+						DownloadableChunk downloadableChunk = new DownloadableChunk(d.DownloadableChunk.OutputStream, range);
+						DownloadableTask downloadableTask = new DownloadableTask(
+							downloadableChunk, d.Id, fullContentLength, transferred,
+							taskTryNumber, TryCountLimitPerThread, DownloadableTaskState.Errored);
+						OnProgressUpdatedFunc(downloadableTask);
+					}
+				};
 				#endregion
 
 				while (true)

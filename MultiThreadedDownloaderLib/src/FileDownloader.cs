@@ -81,6 +81,8 @@ namespace MultiThreadedDownloaderLib
 		public delegate void WorkStartedDelegate(object sender, long contentLength, int tryNumber, int tryCountLimit);
 		public delegate void WorkProgressDelegate(object sender, long bytesTransferred, long contentLength,
 			int tryNumber, int tryCountLimit);
+		public delegate void WorkErrorDelegate(object sender, int errorCode, string errorMessage,
+			long bytesTransferred, long contentLength, int tryNumber, int tryCountLimit);
 		public delegate void WorkFinishedDelegate(object sender, long bytesTransferred, long contentLength,
 			int tryNumber, int tryCountLimit, int errorCode);
 		public PreparingDelegate Preparing;
@@ -90,6 +92,7 @@ namespace MultiThreadedDownloaderLib
 		public ConnectedDelegate Connected;
 		public WorkStartedDelegate WorkStarted;
 		public WorkProgressDelegate WorkProgress;
+		public WorkErrorDelegate WorkError;
 		public WorkFinishedDelegate WorkFinished;
 
 		public FileDownloader(int id) { Id = id; }
@@ -481,13 +484,18 @@ namespace MultiThreadedDownloaderLib
 				requestResult.Dispose();
 
 				if (completed) { break; }
-				else if (isExceptionRaised && RetryIntervalMilliseconds > 0 &&
-					!isInfiniteRetries && tryNumber < tryCountLimit)
+				else if (isExceptionRaised)
 				{
+					WorkError?.Invoke(this, LastErrorCode, LastErrorMessage,
+						DownloadedInLastSession, contentLength, tryNumber, tryCountLimit);
+					if (RetryIntervalMilliseconds > 0 &&
+					!isInfiniteRetries && tryNumber < tryCountLimit)
+					{
 #if DEBUG
-					Debug.WriteLine($"Downloader №{Id}: Waiting {RetryIntervalMilliseconds} milliseconds, then restarting...");
+						Debug.WriteLine($"Downloader №{Id}: Waiting {RetryIntervalMilliseconds} milliseconds, then restarting...");
 #endif
-					Thread.Sleep(RetryIntervalMilliseconds);
+						Thread.Sleep(RetryIntervalMilliseconds);
+					}
 				}
 			} while (!_cancellationTokenSource.IsCancellationRequested);
 			stopwatch.Stop();
