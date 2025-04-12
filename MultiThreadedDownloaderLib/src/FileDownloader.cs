@@ -445,6 +445,7 @@ namespace MultiThreadedDownloaderLib
 
 				int lastTime = Environment.TickCount;
 				bool completed = false;
+				bool isExceptionRaised = false;
 				try
 				{
 					CancellationToken token = _cancellationTokenSource.Token;
@@ -472,6 +473,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 					Debug.WriteLine($"Downloader №{Id} catches exception!\n{ex.Message}");
 #endif
+					isExceptionRaised = true;
 					LastErrorCode = ex.HResult;
 					LastErrorMessage = ex.Message;
 				}
@@ -479,6 +481,14 @@ namespace MultiThreadedDownloaderLib
 				requestResult.Dispose();
 
 				if (completed) { break; }
+				else if (isExceptionRaised && RetryIntervalMilliseconds > 0 &&
+					!isInfiniteRetries && tryNumber < tryCountLimit)
+				{
+#if DEBUG
+					Debug.WriteLine($"Downloader №{Id}: Waiting {RetryIntervalMilliseconds} milliseconds, then restarting...");
+#endif
+					Thread.Sleep(RetryIntervalMilliseconds);
+				}
 			} while (!_cancellationTokenSource.IsCancellationRequested);
 			stopwatch.Stop();
 
