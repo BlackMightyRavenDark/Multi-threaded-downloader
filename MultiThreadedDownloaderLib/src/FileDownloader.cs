@@ -217,11 +217,12 @@ namespace MultiThreadedDownloaderLib
 				}
 			}
 
-			bool isRangeSupported = responseHeaders != null && IsRangeSupported(responseHeaders);
+			bool isRangeSupported;
 			long contentLength;
 			if (isIndependent)
 			{
-				if (isRangeSupported && responseHeaders != null)
+				isRangeSupported = responseHeaders != null && IsRangeSupported(responseHeaders);
+				if (isRangeSupported)
 				{
 					ExtractContentLengthFromHeaders(responseHeaders, out contentLength);
 					if (isRangeAssigned) { downloadableChunk.Range.ContentLength = contentLength; }
@@ -243,6 +244,7 @@ namespace MultiThreadedDownloaderLib
 			}
 			else
 			{
+				isRangeSupported = Owner.IsRangeSupported;
 				contentLength = Owner.ContentLength;
 			}
 

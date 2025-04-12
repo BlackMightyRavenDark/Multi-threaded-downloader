@@ -34,6 +34,7 @@ namespace MultiThreadedDownloaderLib
 		public long ContentLength { get; private set; } = -1L;
 		public long RangeFrom { get; private set; } = 0L;
 		public long RangeTo { get; private set; } = -1L;
+		internal bool IsRangeSupported { get; private set; }
 
 		/// <summary>
 		/// Don't save downloaded data to anywhere.
@@ -331,6 +332,8 @@ namespace MultiThreadedDownloaderLib
 					"Can't use multiple threads! Switching to single-threaded mode!");
 			}
 #endif
+			IsRangeSupported = isRangeSupported;
+
 			if (bufferSize == 0)
 			{
 				bufferSize = isRangeSupported ? 8192 : 4096;
