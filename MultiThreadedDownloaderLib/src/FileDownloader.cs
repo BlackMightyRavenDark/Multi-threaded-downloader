@@ -249,6 +249,10 @@ namespace MultiThreadedDownloaderLib
 			{
 				isRangeSupported = Owner.IsRangeSupported;
 				contentLength = Owner.ContentLength;
+				if (isRangeSupported && isRangeAssigned)
+				{
+					downloadableChunk.Range.ContentLength = contentLength;
+				}
 			}
 
 			bool isFakeDownloading = FakeDownloading;
