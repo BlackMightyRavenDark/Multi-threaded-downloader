@@ -433,6 +433,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			singleThreadedDownloader.Headers = headerCollection;
 			singleThreadedDownloader.Cookies = cookies;
 			singleThreadedDownloader.Proxy = proxy;
+			singleThreadedDownloader.SkipHeaderRequest = checkBoxSkipHeadRequest.Checked;
 			singleThreadedDownloader.UpdateIntervalMilliseconds = (int)numericUpDownUpdateInterval.Value;
 			singleThreadedDownloader.TryCountLimit = (int)numericUpDownTryCountInsideEachThread.Value;
 			singleThreadedDownloader.RetryIntervalMilliseconds = (int)numericUpDownRetryInterval.Value;
