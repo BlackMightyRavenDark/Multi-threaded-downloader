@@ -453,8 +453,7 @@ namespace MultiThreadedDownloaderLib
 								if (isOutOfTries)
 								{
 #if DEBUG
-									System.Diagnostics.Debug.WriteLine($"Task №{d.Id}: Out of tries");
-									System.Diagnostics.Debug.WriteLine($"Task №{d.Id}: Aborting all tasks...");
+									System.Diagnostics.Debug.WriteLine($"Task №{d.Id}: Out of tries! Aborting all tasks...");
 #endif
 									Abort();
 								}
@@ -495,7 +494,31 @@ namespace MultiThreadedDownloaderLib
 					try
 					{
 						taskTryNumber++;
+						if (!isInfiniteRetries && taskTryNumber > TryCountLimitPerThread)
+						{
+							lock (downloaders)
+							{
+								if (!isOutOfTries)
+								{
+									isOutOfTries = true;
+#if DEBUG
 
+									System.Diagnostics.Debug.WriteLine($"Task №{taskId}: Out of tries! Aborting all tasks...");
+#endif
+									Abort();
+								}
+							}
+
+							return;
+						}
+#if DEBUG
+						string tryMessage = $"Task №{taskId}: Try №{taskTryNumber}";
+						if (!isInfiniteRetries)
+						{
+							tryMessage += $" / {TryCountLimitPerThread}";
+						}
+						System.Diagnostics.Debug.WriteLine(tryMessage);
+#endif
 						if (!GetChunkStream(downloader, taskDownloadRange, chunkFileName,
 							UseRamForTempFiles, isFakeDownloading, out Stream streamChunk))
 						{
@@ -526,13 +549,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 							else
 							{
-								string restartMessage = $"Restarting the task №{downloader.Id}... Try №{taskTryNumber + 1}";
-								if (!isInfiniteRetries)
-								{
-									restartMessage += $" / {TryCountLimitPerThread}";
-								}
-
-								System.Diagnostics.Debug.WriteLine(restartMessage);
+								System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id}: Restarting...");
 							}
 #endif
 						}
@@ -540,8 +557,7 @@ namespace MultiThreadedDownloaderLib
 					catch (Exception ex)
 					{
 #if DEBUG
-						System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id} is failed!");
-						System.Diagnostics.Debug.WriteLine(ex.Message);
+						System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id} catches exception while try №{taskTryNumber}!\n{ex.Message}");
 #endif
 						LastErrorCode = DOWNLOAD_ERROR_ABORTED;
 						LastErrorMessage = ex.Message;
