@@ -83,7 +83,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 
 		private void btnSetRequestBody_Click(object sender, EventArgs e)
 		{
-			RequestBodyEditor editor = new RequestBodyEditor(_requestBody);
+			FormRequestBodyEditor editor = new FormRequestBodyEditor(_requestBody);
 			if (editor.ShowDialog() == DialogResult.OK)
 			{
 				_requestBody = editor.BodyContent;

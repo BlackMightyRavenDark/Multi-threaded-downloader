@@ -3,11 +3,11 @@ using System.Windows.Forms;
 
 namespace MultiThreadedDownloaderLib.RequestsTest
 {
-	public partial class RequestBodyEditor : Form
+	public partial class FormRequestBodyEditor : Form
 	{
 		public string BodyContent { get; private set; }
 
-		public RequestBodyEditor(string bodyContent)
+		public FormRequestBodyEditor(string bodyContent)
 		{
 			InitializeComponent();
 			textBoxRequestBody.Text = bodyContent;

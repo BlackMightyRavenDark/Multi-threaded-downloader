@@ -1,6 +1,6 @@
 ﻿namespace MultiThreadedDownloaderLib.RequestsTest
 {
-	partial class RequestBodyEditor
+	partial class FormRequestBodyEditor
 	{
 		/// <summary>
 		/// Required designer variable.
