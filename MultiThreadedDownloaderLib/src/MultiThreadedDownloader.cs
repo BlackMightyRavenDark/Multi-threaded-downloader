@@ -535,24 +535,21 @@ namespace MultiThreadedDownloaderLib
 							streamChunk, UseRamForTempFiles || isFakeDownloading ? null : chunkFileName);
 						LastErrorCode = downloader.Download(chunkStream, bufferSize, _cancellationTokenSource);
 
-						lock (downloaders)
+						if (LastErrorCode == 200 || LastErrorCode == 206)
 						{
-							if (LastErrorCode == 200 || LastErrorCode == 206)
-							{
-								if (!UseRamForTempFiles && !isFakeDownloading) { downloader.DisposeOutputStream(); }
-								break;
-							}
-							downloader.DisposeOutputStream();
-							if (UseRamForTempFiles) { GC.Collect(); }
-
-							if (_isCanceled || _isAborted || isOutOfTries) { break; }
-#if DEBUG
-							else
-							{
-								System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id}: Restarting...");
-							}
-#endif
+							if (!UseRamForTempFiles && !isFakeDownloading) { downloader.DisposeOutputStream(); }
+							break;
 						}
+						downloader.DisposeOutputStream();
+						if (UseRamForTempFiles) { GC.Collect(); }
+
+						if (_isCanceled || _isAborted || isOutOfTries) { break; }
+#if DEBUG
+						else
+						{
+							System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id}: Restarting...");
+						}
+#endif
 					}
 					catch (Exception ex)
 					{
