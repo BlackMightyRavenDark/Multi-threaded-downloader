@@ -874,6 +874,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			checkBoxUseRamForTempFiles.Enabled = enable;
 			checkBoxFakeDownloading.Enabled = enable;
 			checkBoxUseAccurateMode.Enabled = enable;
+			checkBoxSkipHeadRequest.Enabled = enable;
 			numericUpDownThreadCount.Enabled = enable;
 			numericUpDownTryCountPerThread.Enabled = enable;
 			numericUpDownTryCountInsideEachThread.Enabled = enable;
