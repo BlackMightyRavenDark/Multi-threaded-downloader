@@ -34,6 +34,8 @@ namespace MultiThreadedDownloaderLib
 		public long OutputStreamSize => DownloadableChunk?.OutputStream?.Stream != null ?
 			DownloadableChunk.OutputStream.Stream.Length : 0L;
 		public DownloadableChunk DownloadableChunk { get; private set; }
+		public bool IsCompressedContent { get; private set; }
+		public string ContentCompressionAlgorithm { get; private set; }
 
 		/// <summary>
 		/// Don't save downloaded data to anywhere.
@@ -448,10 +450,11 @@ namespace MultiThreadedDownloaderLib
 					return DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT;
 				}
 
-				if (requestResult.WebContent.IsCompressed)
+				IsCompressedContent = requestResult.WebContent.IsCompressed;
+				ContentCompressionAlgorithm = requestResult.WebContent.CompressionAlgorithm;
+				if (IsCompressedContent)
 				{
-					Debug.WriteLine($"Downloader №{Id}: Content compression algorithm: " +
-						requestResult.WebContent.CompressionAlgorithm);
+					Debug.WriteLine($"Downloader №{Id}: Content compression algorithm: {ContentCompressionAlgorithm}");
 				}
 
 				WorkStarted?.Invoke(this, contentLength, tryNumber, tryCountLimit);
