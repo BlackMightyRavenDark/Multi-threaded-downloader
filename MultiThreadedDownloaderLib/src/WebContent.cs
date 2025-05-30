@@ -10,6 +10,9 @@ namespace MultiThreadedDownloaderLib
 	{
 		public Stream Data { get; private set; }
 		public long Length { get; private set; }
+		public bool IsCompressed { get; }
+		public string CompressionAlgorithm { get; }
+
 
 		public delegate void ProgressDelegate(long byteCount);
 
@@ -20,6 +23,8 @@ namespace MultiThreadedDownloaderLib
 			Data = dataStream;
 			Length = dataStreamLength;
 			_contentEncodingHeaderValue = contentEncodingHeaderValue;
+			CompressionAlgorithm = GetCompressionAlgorithmId();
+			IsCompressed = !string.IsNullOrEmpty(CompressionAlgorithm);
 		}
 
 		public void Dispose()
@@ -41,8 +46,8 @@ namespace MultiThreadedDownloaderLib
 				return FileDownloader.DOWNLOAD_ERROR_NULL_CONTENT;
 			}
 
-			Stream readingStream = GetReadingStream(out bool isComressed);
-			if (isComressed && readingStream == null)
+			Stream readingStream = GetReadingStream();
+			if (IsCompressed && readingStream == null)
 			{
 				return FileDownloader.DOWNLOAD_ERROR_UNSUPPORTED_COMPRESSION_ALGORITHM;
 			}
@@ -60,13 +65,13 @@ namespace MultiThreadedDownloaderLib
 			}
 			while (!cancellationToken.IsCancellationRequested);
 
-			if (isComressed) { readingStream.Close(); }
+			if (IsCompressed) { readingStream.Close(); }
 
 			if (cancellationToken.IsCancellationRequested)
 			{
 				return FileDownloader.DOWNLOAD_ERROR_CANCELED_BY_USER;
 			}
-			else if (!isComressed && Length >= 0L && bytesTransferred != Length)
+			else if (!IsCompressed && Length >= 0L && bytesTransferred != Length)
 			{
 				return FileDownloader.DOWNLOAD_ERROR_DATA_SIZE_MISMATCH;
 			}
@@ -125,47 +130,36 @@ namespace MultiThreadedDownloaderLib
 			return ContentToString(out resultString, Encoding.UTF8, bufferSize);
 		}
 
-		public bool IsCompressedContent(out string algorithm)
+		private string GetCompressionAlgorithmId()
 		{
 			if (!string.IsNullOrEmpty(_contentEncodingHeaderValue))
 			{
 				if (_contentEncodingHeaderValue.Contains("gzip"))
 				{
-					algorithm = "gzip";
-					return true;
+					return "gzip";
 				}
 				else if (_contentEncodingHeaderValue.Contains("deflate"))
 				{
-					algorithm = "deflate";
-					return true;
+					return "deflate";
 				}
 				else if (_contentEncodingHeaderValue.Contains("br"))
 				{
-					algorithm = "br";
-					return true;
+					return "br";
 				}
 				else if (_contentEncodingHeaderValue.Contains("zstd"))
 				{
-					algorithm = "zstd";
-					return true;
+					return "zstd";
 				}
 			}
 
-			algorithm = null;
-			return false;
+			return null;
 		}
 
-		public bool IsCompressedContent()
+		private Stream GetReadingStream()
 		{
-			return IsCompressedContent(out _);
-		}
-
-		private Stream GetReadingStream(out bool isCompressedData)
-		{
-			isCompressedData = IsCompressedContent(out string algorithm);
-			if (isCompressedData)
+			if (IsCompressed)
 			{
-				switch (algorithm)
+				switch (CompressionAlgorithm)
 				{
 					case "gzip": return new GZipStream(Data, CompressionMode.Decompress, true);
 					case "deflate": return new DeflateStream(Data, CompressionMode.Decompress, true);

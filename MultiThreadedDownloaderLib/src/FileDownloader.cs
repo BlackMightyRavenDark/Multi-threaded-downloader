@@ -448,6 +448,12 @@ namespace MultiThreadedDownloaderLib
 					return DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT;
 				}
 
+				if (requestResult.WebContent.IsCompressed)
+				{
+					Debug.WriteLine($"Downloader №{Id}: Content compression algorithm: " +
+						requestResult.WebContent.CompressionAlgorithm);
+				}
+
 				WorkStarted?.Invoke(this, contentLength, tryNumber, tryCountLimit);
 
 				int lastTime = Environment.TickCount;
