@@ -502,7 +502,7 @@ namespace MultiThreadedDownloaderLib
 					WorkError?.Invoke(this, LastErrorCode, LastErrorMessage,
 						DownloadedInLastSession, contentLength, tryNumber, tryCountLimit);
 					if (RetryIntervalMilliseconds > 0 &&
-					!isInfiniteRetries && tryNumber < tryCountLimit)
+						!isInfiniteRetries && tryNumber < tryCountLimit)
 					{
 #if DEBUG
 						Debug.WriteLine($"Downloader №{Id}: Waiting {RetryIntervalMilliseconds} milliseconds, then restarting...");
