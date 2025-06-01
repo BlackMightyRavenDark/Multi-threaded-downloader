@@ -608,106 +608,105 @@ namespace MultiThreadedDownloaderLib
 			}
 
 			downloaders = null;
-			if (LastErrorCode != 200 && LastErrorCode != 206)
+			if (!_isCanceled && (LastErrorCode == 200 || LastErrorCode == 206))
 			{
-				ClearGarbage(downloadableTasks);
-				IsActive = false;
-				return LastErrorCode;
-			}
-			else if (_isCanceled)
-			{
-				ClearGarbage(downloadableTasks);
-				LastErrorCode = DOWNLOAD_ERROR_CANCELED_BY_USER;
-				LastErrorMessage = null;
-				_cancellationTokenSource.Dispose();
-				_cancellationTokenSource = null;
-				DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
-				IsActive = false;
-				return LastErrorCode;
-			}
-
-			List<DownloadableChunk> downloadableChunks = BuildChunkSequence(downloadableTasks, chunkCount, out bool isValidChunkSequence);
-			if (downloadableChunks != null && ChunksDownloaded != null && isValidChunkSequence)
-			{
-				customError = ChunksDownloaded.Invoke(this, downloadableChunks, ContentLength);
-				if (customError != null && customError.ErrorCode != 200)
+				List<DownloadableChunk> downloadableChunks = BuildChunkSequence(downloadableTasks, chunkCount, out bool isValidChunkSequence);
+				if (downloadableChunks != null && ChunksDownloaded != null && isValidChunkSequence)
 				{
-					ClearGarbage(downloadableTasks);
-					LastErrorCode = customError.ErrorCode;
-					LastErrorMessage = customError.ErrorMessage;
-					_cancellationTokenSource.Dispose();
-					_cancellationTokenSource = null;
-					DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
-					IsActive = false;
-					return LastErrorCode;
-				}
-			}
-
-			if (!isFakeDownloading)
-			{
-				if (!isValidChunkSequence || downloadableChunks == null || downloadableChunks.Count <= 0)
-				{
-					downloadableTasks = null;
-					if (UseRamForTempFiles && downloadableChunks != null) { ClearGarbage(downloadableChunks); }
-					LastErrorCode = DOWNLOAD_ERROR_CHUNK_SEQUENCE;
-					LastErrorMessage = null;
-					_cancellationTokenSource.Dispose();
-					_cancellationTokenSource = null;
-					DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
-					IsActive = false;
-					return LastErrorCode;
-				}
-
-				downloadableTasks = null;
-
-				if (MergeChunksAutomatically)
-				{
-					if (UseRamForTempFiles || downloadableChunks.Count > 1)
+					customError = ChunksDownloaded.Invoke(this, downloadableChunks, ContentLength);
+					if (customError != null && customError.ErrorCode != 200)
 					{
-						ChunkMergingStarted?.Invoke(this, downloadableChunks.Count);
-						LastErrorCode = MergeChunks(downloadableChunks, outputStream);
-						ChunkMergingFinished?.Invoke(this, LastErrorCode);
+						ClearGarbage(downloadableTasks);
+						LastErrorCode = customError.ErrorCode;
+						LastErrorMessage = customError.ErrorMessage;
+						_cancellationTokenSource.Dispose();
+						_cancellationTokenSource = null;
+						DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
+						IsActive = false;
+						return LastErrorCode;
 					}
-					else if (!UseRamForTempFiles && downloadableChunks.Count == 1)
-					{
-						string chunkFilePath = downloadableChunks[0].OutputStream.FilePath;
-						if (!string.IsNullOrEmpty(chunkFilePath) && !string.IsNullOrWhiteSpace(chunkFilePath) &&
-							File.Exists(chunkFilePath))
-						{
-							string destinationDirPath = Path.GetDirectoryName(
-								KeepDownloadedFileInTempOrMergingDirectory ? chunkFilePath : OutputFileName);
-							string destinationFileName = Path.GetFileName(OutputFileName);
-							string destinationFilePath = Path.Combine(destinationDirPath, destinationFileName);
-							string outputFn = GetNumberedFileName(destinationFilePath);
-							if (string.IsNullOrEmpty(outputFn) || string.IsNullOrWhiteSpace(outputFn))
-							{
-								ClearGarbage(downloadableTasks);
-								LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
-								LastErrorMessage = null;
-								IsActive = false;
-								return LastErrorCode;
-							}
+				}
 
-							OutputFileName = outputFn;
-							File.Move(chunkFilePath, OutputFileName);
-							LastErrorCode = 200;
+				if (!isFakeDownloading)
+				{
+					if (!isValidChunkSequence || downloadableChunks == null || downloadableChunks.Count <= 0)
+					{
+						downloadableTasks = null;
+						if (UseRamForTempFiles && downloadableChunks != null) { ClearGarbage(downloadableChunks); }
+						LastErrorCode = DOWNLOAD_ERROR_CHUNK_SEQUENCE;
+						LastErrorMessage = null;
+						_cancellationTokenSource.Dispose();
+						_cancellationTokenSource = null;
+						DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
+						IsActive = false;
+						return LastErrorCode;
+					}
+
+					downloadableTasks = null;
+
+					if (MergeChunksAutomatically)
+					{
+						if (UseRamForTempFiles || downloadableChunks.Count > 1)
+						{
+							ChunkMergingStarted?.Invoke(this, downloadableChunks.Count);
+							LastErrorCode = MergeChunks(downloadableChunks, outputStream);
+							ChunkMergingFinished?.Invoke(this, LastErrorCode);
+						}
+						else if (!UseRamForTempFiles && downloadableChunks.Count == 1)
+						{
+							string chunkFilePath = downloadableChunks[0].OutputStream.FilePath;
+							if (!string.IsNullOrEmpty(chunkFilePath) && !string.IsNullOrWhiteSpace(chunkFilePath) &&
+								File.Exists(chunkFilePath))
+							{
+								string destinationDirPath = Path.GetDirectoryName(
+									KeepDownloadedFileInTempOrMergingDirectory ? chunkFilePath : OutputFileName);
+								string destinationFileName = Path.GetFileName(OutputFileName);
+								string destinationFilePath = Path.Combine(destinationDirPath, destinationFileName);
+								string outputFn = GetNumberedFileName(destinationFilePath);
+								if (string.IsNullOrEmpty(outputFn) || string.IsNullOrWhiteSpace(outputFn))
+								{
+									ClearGarbage(downloadableTasks);
+									LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
+									LastErrorMessage = null;
+									IsActive = false;
+									return LastErrorCode;
+								}
+
+								OutputFileName = outputFn;
+								File.Move(chunkFilePath, OutputFileName);
+								LastErrorCode = 200;
+							}
+							else
+							{
+								LastErrorCode = 400;
+							}
 						}
 						else
 						{
 							LastErrorCode = 400;
 						}
 					}
-					else
-					{
-						LastErrorCode = 400;
-					}
 				}
+
+				if (downloadableChunks != null)
+				{
+					ClearGarbage(downloadableChunks);
+					downloadableChunks = null;
+				}
+			} else if (_isCanceled)
+			{
+				LastErrorCode = DOWNLOAD_ERROR_CANCELED_BY_USER;
+				LastErrorMessage = null;
+			} else if (isOutOfTries)
+			{
+				LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
+				LastErrorMessage = null;
 			}
 
-			if (downloadableChunks != null)
+			if (downloadableTasks != null)
 			{
-				ClearGarbage(downloadableChunks);
-				downloadableChunks = null;
+				ClearGarbage(downloadableTasks);
+				downloadableTasks = null;
 			}
 
 			_cancellationTokenSource.Dispose();
