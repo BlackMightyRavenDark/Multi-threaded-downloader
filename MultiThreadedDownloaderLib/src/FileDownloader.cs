@@ -808,6 +808,13 @@ namespace MultiThreadedDownloaderLib
 		{
 			switch (errorCode)
 			{
+				case 200:
+				case 206:
+					return "OK";
+
+				case 204:
+					return "Сервер не выдал полезных данных!";
+
 				case 400:
 					return "Ошибка клиента!";
 
