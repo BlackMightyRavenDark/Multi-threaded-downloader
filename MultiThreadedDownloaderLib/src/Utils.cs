@@ -11,6 +11,11 @@ namespace MultiThreadedDownloaderLib
 	public static class Utils
 	{
 		public const int ONE_MEGABYTE = 1048576; //1024 * 1024;
+		public static int ConnectionLimit
+		{
+			get => ServicePointManager.DefaultConnectionLimit;
+			set => ServicePointManager.DefaultConnectionLimit = value;
+		}
 
 		public static string GetNumberedFileName(string filePath)
 		{
@@ -597,16 +602,6 @@ namespace MultiThreadedDownloaderLib
 				return stream;
 			}
 			return null;
-		}
-
-		public static int GetDefaultMaximumConnectionLimit()
-		{
-			return ServicePointManager.DefaultConnectionLimit;
-		}
-
-		public static void SetDefaultMaximumConnectionLimit(int limit)
-		{
-			ServicePointManager.DefaultConnectionLimit = limit;
 		}
 	}
 }
