@@ -53,6 +53,7 @@
 			this.numericUpDownTryCountInsideEachThread = new System.Windows.Forms.NumericUpDown();
 			this.numericUpDownTryCountPerThread = new System.Windows.Forms.NumericUpDown();
 			this.label8 = new System.Windows.Forms.Label();
+			this.progressBarDownload = new MultiThreadedDownloaderLib.MultipleProgressBar();
 			this.numericUpDownChunksMergingUpdateInterval = new System.Windows.Forms.NumericUpDown();
 			this.label7 = new System.Windows.Forms.Label();
 			this.numericUpDownUpdateInterval = new System.Windows.Forms.NumericUpDown();
@@ -64,8 +65,8 @@
 			this.numericUpDownThreadCount = new System.Windows.Forms.NumericUpDown();
 			this.btnSelectTempDir = new System.Windows.Forms.Button();
 			this.btnSelectFile = new System.Windows.Forms.Button();
-			this.editTempPath = new System.Windows.Forms.TextBox();
-			this.editFileName = new System.Windows.Forms.TextBox();
+			this.txtBoxTempDir = new System.Windows.Forms.TextBox();
+			this.textBoxOutputFileName = new System.Windows.Forms.TextBox();
 			this.label3 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
@@ -77,7 +78,6 @@
 			this.listViewLog = new System.Windows.Forms.ListView();
 			this.columnHeaderEventDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeaderEventText = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-			this.progressBarDownloading = new MultiThreadedDownloaderLib.MultipleProgressBar();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownProxyPort)).BeginInit();
 			this.tabControl1.SuspendLayout();
 			this.tabPageMain.SuspendLayout();
@@ -185,7 +185,7 @@
 			this.tabPageMain.Controls.Add(this.numericUpDownTryCountInsideEachThread);
 			this.tabPageMain.Controls.Add(this.numericUpDownTryCountPerThread);
 			this.tabPageMain.Controls.Add(this.label8);
-			this.tabPageMain.Controls.Add(this.progressBarDownloading);
+			this.tabPageMain.Controls.Add(this.progressBarDownload);
 			this.tabPageMain.Controls.Add(this.numericUpDownChunksMergingUpdateInterval);
 			this.tabPageMain.Controls.Add(this.label7);
 			this.tabPageMain.Controls.Add(this.numericUpDownUpdateInterval);
@@ -197,8 +197,8 @@
 			this.tabPageMain.Controls.Add(this.numericUpDownThreadCount);
 			this.tabPageMain.Controls.Add(this.btnSelectTempDir);
 			this.tabPageMain.Controls.Add(this.btnSelectFile);
-			this.tabPageMain.Controls.Add(this.editTempPath);
-			this.tabPageMain.Controls.Add(this.editFileName);
+			this.tabPageMain.Controls.Add(this.txtBoxTempDir);
+			this.tabPageMain.Controls.Add(this.textBoxOutputFileName);
 			this.tabPageMain.Controls.Add(this.label3);
 			this.tabPageMain.Controls.Add(this.label2);
 			this.tabPageMain.Controls.Add(this.label1);
@@ -410,6 +410,16 @@
 			this.label8.TabIndex = 69;
 			this.label8.Text = "Количество попыток для каждого потока (0 - бесконечно):";
 			// 
+			// progressBarDownload
+			// 
+			this.progressBarDownload.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
+			this.progressBarDownload.Location = new System.Drawing.Point(9, 437);
+			this.progressBarDownload.Name = "progressBarDownload";
+			this.progressBarDownload.Size = new System.Drawing.Size(810, 23);
+			this.progressBarDownload.TabIndex = 68;
+			this.progressBarDownload.Text = "multipleProgressBar1";
+			// 
 			// numericUpDownChunksMergingUpdateInterval
 			// 
 			this.numericUpDownChunksMergingUpdateInterval.Increment = new decimal(new int[] {
@@ -567,23 +577,23 @@
 			this.btnSelectFile.UseVisualStyleBackColor = true;
 			this.btnSelectFile.Click += new System.EventHandler(this.btnSelectFile_Click);
 			// 
-			// editTempPath
+			// txtBoxTempDir
 			// 
-			this.editTempPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			this.txtBoxTempDir.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
 			| System.Windows.Forms.AnchorStyles.Right)));
-			this.editTempPath.Location = new System.Drawing.Point(183, 66);
-			this.editTempPath.Name = "editTempPath";
-			this.editTempPath.Size = new System.Drawing.Size(591, 20);
-			this.editTempPath.TabIndex = 53;
+			this.txtBoxTempDir.Location = new System.Drawing.Point(183, 66);
+			this.txtBoxTempDir.Name = "txtBoxTempDir";
+			this.txtBoxTempDir.Size = new System.Drawing.Size(591, 20);
+			this.txtBoxTempDir.TabIndex = 53;
 			// 
-			// editFileName
+			// textBoxOutputFileName
 			// 
-			this.editFileName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			this.textBoxOutputFileName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
 			| System.Windows.Forms.AnchorStyles.Right)));
-			this.editFileName.Location = new System.Drawing.Point(61, 37);
-			this.editFileName.Name = "editFileName";
-			this.editFileName.Size = new System.Drawing.Size(713, 20);
-			this.editFileName.TabIndex = 52;
+			this.textBoxOutputFileName.Location = new System.Drawing.Point(61, 37);
+			this.textBoxOutputFileName.Name = "textBoxOutputFileName";
+			this.textBoxOutputFileName.Size = new System.Drawing.Size(713, 20);
+			this.textBoxOutputFileName.TabIndex = 52;
 			// 
 			// label3
 			// 
@@ -687,16 +697,6 @@
 			this.columnHeaderEventText.Text = "Событие";
 			this.columnHeaderEventText.Width = 666;
 			// 
-			// progressBarDownloading
-			// 
-			this.progressBarDownloading.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-			| System.Windows.Forms.AnchorStyles.Right)));
-			this.progressBarDownloading.Location = new System.Drawing.Point(9, 437);
-			this.progressBarDownloading.Name = "progressBarDownloading";
-			this.progressBarDownloading.Size = new System.Drawing.Size(810, 23);
-			this.progressBarDownloading.TabIndex = 68;
-			this.progressBarDownloading.Text = "multipleProgressBar1";
-			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -754,7 +754,7 @@
 		private System.Windows.Forms.NumericUpDown numericUpDownTryCountInsideEachThread;
 		private System.Windows.Forms.NumericUpDown numericUpDownTryCountPerThread;
 		private System.Windows.Forms.Label label8;
-		private MultipleProgressBar progressBarDownloading;
+		private MultipleProgressBar progressBarDownload;
 		private System.Windows.Forms.NumericUpDown numericUpDownChunksMergingUpdateInterval;
 		private System.Windows.Forms.Label label7;
 		private System.Windows.Forms.NumericUpDown numericUpDownUpdateInterval;
@@ -766,8 +766,8 @@
 		private System.Windows.Forms.NumericUpDown numericUpDownThreadCount;
 		private System.Windows.Forms.Button btnSelectTempDir;
 		private System.Windows.Forms.Button btnSelectFile;
-		private System.Windows.Forms.TextBox editTempPath;
-		private System.Windows.Forms.TextBox editFileName;
+		private System.Windows.Forms.TextBox txtBoxTempDir;
+		private System.Windows.Forms.TextBox textBoxOutputFileName;
 		private System.Windows.Forms.Label label3;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Label label1;
