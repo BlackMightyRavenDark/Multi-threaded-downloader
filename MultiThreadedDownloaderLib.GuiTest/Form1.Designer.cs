@@ -59,17 +59,13 @@
 			this.label6 = new System.Windows.Forms.Label();
 			this.checkBoxUseRamForTempFiles = new System.Windows.Forms.CheckBox();
 			this.btnHeaders = new System.Windows.Forms.Button();
-			this.cbKeepDownloadedFileInTempOrMergingDirectory = new System.Windows.Forms.CheckBox();
 			this.lblMergeProgress = new System.Windows.Forms.Label();
 			this.label5 = new System.Windows.Forms.Label();
 			this.numericUpDownThreadCount = new System.Windows.Forms.NumericUpDown();
-			this.btnSelectMergingDir = new System.Windows.Forms.Button();
 			this.btnSelectTempDir = new System.Windows.Forms.Button();
 			this.btnSelectFile = new System.Windows.Forms.Button();
-			this.editMergingPath = new System.Windows.Forms.TextBox();
 			this.editTempPath = new System.Windows.Forms.TextBox();
 			this.editFileName = new System.Windows.Forms.TextBox();
-			this.label4 = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
@@ -124,9 +120,8 @@
 			// 
 			// checkBoxFakeDownloading
 			// 
-			this.checkBoxFakeDownloading.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.checkBoxFakeDownloading.AutoSize = true;
-			this.checkBoxFakeDownloading.Location = new System.Drawing.Point(678, 145);
+			this.checkBoxFakeDownloading.Location = new System.Drawing.Point(245, 139);
 			this.checkBoxFakeDownloading.Name = "checkBoxFakeDownloading";
 			this.checkBoxFakeDownloading.Size = new System.Drawing.Size(141, 17);
 			this.checkBoxFakeDownloading.TabIndex = 78;
@@ -136,9 +131,8 @@
 			// 
 			// checkBoxDownloadToRAM
 			// 
-			this.checkBoxDownloadToRAM.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.checkBoxDownloadToRAM.AutoSize = true;
-			this.checkBoxDownloadToRAM.Location = new System.Drawing.Point(442, 145);
+			this.checkBoxDownloadToRAM.Location = new System.Drawing.Point(9, 139);
 			this.checkBoxDownloadToRAM.Name = "checkBoxDownloadToRAM";
 			this.checkBoxDownloadToRAM.Size = new System.Drawing.Size(230, 17);
 			this.checkBoxDownloadToRAM.TabIndex = 77;
@@ -152,14 +146,13 @@
 			this.checkBoxMergeChunksAutomatically.AutoSize = true;
 			this.checkBoxMergeChunksAutomatically.Checked = true;
 			this.checkBoxMergeChunksAutomatically.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxMergeChunksAutomatically.Location = new System.Drawing.Point(9, 122);
+			this.checkBoxMergeChunksAutomatically.Location = new System.Drawing.Point(9, 93);
 			this.checkBoxMergeChunksAutomatically.Name = "checkBoxMergeChunksAutomatically";
 			this.checkBoxMergeChunksAutomatically.Size = new System.Drawing.Size(457, 17);
 			this.checkBoxMergeChunksAutomatically.TabIndex = 76;
 			this.checkBoxMergeChunksAutomatically.Text = "Автоматически объединить чанки после скачивания (только многопоточный режим)";
 			this.toolTip1.SetToolTip(this.checkBoxMergeChunksAutomatically, "Будет использован встроенный алгоритм объединения");
 			this.checkBoxMergeChunksAutomatically.UseVisualStyleBackColor = true;
-			this.checkBoxMergeChunksAutomatically.Click += new System.EventHandler(this.checkBoxMergeChunksAutomatically_CheckedChanged);
 			// 
 			// tabControl1
 			// 
@@ -171,7 +164,7 @@
 			this.tabControl1.Location = new System.Drawing.Point(12, 12);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
-			this.tabControl1.Size = new System.Drawing.Size(833, 522);
+			this.tabControl1.Size = new System.Drawing.Size(833, 492);
 			this.tabControl1.TabIndex = 0;
 			// 
 			// tabPageMain
@@ -199,17 +192,13 @@
 			this.tabPageMain.Controls.Add(this.label6);
 			this.tabPageMain.Controls.Add(this.checkBoxUseRamForTempFiles);
 			this.tabPageMain.Controls.Add(this.btnHeaders);
-			this.tabPageMain.Controls.Add(this.cbKeepDownloadedFileInTempOrMergingDirectory);
 			this.tabPageMain.Controls.Add(this.lblMergeProgress);
 			this.tabPageMain.Controls.Add(this.label5);
 			this.tabPageMain.Controls.Add(this.numericUpDownThreadCount);
-			this.tabPageMain.Controls.Add(this.btnSelectMergingDir);
 			this.tabPageMain.Controls.Add(this.btnSelectTempDir);
 			this.tabPageMain.Controls.Add(this.btnSelectFile);
-			this.tabPageMain.Controls.Add(this.editMergingPath);
 			this.tabPageMain.Controls.Add(this.editTempPath);
 			this.tabPageMain.Controls.Add(this.editFileName);
-			this.tabPageMain.Controls.Add(this.label4);
 			this.tabPageMain.Controls.Add(this.label3);
 			this.tabPageMain.Controls.Add(this.label2);
 			this.tabPageMain.Controls.Add(this.label1);
@@ -220,14 +209,14 @@
 			this.tabPageMain.Location = new System.Drawing.Point(4, 22);
 			this.tabPageMain.Name = "tabPageMain";
 			this.tabPageMain.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPageMain.Size = new System.Drawing.Size(825, 496);
+			this.tabPageMain.Size = new System.Drawing.Size(825, 466);
 			this.tabPageMain.TabIndex = 0;
 			this.tabPageMain.Text = "Скачивание";
 			// 
 			// checkBoxSkipHeadRequest
 			// 
 			this.checkBoxSkipHeadRequest.AutoSize = true;
-			this.checkBoxSkipHeadRequest.Location = new System.Drawing.Point(9, 214);
+			this.checkBoxSkipHeadRequest.Location = new System.Drawing.Point(9, 185);
 			this.checkBoxSkipHeadRequest.Name = "checkBoxSkipHeadRequest";
 			this.checkBoxSkipHeadRequest.Size = new System.Drawing.Size(474, 17);
 			this.checkBoxSkipHeadRequest.TabIndex = 83;
@@ -237,7 +226,7 @@
 			// label13
 			// 
 			this.label13.AutoSize = true;
-			this.label13.Location = new System.Drawing.Point(8, 394);
+			this.label13.Location = new System.Drawing.Point(8, 365);
 			this.label13.Name = "label13";
 			this.label13.Size = new System.Drawing.Size(177, 13);
 			this.label13.TabIndex = 82;
@@ -250,7 +239,7 @@
 			0,
 			0,
 			0});
-			this.numericUpDownRetryInterval.Location = new System.Drawing.Point(331, 392);
+			this.numericUpDownRetryInterval.Location = new System.Drawing.Point(331, 363);
 			this.numericUpDownRetryInterval.Maximum = new decimal(new int[] {
 			10000,
 			0,
@@ -276,7 +265,7 @@
 			| System.Windows.Forms.AnchorStyles.Right)));
 			this.groupBox1.Controls.Add(this.lblCookieCount);
 			this.groupBox1.Controls.Add(this.btnCookies);
-			this.groupBox1.Location = new System.Drawing.Point(391, 316);
+			this.groupBox1.Location = new System.Drawing.Point(391, 287);
 			this.groupBox1.Name = "groupBox1";
 			this.groupBox1.Size = new System.Drawing.Size(428, 44);
 			this.groupBox1.TabIndex = 80;
@@ -308,7 +297,7 @@
 			this.groupBoxProxy.Controls.Add(this.numericUpDownProxyPort);
 			this.groupBoxProxy.Controls.Add(this.textBoxProxyAddress);
 			this.groupBoxProxy.Controls.Add(this.label11);
-			this.groupBoxProxy.Location = new System.Drawing.Point(391, 238);
+			this.groupBoxProxy.Location = new System.Drawing.Point(391, 209);
 			this.groupBoxProxy.Name = "groupBoxProxy";
 			this.groupBoxProxy.Size = new System.Drawing.Size(428, 70);
 			this.groupBoxProxy.TabIndex = 79;
@@ -340,7 +329,7 @@
 			0,
 			0,
 			0});
-			this.numericUpDownConnectionTimeout.Location = new System.Drawing.Point(331, 366);
+			this.numericUpDownConnectionTimeout.Location = new System.Drawing.Point(331, 337);
 			this.numericUpDownConnectionTimeout.Maximum = new decimal(new int[] {
 			100000,
 			0,
@@ -363,7 +352,7 @@
 			// label9
 			// 
 			this.label9.AutoSize = true;
-			this.label9.Location = new System.Drawing.Point(8, 368);
+			this.label9.Location = new System.Drawing.Point(8, 339);
 			this.label9.Name = "label9";
 			this.label9.Size = new System.Drawing.Size(181, 13);
 			this.label9.TabIndex = 74;
@@ -372,7 +361,7 @@
 			// checkBoxUseAccurateMode
 			// 
 			this.checkBoxUseAccurateMode.AutoSize = true;
-			this.checkBoxUseAccurateMode.Location = new System.Drawing.Point(9, 191);
+			this.checkBoxUseAccurateMode.Location = new System.Drawing.Point(9, 162);
 			this.checkBoxUseAccurateMode.Name = "checkBoxUseAccurateMode";
 			this.checkBoxUseAccurateMode.Size = new System.Drawing.Size(374, 17);
 			this.checkBoxUseAccurateMode.TabIndex = 73;
@@ -382,7 +371,7 @@
 			// label10
 			// 
 			this.label10.AutoSize = true;
-			this.label10.Location = new System.Drawing.Point(6, 290);
+			this.label10.Location = new System.Drawing.Point(6, 261);
 			this.label10.Name = "label10";
 			this.label10.Size = new System.Drawing.Size(319, 13);
 			this.label10.TabIndex = 72;
@@ -390,7 +379,7 @@
 			// 
 			// numericUpDownTryCountInsideEachThread
 			// 
-			this.numericUpDownTryCountInsideEachThread.Location = new System.Drawing.Point(331, 288);
+			this.numericUpDownTryCountInsideEachThread.Location = new System.Drawing.Point(331, 259);
 			this.numericUpDownTryCountInsideEachThread.Name = "numericUpDownTryCountInsideEachThread";
 			this.numericUpDownTryCountInsideEachThread.Size = new System.Drawing.Size(54, 20);
 			this.numericUpDownTryCountInsideEachThread.TabIndex = 71;
@@ -402,7 +391,7 @@
 			// 
 			// numericUpDownTryCountPerThread
 			// 
-			this.numericUpDownTryCountPerThread.Location = new System.Drawing.Point(331, 262);
+			this.numericUpDownTryCountPerThread.Location = new System.Drawing.Point(331, 233);
 			this.numericUpDownTryCountPerThread.Name = "numericUpDownTryCountPerThread";
 			this.numericUpDownTryCountPerThread.Size = new System.Drawing.Size(54, 20);
 			this.numericUpDownTryCountPerThread.TabIndex = 70;
@@ -415,7 +404,7 @@
 			// label8
 			// 
 			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point(6, 264);
+			this.label8.Location = new System.Drawing.Point(6, 235);
 			this.label8.Name = "label8";
 			this.label8.Size = new System.Drawing.Size(303, 13);
 			this.label8.TabIndex = 69;
@@ -428,7 +417,7 @@
 			0,
 			0,
 			0});
-			this.numericUpDownChunksMergingUpdateInterval.Location = new System.Drawing.Point(331, 340);
+			this.numericUpDownChunksMergingUpdateInterval.Location = new System.Drawing.Point(331, 311);
 			this.numericUpDownChunksMergingUpdateInterval.Maximum = new decimal(new int[] {
 			1000,
 			0,
@@ -451,7 +440,7 @@
 			// label7
 			// 
 			this.label7.AutoSize = true;
-			this.label7.Location = new System.Drawing.Point(6, 342);
+			this.label7.Location = new System.Drawing.Point(6, 313);
 			this.label7.Name = "label7";
 			this.label7.Size = new System.Drawing.Size(266, 13);
 			this.label7.TabIndex = 66;
@@ -464,7 +453,7 @@
 			0,
 			0,
 			0});
-			this.numericUpDownUpdateInterval.Location = new System.Drawing.Point(331, 314);
+			this.numericUpDownUpdateInterval.Location = new System.Drawing.Point(331, 285);
 			this.numericUpDownUpdateInterval.Maximum = new decimal(new int[] {
 			2000,
 			0,
@@ -487,7 +476,7 @@
 			// label6
 			// 
 			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point(6, 316);
+			this.label6.Location = new System.Drawing.Point(6, 287);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(220, 13);
 			this.label6.TabIndex = 64;
@@ -496,7 +485,7 @@
 			// checkBoxUseRamForTempFiles
 			// 
 			this.checkBoxUseRamForTempFiles.AutoSize = true;
-			this.checkBoxUseRamForTempFiles.Location = new System.Drawing.Point(9, 168);
+			this.checkBoxUseRamForTempFiles.Location = new System.Drawing.Point(9, 116);
 			this.checkBoxUseRamForTempFiles.Name = "checkBoxUseRamForTempFiles";
 			this.checkBoxUseRamForTempFiles.Size = new System.Drawing.Size(650, 17);
 			this.checkBoxUseRamForTempFiles.TabIndex = 63;
@@ -507,7 +496,7 @@
 			// btnHeaders
 			// 
 			this.btnHeaders.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnHeaders.Location = new System.Drawing.Point(744, 122);
+			this.btnHeaders.Location = new System.Drawing.Point(744, 93);
 			this.btnHeaders.Name = "btnHeaders";
 			this.btnHeaders.Size = new System.Drawing.Size(75, 23);
 			this.btnHeaders.TabIndex = 62;
@@ -515,21 +504,11 @@
 			this.btnHeaders.UseVisualStyleBackColor = true;
 			this.btnHeaders.Click += new System.EventHandler(this.btnHeaders_Click);
 			// 
-			// cbKeepDownloadedFileInTempOrMergingDirectory
-			// 
-			this.cbKeepDownloadedFileInTempOrMergingDirectory.AutoSize = true;
-			this.cbKeepDownloadedFileInTempOrMergingDirectory.Location = new System.Drawing.Point(9, 145);
-			this.cbKeepDownloadedFileInTempOrMergingDirectory.Name = "cbKeepDownloadedFileInTempOrMergingDirectory";
-			this.cbKeepDownloadedFileInTempOrMergingDirectory.Size = new System.Drawing.Size(210, 17);
-			this.cbKeepDownloadedFileInTempOrMergingDirectory.TabIndex = 61;
-			this.cbKeepDownloadedFileInTempOrMergingDirectory.Text = "Оставить файл во временной папке";
-			this.cbKeepDownloadedFileInTempOrMergingDirectory.UseVisualStyleBackColor = true;
-			// 
 			// lblMergeProgress
 			// 
 			this.lblMergeProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lblMergeProgress.AutoSize = true;
-			this.lblMergeProgress.Location = new System.Drawing.Point(70, 451);
+			this.lblMergeProgress.Location = new System.Drawing.Point(70, 421);
 			this.lblMergeProgress.Name = "lblMergeProgress";
 			this.lblMergeProgress.Size = new System.Drawing.Size(88, 13);
 			this.lblMergeProgress.TabIndex = 60;
@@ -538,7 +517,7 @@
 			// label5
 			// 
 			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(6, 238);
+			this.label5.Location = new System.Drawing.Point(6, 209);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(113, 13);
 			this.label5.TabIndex = 59;
@@ -546,7 +525,7 @@
 			// 
 			// numericUpDownThreadCount
 			// 
-			this.numericUpDownThreadCount.Location = new System.Drawing.Point(331, 238);
+			this.numericUpDownThreadCount.Location = new System.Drawing.Point(331, 209);
 			this.numericUpDownThreadCount.Maximum = new decimal(new int[] {
 			25,
 			0,
@@ -565,17 +544,6 @@
 			0,
 			0,
 			0});
-			// 
-			// btnSelectMergingDir
-			// 
-			this.btnSelectMergingDir.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnSelectMergingDir.Location = new System.Drawing.Point(780, 92);
-			this.btnSelectMergingDir.Name = "btnSelectMergingDir";
-			this.btnSelectMergingDir.Size = new System.Drawing.Size(39, 23);
-			this.btnSelectMergingDir.TabIndex = 57;
-			this.btnSelectMergingDir.Text = "...";
-			this.btnSelectMergingDir.UseVisualStyleBackColor = true;
-			this.btnSelectMergingDir.Click += new System.EventHandler(this.btnSelectMergingDir_Click);
 			// 
 			// btnSelectTempDir
 			// 
@@ -599,15 +567,6 @@
 			this.btnSelectFile.UseVisualStyleBackColor = true;
 			this.btnSelectFile.Click += new System.EventHandler(this.btnSelectFile_Click);
 			// 
-			// editMergingPath
-			// 
-			this.editMergingPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-			| System.Windows.Forms.AnchorStyles.Right)));
-			this.editMergingPath.Location = new System.Drawing.Point(183, 92);
-			this.editMergingPath.Name = "editMergingPath";
-			this.editMergingPath.Size = new System.Drawing.Size(591, 20);
-			this.editMergingPath.TabIndex = 54;
-			// 
 			// editTempPath
 			// 
 			this.editTempPath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
@@ -625,15 +584,6 @@
 			this.editFileName.Name = "editFileName";
 			this.editFileName.Size = new System.Drawing.Size(713, 20);
 			this.editFileName.TabIndex = 52;
-			// 
-			// label4
-			// 
-			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point(6, 95);
-			this.label4.Name = "label4";
-			this.label4.Size = new System.Drawing.Size(171, 13);
-			this.label4.TabIndex = 51;
-			this.label4.Text = "Папка для объединения чанков:";
 			// 
 			// label3
 			// 
@@ -656,7 +606,7 @@
 			// label1
 			// 
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(8, 9);
+			this.label1.Location = new System.Drawing.Point(6, 9);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(49, 13);
 			this.label1.TabIndex = 48;
@@ -666,7 +616,7 @@
 			// 
 			this.lblDownloadProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lblDownloadProgress.AutoSize = true;
-			this.lblDownloadProgress.Location = new System.Drawing.Point(6, 451);
+			this.lblDownloadProgress.Location = new System.Drawing.Point(6, 421);
 			this.lblDownloadProgress.Name = "lblDownloadProgress";
 			this.lblDownloadProgress.Size = new System.Drawing.Size(58, 13);
 			this.lblDownloadProgress.TabIndex = 47;
@@ -675,7 +625,7 @@
 			// btnDownloadMultiThreaded
 			// 
 			this.btnDownloadMultiThreaded.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnDownloadMultiThreaded.Location = new System.Drawing.Point(153, 419);
+			this.btnDownloadMultiThreaded.Location = new System.Drawing.Point(153, 389);
 			this.btnDownloadMultiThreaded.Name = "btnDownloadMultiThreaded";
 			this.btnDownloadMultiThreaded.Size = new System.Drawing.Size(148, 23);
 			this.btnDownloadMultiThreaded.TabIndex = 46;
@@ -695,7 +645,7 @@
 			// btnDownloadSingleThreaded
 			// 
 			this.btnDownloadSingleThreaded.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnDownloadSingleThreaded.Location = new System.Drawing.Point(9, 419);
+			this.btnDownloadSingleThreaded.Location = new System.Drawing.Point(9, 389);
 			this.btnDownloadSingleThreaded.Name = "btnDownloadSingleThreaded";
 			this.btnDownloadSingleThreaded.Size = new System.Drawing.Size(138, 23);
 			this.btnDownloadSingleThreaded.TabIndex = 44;
@@ -710,7 +660,7 @@
 			this.tabPageLogger.Location = new System.Drawing.Point(4, 22);
 			this.tabPageLogger.Name = "tabPageLogger";
 			this.tabPageLogger.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPageLogger.Size = new System.Drawing.Size(825, 496);
+			this.tabPageLogger.Size = new System.Drawing.Size(825, 466);
 			this.tabPageLogger.TabIndex = 1;
 			this.tabPageLogger.Text = "Лог";
 			// 
@@ -741,7 +691,7 @@
 			// 
 			this.progressBarDownloading.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
 			| System.Windows.Forms.AnchorStyles.Right)));
-			this.progressBarDownloading.Location = new System.Drawing.Point(9, 467);
+			this.progressBarDownloading.Location = new System.Drawing.Point(9, 437);
 			this.progressBarDownloading.Name = "progressBarDownloading";
 			this.progressBarDownloading.Size = new System.Drawing.Size(810, 23);
 			this.progressBarDownloading.TabIndex = 68;
@@ -751,7 +701,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(857, 546);
+			this.ClientSize = new System.Drawing.Size(857, 516);
 			this.Controls.Add(this.tabControl1);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
 			this.MaximizeBox = false;
@@ -811,17 +761,13 @@
 		private System.Windows.Forms.Label label6;
 		private System.Windows.Forms.CheckBox checkBoxUseRamForTempFiles;
 		private System.Windows.Forms.Button btnHeaders;
-		private System.Windows.Forms.CheckBox cbKeepDownloadedFileInTempOrMergingDirectory;
 		private System.Windows.Forms.Label lblMergeProgress;
 		private System.Windows.Forms.Label label5;
 		private System.Windows.Forms.NumericUpDown numericUpDownThreadCount;
-		private System.Windows.Forms.Button btnSelectMergingDir;
 		private System.Windows.Forms.Button btnSelectTempDir;
 		private System.Windows.Forms.Button btnSelectFile;
-		private System.Windows.Forms.TextBox editMergingPath;
 		private System.Windows.Forms.TextBox editTempPath;
 		private System.Windows.Forms.TextBox editFileName;
-		private System.Windows.Forms.Label label4;
 		private System.Windows.Forms.Label label3;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Label label1;

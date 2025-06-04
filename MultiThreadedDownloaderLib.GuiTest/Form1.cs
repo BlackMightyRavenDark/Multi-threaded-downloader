@@ -30,7 +30,6 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			Utils.ConnectionLimit = 100;
 			lblDownloadProgress.Text = null;
 			lblMergeProgress.Text = null;
-			cbKeepDownloadedFileInTempOrMergingDirectory.Enabled = checkBoxMergeChunksAutomatically.Checked;
 			numericUpDownProxyPort.Maximum = ushort.MaxValue;
 
 			headerCollection = new NameValueCollection()
@@ -66,11 +65,6 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				isClosing = false;
 				Close();
 			}
-		}
-
-		private void checkBoxMergeChunksAutomatically_CheckedChanged(object sender, EventArgs e)
-		{
-			cbKeepDownloadedFileInTempOrMergingDirectory.Enabled = checkBoxMergeChunksAutomatically.Checked;
 		}
 
 		private void btnSelectFile_Click(object sender, EventArgs e)
@@ -109,26 +103,6 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				}
 			}
 			catch (Exception ex)
-			{
-				MessageBox.Show(ex.Message, "Ошибка!",
-					MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-		}
-
-		private void btnSelectMergingDir_Click(object sender, EventArgs e)
-		{
-			try
-			{
-				using (FolderBrowserDialog fbd = new FolderBrowserDialog())
-				{
-					fbd.Description = "Выберите папку для объединения чанков";
-					fbd.SelectedPath = Application.StartupPath;
-					if (fbd.ShowDialog() == DialogResult.OK)
-					{
-						editMergingPath.Text = fbd.SelectedPath;
-					}
-				}
-			} catch (Exception ex)
 			{
 				MessageBox.Show(ex.Message, "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -563,6 +537,20 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			EnableControls(false);
 			lblMergeProgress.Text = null;
 
+			string tempDirectory = editTempPath.Text;
+			if (!checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked &&
+				!string.IsNullOrEmpty(tempDirectory) && !string.IsNullOrWhiteSpace(tempDirectory) &&
+				!Directory.Exists(tempDirectory))
+			{
+				MessageBox.Show("Не указана папка для временных файлов!", "Ошибка!",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
+				btnDownloadMultiThreaded.Text = "Download multi threaded";
+				btnDownloadMultiThreaded.Enabled = true;
+				EnableControls(true);
+				isDownloading = false;
+				return;
+			}
+
 			if (!CreateProxy(out WebProxy proxy, out string proxyError))
 			{
 				string msg = $"Неверно указан прокси-сервер!\n{proxyError}\nПродолжить скачивание без использования прокси-сервера?";
@@ -815,18 +803,16 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				}));
 			};
 
-			multiThreadedDownloader.Headers = headerCollection;
+			multiThreadedDownloader.Url = textBoxUrl.Text;
+			multiThreadedDownloader.OutputFileName = editFileName.Text;
+			multiThreadedDownloader.TempDirectory = tempDirectory;
 			multiThreadedDownloader.ThreadCount = (int)numericUpDownThreadCount.Value;
 			multiThreadedDownloader.TryCountLimitPerThread = (int)numericUpDownTryCountPerThread.Value;
 			multiThreadedDownloader.TryCountLimitInsideThread = (int)numericUpDownTryCountInsideEachThread.Value;
 			multiThreadedDownloader.RetryIntervalMilliseconds = (int)numericUpDownRetryInterval.Value;
-			multiThreadedDownloader.Url = textBoxUrl.Text;
+			multiThreadedDownloader.Headers = headerCollection;
 			multiThreadedDownloader.Cookies = cookies;
 			multiThreadedDownloader.Proxy = proxy;
-			multiThreadedDownloader.OutputFileName = editFileName.Text;
-			multiThreadedDownloader.TempDirectory = editTempPath.Text;
-			multiThreadedDownloader.MergingDirectory = editMergingPath.Text;
-			multiThreadedDownloader.KeepDownloadedFileInTempOrMergingDirectory = cbKeepDownloadedFileInTempOrMergingDirectory.Checked;
 			multiThreadedDownloader.UseRamForTempFiles = checkBoxUseRamForTempFiles.Checked;
 			multiThreadedDownloader.FakeDownloading = checkBoxFakeDownloading.Checked;
 			multiThreadedDownloader.UpdateIntervalMilliseconds = (int)numericUpDownUpdateInterval.Value;
@@ -910,13 +896,10 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			textBoxUrl.Enabled = enable;
 			editFileName.Enabled = enable;
 			editTempPath.Enabled = enable;
-			editMergingPath.Enabled = enable;
 			btnSelectFile.Enabled = enable;
 			btnSelectTempDir.Enabled = enable;
-			btnSelectMergingDir.Enabled = enable;
 			btnHeaders.Enabled = enable;
 			checkBoxMergeChunksAutomatically.Enabled = enable;
-			cbKeepDownloadedFileInTempOrMergingDirectory.Enabled = enable;
 			checkBoxDownloadToRAM.Enabled = enable;
 			checkBoxUseRamForTempFiles.Enabled = enable;
 			checkBoxFakeDownloading.Enabled = enable;

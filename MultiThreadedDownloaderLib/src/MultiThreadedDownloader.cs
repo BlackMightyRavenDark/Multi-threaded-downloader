@@ -25,8 +25,6 @@ namespace MultiThreadedDownloaderLib
 		public string OutputFileName { get; set; } = null;
 
 		public string TempDirectory { get; set; } = null;
-		public string MergingDirectory { get; set; } = null;
-		public bool KeepDownloadedFileInTempOrMergingDirectory { get; set; } = false;
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
 		public int RetryIntervalMilliseconds { get; set; } = 1000;
 		public int ChunksMergingUpdateIntervalMilliseconds { get; set; } = 100;
@@ -70,8 +68,6 @@ namespace MultiThreadedDownloaderLib
 		public string LastErrorMessage { get; private set; }
 		public bool IsTempDirectoryAvailable => !string.IsNullOrEmpty(TempDirectory) &&
 			!string.IsNullOrWhiteSpace(TempDirectory) && Directory.Exists(TempDirectory);
-		public bool IsMergingDirectoryAvailable => !string.IsNullOrEmpty(MergingDirectory) &&
-			!string.IsNullOrWhiteSpace(MergingDirectory) && Directory.Exists(MergingDirectory);
 		public bool HasErrorMessage => HasErrorMessageText();
 
 		private NameValueCollection _headers = new NameValueCollection();
@@ -86,7 +82,6 @@ namespace MultiThreadedDownloaderLib
 		public const int DOWNLOAD_ERROR_NO_URL_SPECIFIED = -202;
 		public const int DOWNLOAD_ERROR_NO_FILE_NAME_SPECIFIED = -203;
 		public const int DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS = -204;
-		public const int DOWNLOAD_ERROR_MERGING_DIR_NOT_EXISTS = -205;
 		public const int DOWNLOAD_ERROR_CUSTOM = -206;
 		public const int DOWNLOAD_ERROR_CHUNK_SEQUENCE = -207;
 		public const int DOWNLOAD_ERROR_UNDEFINED = -208;
@@ -155,10 +150,10 @@ namespace MultiThreadedDownloaderLib
 				return DOWNLOAD_ERROR_NO_URL_SPECIFIED;
 			}
 
-			bool isDownloadingToRam = outputStream != null && outputStream is MemoryStream;
+			bool isMemoryStream = outputStream != null && outputStream is MemoryStream;
 			bool isTempDirectoryProvided = !string.IsNullOrEmpty(TempDirectory) && !string.IsNullOrWhiteSpace(TempDirectory);
-			bool isTempDirectoryAvailable = isTempDirectoryProvided && Directory.Exists(TempDirectory);
-			if (!UseRamForTempFiles && !FakeDownloading && isDownloadingToRam && !isTempDirectoryAvailable)
+			if (!UseRamForTempFiles && !FakeDownloading && !isMemoryStream &&
+				(!isTempDirectoryProvided || !Directory.Exists(TempDirectory)))
 			{
 				LastErrorCode = DOWNLOAD_ERROR_CUSTOM;
 				LastErrorMessage = "Не указана или недоступна папка для временных файлов!";
@@ -182,12 +177,6 @@ namespace MultiThreadedDownloaderLib
 					IsActive = false;
 					return DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS;
 				}
-				if (IsMergingDirectoryAvailable && !Directory.Exists(MergingDirectory))
-				{
-					LastErrorCode = DOWNLOAD_ERROR_MERGING_DIR_NOT_EXISTS;
-					IsActive = false;
-					return DOWNLOAD_ERROR_MERGING_DIR_NOT_EXISTS;
-				}
 
 				string dirName = Path.GetDirectoryName(OutputFileName);
 				if (string.IsNullOrEmpty(dirName) || string.IsNullOrWhiteSpace(dirName))
@@ -198,10 +187,6 @@ namespace MultiThreadedDownloaderLib
 				if (!IsTempDirectoryAvailable)
 				{
 					TempDirectory = Path.GetDirectoryName(OutputFileName);
-				}
-				if (!IsMergingDirectoryAvailable)
-				{
-					MergingDirectory = TempDirectory;
 				}
 
 				List<char> driveLetters = GetUsedDriveLetters();
@@ -648,9 +633,20 @@ namespace MultiThreadedDownloaderLib
 					{
 						if (UseRamForTempFiles || downloadableChunks.Count > 1)
 						{
-							ChunkMergingStarted?.Invoke(this, downloadableChunks.Count);
-							LastErrorCode = MergeChunks(downloadableChunks, outputStream);
-							ChunkMergingFinished?.Invoke(this, LastErrorCode);
+							bool canMerge = true;
+							if (!isMemoryStream && !IsTempDirectoryAvailable)
+							{
+								LastErrorCode = DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS;
+								LastErrorMessage = null;
+								canMerge = false;
+							}
+
+							if (canMerge)
+							{
+								ChunkMergingStarted?.Invoke(this, downloadableChunks.Count);
+								LastErrorCode = MergeChunks(downloadableChunks, outputStream);
+								ChunkMergingFinished?.Invoke(this, LastErrorCode);
+							}
 						}
 						else if (!UseRamForTempFiles && downloadableChunks.Count == 1)
 						{
@@ -658,21 +654,7 @@ namespace MultiThreadedDownloaderLib
 							if (!string.IsNullOrEmpty(chunkFilePath) && !string.IsNullOrWhiteSpace(chunkFilePath) &&
 								File.Exists(chunkFilePath))
 							{
-								string destinationDirPath = Path.GetDirectoryName(
-									KeepDownloadedFileInTempOrMergingDirectory ? chunkFilePath : OutputFileName);
-								string destinationFileName = Path.GetFileName(OutputFileName);
-								string destinationFilePath = Path.Combine(destinationDirPath, destinationFileName);
-								string outputFn = GetNumberedFileName(destinationFilePath);
-								if (string.IsNullOrEmpty(outputFn) || string.IsNullOrWhiteSpace(outputFn))
-								{
-									ClearGarbage(downloadableTasks);
-									LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
-									LastErrorMessage = null;
-									IsActive = false;
-									return LastErrorCode;
-								}
-
-								OutputFileName = outputFn;
+								OutputFileName = GetNumberedFileName(OutputFileName);
 								File.Move(chunkFilePath, OutputFileName);
 								LastErrorCode = 200;
 							}
@@ -792,7 +774,7 @@ namespace MultiThreadedDownloaderLib
 		private int MergeChunks(IEnumerable<DownloadableChunk> downloadableChunks, Stream outputStream)
 		{
 			bool isSharedStream = outputStream != null;
-			string tmpFileName = !isSharedStream ? GetNumberedFileName(GetTempMergingFilePath()) : null;
+			string tmpFileName = !isSharedStream ? GetNumberedFileName($"{OutputFileName}.tmp") : null;
 			if (!isSharedStream)
 			{
 				if (string.IsNullOrEmpty(tmpFileName) || string.IsNullOrWhiteSpace(tmpFileName))
@@ -909,13 +891,6 @@ namespace MultiThreadedDownloaderLib
 
 			if (!isSharedStream)
 			{
-				if (KeepDownloadedFileInTempOrMergingDirectory &&
-					IsMergingDirectoryAvailable)
-				{
-					string fn = Path.GetFileName(OutputFileName);
-					OutputFileName = Path.Combine(MergingDirectory, fn);
-				}
-
 				string outputFn = GetNumberedFileName(OutputFileName);
 				if (string.IsNullOrEmpty(outputFn) || string.IsNullOrWhiteSpace(outputFn))
 				{
@@ -1030,25 +1005,6 @@ namespace MultiThreadedDownloaderLib
 			return string.Empty;
 		}
 
-		private string GetTempMergingFilePath()
-		{
-			string fn = Path.GetFileName(OutputFileName);
-			string tempFilePath;
-			if (IsMergingDirectoryAvailable)
-			{
-				tempFilePath = Path.Combine(MergingDirectory, $"{fn}.tmp");
-			}
-			else if (IsTempDirectoryAvailable)
-			{
-				tempFilePath = Path.Combine(TempDirectory, $"{fn}.tmp");
-			}
-			else
-			{
-				tempFilePath = $"{OutputFileName}.tmp";
-			}
-			return tempFilePath;
-		}
-
 		private void SetHeaders(NameValueCollection headers)
 		{
 			RangeFrom = 0L;
@@ -1106,10 +1062,6 @@ namespace MultiThreadedDownloaderLib
 			{
 				driveLetters.Add(char.ToUpper(TempDirectory[0]));
 			}
-			if (IsMergingDirectoryAvailable && !driveLetters.Contains(char.ToUpper(MergingDirectory[0])))
-			{
-				driveLetters.Add(char.ToUpper(MergingDirectory[0]));
-			}
 			return driveLetters;
 		}
 
@@ -1155,9 +1107,6 @@ namespace MultiThreadedDownloaderLib
 
 				case DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS:
 					return "Не найдена папка для временных файлов!";
-
-				case DOWNLOAD_ERROR_MERGING_DIR_NOT_EXISTS:
-					return "Не найдена папка для объединения чанков!";
 
 				case DOWNLOAD_ERROR_CUSTOM:
 					return null;
