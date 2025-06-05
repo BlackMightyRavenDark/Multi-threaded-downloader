@@ -82,6 +82,7 @@ namespace MultiThreadedDownloaderLib
 		public const int DOWNLOAD_ERROR_NO_URL_SPECIFIED = -202;
 		public const int DOWNLOAD_ERROR_NO_FILE_NAME_SPECIFIED = -203;
 		public const int DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS = -204;
+		public const int DOWNLOAD_ERROR_FINAL_FILE_MOVE = -205;
 		public const int DOWNLOAD_ERROR_CUSTOM = -206;
 		public const int DOWNLOAD_ERROR_CHUNK_SEQUENCE = -207;
 		public const int DOWNLOAD_ERROR_UNDEFINED = -208;
@@ -99,6 +100,8 @@ namespace MultiThreadedDownloaderLib
 		public delegate void ChunkMergingProgressDelegate(object sender, int chunkId,
 			int chunkCount, long chunkPosition, long chunkSize);
 		public delegate void ChunkMergingFinishedDelegate(object sender, int errorCode);
+		public delegate void MovingFileToDestinationDelegate(object sender, long bytesTransferred, long fileSize, string destinationFilePath,
+			char sourceDriveLetter, char destnationDriveLetter);
 
 		public PreparingDelegate Preparing;
 		public ConnectingDelegate Connecting;
@@ -110,6 +113,7 @@ namespace MultiThreadedDownloaderLib
 		public ChunkMergingStartedDelegate ChunkMergingStarted;
 		public ChunkMergingProgressDelegate ChunkMergingProgress;
 		public ChunkMergingFinishedDelegate ChunkMergingFinished;
+		public MovingFileToDestinationDelegate MovingFileToDestination;
 
 		public void Dispose()
 		{
@@ -650,17 +654,60 @@ namespace MultiThreadedDownloaderLib
 						}
 						else if (!UseRamForTempFiles && downloadableChunks.Count == 1)
 						{
-							string chunkFilePath = downloadableChunks[0].OutputStream.FilePath;
-							if (!string.IsNullOrEmpty(chunkFilePath) && !string.IsNullOrWhiteSpace(chunkFilePath) &&
-								File.Exists(chunkFilePath))
+							try
 							{
-								OutputFileName = GetNumberedFileName(OutputFileName);
-								File.Move(chunkFilePath, OutputFileName);
-								LastErrorCode = 200;
-							}
-							else
+								string chunkFilePath = downloadableChunks[0].OutputStream.FilePath;
+								if (!string.IsNullOrEmpty(chunkFilePath) && !string.IsNullOrWhiteSpace(chunkFilePath) &&
+									File.Exists(chunkFilePath))
+								{
+									OutputFileName = GetNumberedFileName(OutputFileName);
+									if (IsSameLogicalDrive(OutputFileName, chunkFilePath))
+									{
+										File.Move(chunkFilePath, OutputFileName);
+										LastErrorCode = 200;
+										LastErrorMessage = null;
+									}
+									else
+									{
+										void func(long sourcePosition, long sourceLength, long destinationPosition, long destinationLength)
+										{
+											DownloadedBytes = sourcePosition;
+											MovingFileToDestination?.Invoke(this, sourcePosition, sourceLength, chunkFilePath,
+												char.ToUpper(chunkFilePath[0]), char.ToUpper(OutputFileName[0]));
+										};
+
+										using (Stream destinationStream = File.OpenWrite(OutputFileName))
+										{
+											using (Stream inputStream = downloadableChunks[0].OutputStream.Stream ??
+												File.OpenRead(chunkFilePath))
+											{
+												inputStream.Position = DownloadedBytes = 0L;
+												Append(inputStream, destinationStream, func, func, func,
+													_cancellationTokenSource.Token, UpdateIntervalMilliseconds);
+											}
+										}
+
+										if (!_cancellationTokenSource.IsCancellationRequested)
+										{
+											File.Delete(chunkFilePath);
+											LastErrorCode = 200;
+											LastErrorMessage = null;
+										}
+										else
+										{
+											LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
+											LastErrorMessage = "Финальное перемещение файла было прервано";
+										}
+									}
+								}
+								else
+								{
+									LastErrorCode = 400;
+								}
+							} catch (Exception ex)
 							{
-								LastErrorCode = 400;
+								LastErrorCode = DOWNLOAD_ERROR_FINAL_FILE_MOVE;
+								LastErrorMessage = ex.Message;
 							}
 						}
 						else
@@ -1107,6 +1154,9 @@ namespace MultiThreadedDownloaderLib
 
 				case DOWNLOAD_ERROR_TEMPORARY_DIR_NOT_EXISTS:
 					return "Не найдена папка для временных файлов!";
+
+				case DOWNLOAD_ERROR_FINAL_FILE_MOVE:
+					return "Ошибка при финальном перемещении файла!";
 
 				case DOWNLOAD_ERROR_CUSTOM:
 					return null;

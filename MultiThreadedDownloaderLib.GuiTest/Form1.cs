@@ -802,6 +802,31 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					lblMergeProgress.Text = errCode == 200 || errCode == 206 ? null : $"Ошибка объединения чанков! Код: {errCode}";
 				}));
 			};
+			bool isFileMoved = false;
+			multiThreadedDownloader.MovingFileToDestination += (s, bytesTransferred, fileSize, filePath, sourceDriveLetter, destnationDriveLetter) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					if (bytesTransferred == 0L)
+					{
+						lblMergeProgress.Text = null;
+						AddToLog($"Финальное перемещение файла начато. {sourceDriveLetter}: -> {destnationDriveLetter}:");
+					}
+					else if (!isFileMoved && bytesTransferred == fileSize)
+					{
+						isFileMoved = true;
+						lblDownloadProgress.Text = "Скачано!";
+						AddToLog("Финальное перемещение файла завершено.");
+						return;
+					}
+
+					double percent = 100.0 / fileSize * bytesTransferred;
+					string percentFormatted = string.Format("{0:F2}", percent);
+					lblDownloadProgress.Text = $"Финальное перемещение файла ({sourceDriveLetter}: -> {destnationDriveLetter}:): " +
+						$"{bytesTransferred} / {fileSize} ({percentFormatted}%)";
+					progressBarDownload.SetItem(0, 100, (int)percent);
+				}));
+			};
 
 			multiThreadedDownloader.Url = textBoxUrl.Text;
 			multiThreadedDownloader.OutputFileName = textBoxOutputFileName.Text;

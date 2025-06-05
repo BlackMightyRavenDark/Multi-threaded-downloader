@@ -52,11 +52,15 @@ namespace MultiThreadedDownloaderLib
 				}
 			} while (!cancellationToken.IsCancellationRequested);
 			stopwatch?.Stop();
-			streamAppendProgress?.Invoke(inputStream.Position, inputStreamLength,
-				outputStream.Position, outputStream.Length);
 
-			streamAppendFinished?.Invoke(inputStream.Position, inputStreamLength,
-				outputStream.Position, outputStream.Length);
+			if (!cancellationToken.IsCancellationRequested)
+			{
+				streamAppendProgress?.Invoke(inputStream.Position, inputStreamLength,
+					outputStream.Position, outputStream.Length);
+
+				streamAppendFinished?.Invoke(inputStream.Position, inputStreamLength,
+					outputStream.Position, outputStream.Length);
+			}
 
 			return outputStream.Length == outputStreamInitialLength + inputStreamLength;
 		}

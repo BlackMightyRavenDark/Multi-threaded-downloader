@@ -592,6 +592,16 @@ namespace MultiThreadedDownloaderLib
 			return value;
 		}
 
+		public static bool IsSameLogicalDrive(char driveLetter1, char driveLetter2)
+		{
+			return char.ToUpper(driveLetter1) == char.ToUpper(driveLetter2);
+		}
+
+		public static bool IsSameLogicalDrive(string path1, string path2)
+		{
+			return !string.IsNullOrEmpty(path1) && !string.IsNullOrEmpty(path2) && IsSameLogicalDrive(path1[0], path2[0]);
+		}
+
 		public static Stream ToStream(this byte[] bytes, bool seekToBeginning = false)
 		{
 			if (bytes.Length > 0)
