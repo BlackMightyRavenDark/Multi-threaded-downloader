@@ -39,7 +39,7 @@ namespace MultiThreadedDownloaderLib
 			stopwatch?.Start();
 			do
 			{
-				int bytesRead = inputStream.Read(buffer, 0, buffer.Length);
+				int bytesRead = inputStream.Read(buffer, 0, bufferSize);
 				if (bytesRead <= 0) { break; }
 				outputStream.Write(buffer, 0, bytesRead);
 
