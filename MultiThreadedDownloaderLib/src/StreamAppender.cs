@@ -57,9 +57,12 @@ namespace MultiThreadedDownloaderLib
 			{
 				streamAppendProgress?.Invoke(inputStream.Position, inputStreamLength,
 					outputStream.Position, outputStream.Length);
-
-				streamAppendFinished?.Invoke(inputStream.Position, inputStreamLength,
-					outputStream.Position, outputStream.Length);
+				if (streamAppendFinished != null && (streamAppendProgress == null ||
+					(streamAppendFinished.Method != streamAppendProgress.Method)))
+				{
+					streamAppendFinished.Invoke(inputStream.Position, inputStreamLength,
+						outputStream.Position, outputStream.Length);
+				}
 			}
 
 			return outputStream.Length == outputStreamInitialLength + inputStreamLength;
