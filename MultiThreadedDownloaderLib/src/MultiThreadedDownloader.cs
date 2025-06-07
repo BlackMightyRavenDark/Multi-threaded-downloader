@@ -669,9 +669,9 @@ namespace MultiThreadedDownloaderLib
 									}
 									else
 									{
-										void func(long sourcePosition, long sourceLength, long destinationPosition, long destinationLength)
+										void func(long sourcePosition, long sourceLength, long destinationPosition, long destinationLength, long bytesTransferred)
 										{
-											DownloadedBytes = sourcePosition;
+											DownloadedBytes = bytesTransferred;
 											MovingFileToDestination?.Invoke(this, sourcePosition, sourceLength, chunkFilePath,
 												char.ToUpper(chunkFilePath[0]), char.ToUpper(OutputFileName[0]));
 										};
@@ -682,7 +682,13 @@ namespace MultiThreadedDownloaderLib
 												File.OpenRead(chunkFilePath))
 											{
 												inputStream.Position = DownloadedBytes = 0L;
-												Append(inputStream, destinationStream, func, func, func,
+												Append(inputStream, destinationStream,
+													(sourcePosition, sourceLength, destinationPosition, destinationLength) =>
+													{
+														DownloadedBytes = 0L;
+														MovingFileToDestination?.Invoke(this, sourcePosition, sourceLength, chunkFilePath,
+															char.ToUpper(chunkFilePath[0]), char.ToUpper(OutputFileName[0]));
+													}, func, func,
 													_cancellationTokenSource.Token, UpdateIntervalMilliseconds);
 											}
 										}
@@ -876,14 +882,27 @@ namespace MultiThreadedDownloaderLib
 						fileExists = false;
 					}
 
-					void func(long sourcePosition, long sourceLength, long destinationPosition, long destinationLength)
+					void updateProgressFunc(long chunkPosition, long chunkSize)
 					{
-						ChunkMergingProgressItem item = new ChunkMergingProgressItem(
-							i, chunkCount, sourcePosition, sourceLength);
-						ChunkMergingProgress?.Invoke(this, item.ChunkId, item.TotalChunkCount, item.ChunkPosition, item.ChunkLength);
+						if (ChunkMergingProgress != null)
+						{
+							ChunkMergingProgressItem item = new ChunkMergingProgressItem(i, chunkCount, chunkPosition, chunkSize);
+							ChunkMergingProgress.Invoke(this, item.ChunkId, item.TotalChunkCount, item.ChunkPosition, item.ChunkLength);
+						}
 					};
+
+					void func(long sourcePosition, long sourceLength, long destinationPosition, long destinationLength, long bytesTransferred)
+					{
+						DownloadedBytes = bytesTransferred;
+						updateProgressFunc(bytesTransferred, sourceLength);
+					};
+
 					bool appended = Append(tmpStream, outputStream,
-						func, func, func,
+						(sourcePosition, sourceLength, destinationPosition, destinationLength) =>
+						{
+							DownloadedBytes = 0L;
+							updateProgressFunc(0L, sourceLength);
+						}, func, func,
 						_cancellationTokenSource.Token, ChunksMergingUpdateIntervalMilliseconds);
 
 					downloadableChunk.OutputStream.Dispose();

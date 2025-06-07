@@ -8,9 +8,9 @@ namespace MultiThreadedDownloaderLib
 		public delegate void StreamAppendStartedDelegate(long sourcePosition, long sourceLength,
 			long destinationPosition, long destinationLength);
 		public delegate void StreamAppendProgressDelegate(long sourcePosition, long sourceLength,
-			long destinationPosition, long destinationLength);
+			long destinationPosition, long destinationLength, long bytesTransferred);
 		public delegate void StreamAppendFinishedDelegate(long sourcePosition, long sourceLength,
-			long destinationPosition, long destinationLength);
+			long destinationPosition, long destinationLength, long bytesTransferred);
 
 		public static bool Append(Stream inputStream, Stream outputStream,
 			StreamAppendStartedDelegate streamAppendStarted,
@@ -20,7 +20,7 @@ namespace MultiThreadedDownloaderLib
 			long updateIntervalMilliseconds, int bufferSize = 4096)
 		{
 			if (bufferSize <= 0 ||
-				inputStream == null || outputStream == null ||
+				inputStream == null || inputStream.Length <= 0L || outputStream == null ||
 				inputStream.Position != 0L || outputStream.Position != outputStream.Length)
 			{
 				return false;
@@ -29,6 +29,7 @@ namespace MultiThreadedDownloaderLib
 			streamAppendStarted?.Invoke(inputStream.Position, inputStream.Length,
 				outputStream.Position, outputStream.Length);
 
+			long bytesTransferred = 0L;
 			long inputStreamLength = inputStream.Length;
 			long outputStreamInitialLength = outputStream.Length;
 			byte[] buffer = new byte[bufferSize];
@@ -42,12 +43,14 @@ namespace MultiThreadedDownloaderLib
 				int bytesRead = inputStream.Read(buffer, 0, bufferSize);
 				if (bytesRead <= 0) { break; }
 				outputStream.Write(buffer, 0, bytesRead);
+				bytesTransferred += bytesRead;
 
 				if (stopwatch != null && stopwatch.ElapsedMilliseconds >= updateIntervalMilliseconds)
 				{
 					streamAppendProgress.Invoke(
 						inputStream.Position, inputStreamLength,
-						outputStream.Position, outputStream.Length);
+						outputStream.Position, outputStream.Length,
+						bytesTransferred);
 					stopwatch.Restart();
 				}
 			} while (!cancellationToken.IsCancellationRequested);
@@ -56,16 +59,16 @@ namespace MultiThreadedDownloaderLib
 			if (!cancellationToken.IsCancellationRequested)
 			{
 				streamAppendProgress?.Invoke(inputStream.Position, inputStreamLength,
-					outputStream.Position, outputStream.Length);
+					outputStream.Position, outputStream.Length, bytesTransferred);
 				if (streamAppendFinished != null && (streamAppendProgress == null ||
 					(streamAppendFinished.Method != streamAppendProgress.Method)))
 				{
 					streamAppendFinished.Invoke(inputStream.Position, inputStreamLength,
-						outputStream.Position, outputStream.Length);
+						outputStream.Position, outputStream.Length, bytesTransferred);
 				}
 			}
 
-			return outputStream.Length == outputStreamInitialLength + inputStreamLength;
+			return outputStream.Length == outputStreamInitialLength + inputStreamLength && inputStreamLength == bytesTransferred;
 		}
 
 		public static bool Append(Stream inputStream, Stream outputStream,
