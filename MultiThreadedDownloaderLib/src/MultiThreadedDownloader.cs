@@ -884,11 +884,7 @@ namespace MultiThreadedDownloaderLib
 
 					void updateProgressFunc(long chunkPosition, long chunkSize)
 					{
-						if (ChunkMergingProgress != null)
-						{
-							ChunkMergingProgressItem item = new ChunkMergingProgressItem(i, chunkCount, chunkPosition, chunkSize);
-							ChunkMergingProgress.Invoke(this, item.ChunkId, item.TotalChunkCount, item.ChunkPosition, item.ChunkLength);
-						}
+						ChunkMergingProgress?.Invoke(this, i, chunkCount, chunkPosition, chunkSize);
 					};
 
 					void func(long sourcePosition, long sourceLength, long destinationPosition, long destinationLength, long bytesTransferred)
