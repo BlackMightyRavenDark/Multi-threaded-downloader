@@ -799,7 +799,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				Invoke(new MethodInvoker(() =>
 				{
 					AddToLog($"Объединение чанков завершено с кодом {errCode}.");
-					lblMergeProgress.Text = errCode == 200 || errCode == 206 ? null : $"Ошибка объединения чанков! Код: {errCode}";
+					lblMergeProgress.Text = errCode == 200 || errCode == 206 || errCode == FileDownloader.DOWNLOAD_ERROR_CANCELED_BY_USER ? null : $"Ошибка объединения чанков! Код: {errCode}";
 				}));
 			};
 			multiThreadedDownloader.MovingFileToDestination += (s, bytesTransferred, fileSize, filePath, sourceDriveLetter, destnationDriveLetter) =>
