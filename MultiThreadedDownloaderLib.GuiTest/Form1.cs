@@ -291,7 +291,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 						string t = $"Ошибка при получении заголовков! Код: {errCode}";
 						System.Diagnostics.Debug.WriteLine(t);
 						AddToLog(t);
-						if (!(sender as FileDownloader).IgnoreHeaderRequestErrors)
+						if (!(s as FileDownloader).IgnoreHeaderRequestErrors)
 						{
 							System.Diagnostics.Debug.WriteLine("Скачивание прервано!");
 							AddToLog("Скачивание прервано!");
