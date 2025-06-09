@@ -858,8 +858,11 @@ namespace MultiThreadedDownloaderLib
 
 			try
 			{
-				int i = 0;
+				DownloadedBytes = 0L;
 				int chunkCount = downloadableChunks.Count();
+				long[] chunkMergeProgresses = new long[chunkCount];
+
+				int i = 0;
 				foreach (DownloadableChunk downloadableChunk in downloadableChunks)
 				{
 					string chunkFilePath = downloadableChunk.OutputStream.FilePath;
@@ -884,21 +887,20 @@ namespace MultiThreadedDownloaderLib
 
 					void updateProgressFunc(long chunkPosition, long chunkSize)
 					{
+						chunkMergeProgresses[i] = chunkPosition;
+						DownloadedBytes = chunkMergeProgresses.Sum();
 						ChunkMergingProgress?.Invoke(this, i, chunkCount, chunkPosition, chunkSize);
 					};
 
 					void func(long sourcePosition, long sourceLength, long destinationPosition, long destinationLength, long bytesTransferred)
 					{
-						DownloadedBytes = bytesTransferred;
 						updateProgressFunc(bytesTransferred, sourceLength);
 					};
 
 					bool appended = Append(tmpStream, outputStream,
 						(sourcePosition, sourceLength, destinationPosition, destinationLength) =>
-						{
-							DownloadedBytes = 0L;
-							updateProgressFunc(0L, sourceLength);
-						}, func, func,
+							updateProgressFunc(0L, sourceLength)
+						, func, func,
 						_cancellationTokenSource.Token, ChunksMergingUpdateIntervalMilliseconds);
 
 					downloadableChunk.OutputStream.Dispose();
