@@ -458,52 +458,30 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				else
 				{
 					progressBarDownload.ClearItems();
+					string errorMessage = FileDownloader.ErrorCodeToString(errorCode);
+					lblDownloadProgress.Text = $"Ошибка {errorCode}: {errorMessage}";
 
-					switch (errorCode)
+					if (errorCode == FileDownloader.DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED)
 					{
-						case FileDownloader.DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE:
-							lblDownloadProgress.Text = "Ошибка: Недостаточно места на диске!";
-							break;
-
-						case FileDownloader.DOWNLOAD_ERROR_DRIVE_NOT_READY:
-							lblDownloadProgress.Text = "Ошибка: Диск не готов!";
-							break;
-
-						case FileDownloader.DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT:
-							lblDownloadProgress.Text = "Ошибка: Закончились попытки! Скачивание прервано!";
-							break;
-
-						case FileDownloader.DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED:
-							{
-								string t = FileDownloader.ErrorCodeToString(errorCode);
-								lblDownloadProgress.Text = t;
-								MessageBox.Show($"Попытка скачивания в уже существующий не пустой файл!\n{t} ", "Ошибка!",
-									MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-							}
-							break;
-
-						default:
-							if (singleThreadedDownloader.HasErrorMessage)
-							{
-								lblDownloadProgress.Text =
-									$"Ошибка: {singleThreadedDownloader.LastErrorMessage} (Код: {errorCode})";
-							}
-							break;
+						errorMessage = $"Попытка скачивания в уже существующий не пустой файл!\n{errorMessage}";
 					}
-
-					if (errorCode != FileDownloader.DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED)
+					else if (errorCode != FileDownloader.DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED)
 					{
-						string messageText = MultiThreadedDownloader.ErrorCodeToString(errorCode);
 						if (singleThreadedDownloader.HasErrorMessage)
 						{
-							messageText += $"{Environment.NewLine}Текст ошибки: {singleThreadedDownloader.LastErrorMessage}";
+							errorMessage += $"{Environment.NewLine}Текст ошибки: {singleThreadedDownloader.LastErrorMessage}";
 						}
 						else if (errorCode == FileDownloader.DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT)
 						{
-							messageText = $"Скачивание прервано!{Environment.NewLine}{messageText}";
+							errorMessage = $"Скачивание прервано!{Environment.NewLine}{errorMessage}";
 						}
-						ShowErrorMessage(errorCode, messageText);
 					}
+					else if (singleThreadedDownloader.HasErrorMessage)
+					{
+						errorMessage += $"\n{singleThreadedDownloader.LastErrorMessage}";
+					}
+
+					ShowErrorMessage(errorCode, errorMessage);
 				}
 
 				isDownloading = false;
@@ -605,7 +583,6 @@ namespace MultiThreadedDownloaderLib.GuiTest
 							$"Подключено! (попытка №{tryNumber}";
 						AddToLog(connectedString);
 						lblDownloadProgress.Text = connectedString;
-						isPreparing = false;
 						if (!checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked && contentLength > 0L)
 						{
 							long minimumFreeSpaceRequired = (long)(contentLength * 1.1);
@@ -644,6 +621,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			{
 				Invoke(new MethodInvoker(() =>
 				{
+					isPreparing = false;
 					progressBarDownload.SetItem(0, 100, 0);
 					string contentLengthString = contentLength > 0L ? contentLength.ToString() : "<Неизвестно>";
 					lblDownloadProgress.Text = $"Скачано 0 из {contentLengthString}";
@@ -754,7 +732,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				Invoke(new MethodInvoker(() =>
 				{
 					MultiThreadedDownloader mtd = s as MultiThreadedDownloader;
-					string errorMessage = errCode == MultiThreadedDownloader.DOWNLOAD_ERROR_CUSTOM ?
+					string errorMessage = errCode == MultiThreadedDownloader.DOWNLOAD_ERROR_CUSTOM && mtd.HasErrorMessage ?
 						mtd.LastErrorMessage : MultiThreadedDownloader.ErrorCodeToString(errCode);
 					AddToLog($"Скачивание завершено с кодом {errCode} ({errorMessage}). " +
 						$"Скачано {bytesTransferred} из {mtd.ContentLength}.");
@@ -862,46 +840,13 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				if (errorCode != 200 && errorCode != 206)
 				{
 					if (isPreparing) { progressBarDownload.ClearItems(); }
+					string errorMessage = errorCode == MultiThreadedDownloader.DOWNLOAD_ERROR_CUSTOM && multiThreadedDownloader.HasErrorMessage ?
+						multiThreadedDownloader.LastErrorMessage : MultiThreadedDownloader.ErrorCodeToString(errorCode);
 
-					switch (errorCode)
-					{
-						case FileDownloader.DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE:
-							lblDownloadProgress.Text = "Ошибка: Недостаточно места на диске!";
-							break;
-
-						case FileDownloader.DOWNLOAD_ERROR_DRIVE_NOT_READY:
-							lblDownloadProgress.Text = "Ошибка: Диск не готов!";
-							break;
-
-						case FileDownloader.DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT:
-							lblDownloadProgress.Text = "Ошибка: Скачивание прервано! Закончились попытки!";
-							break;
-
-						case MultiThreadedDownloader.DOWNLOAD_ERROR_CUSTOM:
-							lblDownloadProgress.Text = multiThreadedDownloader.HasErrorMessage ?
-								"Ошибка!" : $"Ошибка: {multiThreadedDownloader.LastErrorMessage}";
-							break;
-					}
-
-					string messageText = MultiThreadedDownloader.ErrorCodeToString(errorCode);
-					if (errorCode == FileDownloader.DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT)
-					{
-						lblDownloadProgress.Text = "Ошибка: Скачивание прервано! Закончились попытки!";
-						messageText = $"Скачивание прервано!{Environment.NewLine}{messageText}";
-					}
-					else if (multiThreadedDownloader.HasErrorMessage)
-					{
-						lblDownloadProgress.Text = $"Ошибка: {multiThreadedDownloader.LastErrorMessage} (Код: {errorCode})";
-						messageText += $"{Environment.NewLine}Текст ошибки: {multiThreadedDownloader.LastErrorMessage}";
-					}
-					else
-					{
-						lblDownloadProgress.Text = $"Код ошибки: {errorCode}";
-					}
-
+					lblDownloadProgress.Text = $"Ошибка {errorCode}: {errorMessage}";
 					lblMergeProgress.Left = lblDownloadProgress.Left + lblDownloadProgress.Width + 4;
 
-					ShowErrorMessage(errorCode, messageText);
+					ShowErrorMessage(errorCode, errorMessage);
 				}
 
 				isDownloading = false;
@@ -991,11 +936,13 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			});
 		}
 
-		private static void ShowErrorMessage(int errorCode, string errorText)
+		private static void ShowErrorMessage(int errorCode, string errorMessage)
 		{
+			MessageBoxIcon icon = errorCode == FileDownloader.DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED ?
+				MessageBoxIcon.Exclamation : MessageBoxIcon.Error;
 			string messageCaption = errorCode == FileDownloader.DOWNLOAD_ERROR_CANCELED_BY_USER ?
 				"Отменятор отменения отмены" : "Ошибка!";
-			MessageBox.Show(errorText, messageCaption, MessageBoxButtons.OK, MessageBoxIcon.Error);
+			MessageBox.Show(errorMessage, messageCaption, MessageBoxButtons.OK, icon);
 		}
 
 		private void AddToLog(string eventText)

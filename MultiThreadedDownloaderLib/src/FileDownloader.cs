@@ -870,7 +870,7 @@ namespace MultiThreadedDownloaderLib
 					return "Не указан поток для сохранения данных!";
 
 				default:
-					return $"Код ошибки: {errorCode}";
+					return $"Неведомая ранее ошибка!";
 			}
 		}
 	}
