@@ -918,8 +918,8 @@ namespace MultiThreadedDownloaderLib
 					{
 						if (!isSharedStream && outputStream != null) { outputStream.Close(); }
 						ClearGarbage(downloadableChunks);
-						return _cancellationTokenSource.IsCancellationRequested ?
-							DOWNLOAD_ERROR_CANCELED_BY_USER : DOWNLOAD_ERROR_MERGING_CHUNKS;
+						return !_cancellationTokenSource.IsCancellationRequested ? DOWNLOAD_ERROR_MERGING_CHUNKS :
+							(_isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER);
 					}
 
 					if (!isMemoryStream && fileExists)
