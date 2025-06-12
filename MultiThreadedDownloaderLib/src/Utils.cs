@@ -208,6 +208,42 @@ namespace MultiThreadedDownloaderLib
 			return 404;
 		}
 
+		public static bool IsCompressedContent(string contentEncodingHeaderValue, out string algorithmId)
+		{
+			if (!string.IsNullOrEmpty(contentEncodingHeaderValue) && !string.IsNullOrWhiteSpace(contentEncodingHeaderValue))
+			{
+				if (contentEncodingHeaderValue.Contains("gzip"))
+				{
+					algorithmId = "gzip";
+					return true;
+				}
+				else if (contentEncodingHeaderValue.Contains("deflate"))
+				{
+					algorithmId = "deflate";
+					return true;
+				}
+				else if (contentEncodingHeaderValue.Contains("br"))
+				{
+					algorithmId = "br";
+					return true;
+				}
+				else if (contentEncodingHeaderValue.Contains("zstd"))
+				{
+					algorithmId = "zstd";
+					return true;
+				}
+			}
+
+			algorithmId = null;
+			return false;
+		}
+
+		public static bool IsCompressedContent(NameValueCollection headers, out string algorithmId)
+		{
+			string contentEncodingHeaderValue = headers?.Get("Content-Encoding");
+			return IsCompressedContent(contentEncodingHeaderValue, out algorithmId);
+		}
+
 		public static int GetUrlResponseHeaders(string url, NameValueCollection inHeaders,
 			CookieContainer cookies, IWebProxy proxy,
 			int timeout, out NameValueCollection outHeaders, out string errorText)

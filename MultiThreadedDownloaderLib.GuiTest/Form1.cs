@@ -324,6 +324,11 @@ namespace MultiThreadedDownloaderLib.GuiTest
 							$"Подключено! (попытка №{tryNumber})";
 						lblDownloadProgress.Text = t;
 						AddToLog(t);
+						if ((s as FileDownloader).IsCompressedContent)
+						{
+							AddToLog($"Алгоритм сжатия данных: {(s as FileDownloader).ContentCompressionAlgorithm}");
+						}
+
 						if (!checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked && contentLength > 0L)
 						{
 							string fn = textBoxOutputFileName.Text;
@@ -732,10 +737,11 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				Invoke(new MethodInvoker(() =>
 				{
 					MultiThreadedDownloader mtd = s as MultiThreadedDownloader;
+					string contentLengthString = mtd.ContentLength > 0L ? mtd.ContentLength.ToString() : "<Неизвестно>";
 					string errorMessage = errCode == MultiThreadedDownloader.DOWNLOAD_ERROR_CUSTOM && mtd.HasErrorMessage ?
 						mtd.LastErrorMessage : MultiThreadedDownloader.ErrorCodeToString(errCode);
 					AddToLog($"Скачивание завершено с кодом {errCode} ({errorMessage}). " +
-						$"Скачано {bytesTransferred} из {mtd.ContentLength}.");
+						$"Скачано {bytesTransferred} из {contentLengthString}.");
 					if (errCode == 200 || errCode == 206)
 					{
 						string t = $"Скачано: {bytesTransferred} байт";

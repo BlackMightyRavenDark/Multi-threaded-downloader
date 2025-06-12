@@ -16,15 +16,12 @@ namespace MultiThreadedDownloaderLib
 
 		public delegate void ProgressDelegate(long byteCount);
 
-		private string _contentEncodingHeaderValue;
-
 		public WebContent(Stream dataStream, long dataStreamLength, string contentEncodingHeaderValue = null)
 		{
 			Data = dataStream;
 			Length = dataStreamLength;
-			_contentEncodingHeaderValue = contentEncodingHeaderValue;
-			CompressionAlgorithm = GetCompressionAlgorithmId();
-			IsCompressed = !string.IsNullOrEmpty(CompressionAlgorithm);
+			IsCompressed = Utils.IsCompressedContent(contentEncodingHeaderValue, out string id);
+			CompressionAlgorithm = id;
 		}
 
 		public void Dispose()
@@ -128,31 +125,6 @@ namespace MultiThreadedDownloaderLib
 		public int ContentToString(out string resultString, int bufferSize = 4096)
 		{
 			return ContentToString(out resultString, Encoding.UTF8, bufferSize);
-		}
-
-		private string GetCompressionAlgorithmId()
-		{
-			if (!string.IsNullOrEmpty(_contentEncodingHeaderValue))
-			{
-				if (_contentEncodingHeaderValue.Contains("gzip"))
-				{
-					return "gzip";
-				}
-				else if (_contentEncodingHeaderValue.Contains("deflate"))
-				{
-					return "deflate";
-				}
-				else if (_contentEncodingHeaderValue.Contains("br"))
-				{
-					return "br";
-				}
-				else if (_contentEncodingHeaderValue.Contains("zstd"))
-				{
-					return "zstd";
-				}
-			}
-
-			return null;
 		}
 
 		private Stream GetReadingStream()

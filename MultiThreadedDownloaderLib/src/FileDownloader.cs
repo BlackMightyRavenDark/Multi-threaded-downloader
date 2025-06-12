@@ -131,6 +131,8 @@ namespace MultiThreadedDownloaderLib
 			LastErrorMessage = null;
 			DownloadableChunk = downloadableChunk;
 			DownloadedInLastSession = 0L;
+			IsCompressedContent = false;
+			ContentCompressionAlgorithm = null;
 
 			if (string.IsNullOrEmpty(Url) || string.IsNullOrWhiteSpace(Url))
 			{
@@ -226,31 +228,46 @@ namespace MultiThreadedDownloaderLib
 			long contentLength;
 			if (isIndependent)
 			{
-				isRangeSupported = responseHeaders != null && IsRangeSupported(responseHeaders);
-				if (isRangeSupported)
+				IsCompressedContent = Utils.IsCompressedContent(responseHeaders, out string algorithmId);
+				ContentCompressionAlgorithm = algorithmId;
+				if (IsCompressedContent)
 				{
-					ExtractContentLengthFromHeaders(responseHeaders, out contentLength);
-					if (isRangeAssigned) { downloadableChunk.Range.ContentLength = contentLength; }
-				}
-				else
-				{
-					if (isRangeAssigned) { downloadableChunk.Range.ContentLength = -1L; }
+					isRangeSupported = false;
 					contentLength = -1L;
 					ResetRange();
 				}
-
-				if (isRangeAssigned && !downloadableChunk.Range.IsValid)
+				else
 				{
-					LastErrorCode = DOWNLOAD_ERROR_RANGE;
-					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
-					IsActive = false;
-					return LastErrorCode;
+					isRangeSupported = responseHeaders != null && IsRangeSupported(responseHeaders);
+					if (isRangeSupported)
+					{
+						ExtractContentLengthFromHeaders(responseHeaders, out contentLength);
+						if (isRangeAssigned)
+						{
+							downloadableChunk.Range.ContentLength = contentLength;
+							if (!downloadableChunk.Range.IsValid)
+							{
+								LastErrorCode = DOWNLOAD_ERROR_RANGE;
+								WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, 0, TryCountLimit, LastErrorCode);
+								IsActive = false;
+								return LastErrorCode;
+							}
+						}
+					}
+					else
+					{
+						if (isRangeAssigned) { downloadableChunk.Range.ContentLength = -1L; }
+						contentLength = -1L;
+						ResetRange();
+					}
 				}
 			}
 			else
 			{
 				isRangeSupported = Owner.IsRangeSupported;
 				contentLength = Owner.ContentLength;
+				IsCompressedContent = Owner.IsCompressedContent;
+				ContentCompressionAlgorithm = Owner.ContentCompressionAlgorithm;
 				if (isRangeSupported && isRangeAssigned)
 				{
 					downloadableChunk.Range.ContentLength = contentLength;
@@ -260,7 +277,7 @@ namespace MultiThreadedDownloaderLib
 			bool isFakeDownloading = FakeDownloading;
 			long outputStreamInitialPosition = isFakeDownloading ? 0L : downloadableChunk.OutputStream.Stream.Position;
 
-			if (isIndependent && !isFakeDownloading && !IgnoreStreamSizeExceededError && contentLength > 0L &&
+			if (isIndependent && !IsCompressedContent && !isFakeDownloading && !IgnoreStreamSizeExceededError && contentLength > 0L &&
 				outputStreamInitialPosition + contentLength < downloadableChunk.OutputStream.Stream.Length)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED;
@@ -300,7 +317,7 @@ namespace MultiThreadedDownloaderLib
 					Debug.WriteLine($"Downloader №{Id}: Using a proxy server {Proxy.Address}");
 				}
 #endif
-				if (isRangeSupported && isRangeAssigned)
+				if (!IsCompressedContent && isRangeSupported && isRangeAssigned)
 				{
 					long byteTo = downloadableChunk.Range.EndPosition >= 0L ? downloadableChunk.Range.EndPosition :
 						(contentLength >= 0L ? contentLength - 1L : -1L);
@@ -419,15 +436,27 @@ namespace MultiThreadedDownloaderLib
 					continue;
 				}
 
-				if (contentLength == -1L && isIndependent)
+				if (isIndependent)
 				{
-					contentLength = requestResult.WebContent.Length;
+					/*
+					 * Разные методы запроса могут выдавать разные HTTP-заголовки для одной и той же ссылки.
+					 * Например, в ответе на 'HEAD'-запрос на google.com отсутствует заголовок 'Content-Encoding'
+					 * и некоторые другие, которые есть в ответе на 'GET'-запрос.
+					 * По-этому, необходимо перепроверять заголовки после каждого запроса.
+					 */
+					if (contentLength == -1L)
+					{
+						contentLength = requestResult.WebContent.Length;
+						if (isRangeAssigned) { downloadableChunk.Range.ContentLength = contentLength; }
+					}
+
+					IsCompressedContent = requestResult.WebContent.IsCompressed;
+					ContentCompressionAlgorithm = requestResult.WebContent.CompressionAlgorithm;
 				}
 
 				if (Connected != null)
 				{
-					LastErrorCode = Connected.Invoke(this, Url, contentLength,
-						requestResult.HttpWebResponse.Headers,
+					LastErrorCode = Connected.Invoke(this, Url, contentLength, requestResult.Headers,
 						tryNumber, tryCountLimit, LastErrorCode);
 				}
 
@@ -450,9 +479,7 @@ namespace MultiThreadedDownloaderLib
 					return DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT;
 				}
 
-				IsCompressedContent = requestResult.WebContent.IsCompressed;
-				ContentCompressionAlgorithm = requestResult.WebContent.CompressionAlgorithm;
-				if (IsCompressedContent)
+				if (isIndependent && IsCompressedContent)
 				{
 					Debug.WriteLine($"Downloader №{Id}: Content compression algorithm: {ContentCompressionAlgorithm}");
 				}

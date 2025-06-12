@@ -64,6 +64,8 @@ namespace MultiThreadedDownloaderLib
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public bool MergeChunksAutomatically { get; set; } = true;
+		public bool IsCompressedContent { get; private set; }
+		public string ContentCompressionAlgorithm { get; private set; }
 		public int LastErrorCode { get; private set; }
 		public string LastErrorMessage { get; private set; }
 		public bool IsTempDirectoryAvailable => !string.IsNullOrEmpty(TempDirectory) &&
@@ -146,6 +148,8 @@ namespace MultiThreadedDownloaderLib
 			_isAborted = _isCanceled = false;
 			LastErrorMessage = null;
 			DownloadedBytes = 0L;
+			IsCompressedContent = false;
+			ContentCompressionAlgorithm = string.Empty;
 
 			if (string.IsNullOrEmpty(Url) || string.IsNullOrWhiteSpace(Url))
 			{
@@ -330,6 +334,7 @@ namespace MultiThreadedDownloaderLib
 
 			bool isOutOfTries = false;
 			bool isExceptionRaised = false;
+			bool isHeadersReceived = false;
 
 			List<FileDownloader> downloaders = new List<FileDownloader>();
 			int predictedChunkCount = isRangeSupported && ContentLength > ONE_MEGABYTE ? ThreadCount : 1;
@@ -409,6 +414,16 @@ namespace MultiThreadedDownloaderLib
 					NameValueCollection headers, int tryNumber, int tryCountLimit, int errCode) =>
 				{
 					FileDownloader d = sender as FileDownloader;
+					lock (ContentCompressionAlgorithm)
+					{
+						if (!isHeadersReceived)
+						{
+							isHeadersReceived = true;
+							IsCompressedContent = d.IsCompressedContent;
+							ContentCompressionAlgorithm = d.ContentCompressionAlgorithm;
+						}
+					}
+
 					DownloadableTaskState state = errCode == 200 || errCode == 206 ?
 						DownloadableTaskState.Connected : DownloadableTaskState.Errored;
 					CallProgressUpdaterFunc(d, 0L, taskTryNumber, state);
