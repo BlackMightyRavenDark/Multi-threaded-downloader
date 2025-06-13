@@ -18,7 +18,8 @@ namespace MultiThreadedDownloaderLib
 		public int ConnectionTimeout { get; set; }
 
 		/// <summary>
-		/// Set it to zero or less for infinite retries.
+		/// Ограничение на число попыток скачивания. Если установлено значение '0' или меньше,
+		/// будет произведено бесконечное количество попыток.
 		/// </summary>
 		public int TryCountLimit { get; set; } = 1;
 
@@ -38,7 +39,7 @@ namespace MultiThreadedDownloaderLib
 		public string ContentCompressionAlgorithm { get; private set; }
 
 		/// <summary>
-		/// Don't save downloaded data to anywhere.
+		/// Если 'true', скачанные данные не будут никуда сохранены.
 		/// </summary>
 		public bool FakeDownloading { get; set; } = false;
 
@@ -349,7 +350,7 @@ namespace MultiThreadedDownloaderLib
 					}
 #endif
 				}
-				else //range is not supported.
+				else // Возможность докачки недоступна.
 				{
 #if DEBUG
 					if (tryNumber > 1)

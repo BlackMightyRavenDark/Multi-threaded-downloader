@@ -19,8 +19,9 @@ namespace MultiThreadedDownloaderLib
 		public int ConnectionTimeout { get; set; }
 
 		/// <summary>
-		/// Warning! The file name will be automatically changed after downloading if a file with that name already exists!
-		/// Therefore, you need to double-check this value after the download is complete.
+		/// Путь к файлу, куда будут сохранены скачанные данные.
+		/// Если файл не существует, он автоматически будет создан.
+		/// Иначе, будет создан файл с пронумерованным именем и значение этого свойства изменится.
 		/// </summary>
 		public string OutputFileName { get; set; } = null;
 
@@ -34,30 +35,41 @@ namespace MultiThreadedDownloaderLib
 		public long RangeTo { get; private set; } = -1L;
 		internal bool IsRangeSupported { get; private set; }
 
-		/// <summary>
-		/// Don't save downloaded data to anywhere.
-		/// </summary>
-		public bool FakeDownloading { get; set; } = false;
+        /// <summary>
+        /// Если 'true', скачанные данные не будут никуда сохранены.
+        /// </summary>
+        public bool FakeDownloading { get; set; } = false;
 
 		/// <summary>
-		/// WARNING!!! Experimental feature!
-		/// Must be used very softly and carefully!
+		/// Использовать оперативную память (RAM) для хранения временных файлов.
+		/// Позволяет существенно сократить количество обращений к накопителю,
+		/// увеличив таким образом скорость скачивания.
+		/// Внимание! Экспериментальная функция!
+		/// Должно использоваться аккуратно и очень очень нежно!
 		/// </summary>
 		public bool UseRamForTempFiles { get; set; } = false;
 
+		/// <summary>
+		/// Количество одновременных потоков скачивания.
+		/// Каждый поток будет скачивать свой сегмент (чанк) файла.
+		/// Внимание! Для файлов, размером в один мегабайт и меньше, принудительно будет установлен 1 поток!
+		/// </summary>
 		public int ThreadCount { get; set; } = 2;
 
 		/// <summary>
-		/// Set it to zero or less for infinite retries.
+		/// Ограничение на число попыток скачивания для каждого потока.
+		/// Если хоть один поток превысит это значение, скачивание будет прервано.
+		/// Значение '0' или меньше - для бесконечного числа попыток.
 		/// </summary>
 		public int TryCountLimitPerThread { get; set; } = 1;
 
-		/// <summary>
-		/// Try count inside each download thread.
-		/// The thread will be restarted when out of tries.
-		/// Set it to zero or less for infinite retries.
-		/// </summary>
-		public int TryCountLimitInsideThread { get; set; } = 1;
+        /// <summary>
+        /// Ограничение на число попыток внутри каждого потока.
+		/// Позволяет не перекачивать весь чанк заново при возникновении ошибок в потоках.
+		/// При достижении этого значения, скачивание чанка будет перезапущено и счётчик обнулится.
+        /// Значение '0' или меньше - для бесконечного числа попыток.
+        /// </summary>
+        public int TryCountLimitInsideThread { get; set; } = 1;
 
 		public bool IsActive { get; private set; }
 		public NameValueCollection Headers { get => _headers; set { SetHeaders(value); } }
@@ -126,21 +138,27 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		/// <summary>
-		/// Execute the downloading task.
-		/// </summary>
-		/// <param name="outputStream">
-		/// The stream to download to.</param>
-		/// <param name="accurateMode">
-		/// If 'true' - locks the thread list object before accessing it.
-		/// It's prevents losing the downloaded file parts sometimes.
-		/// But it's may be some slower.
-		/// This is a quick test bugfix. It's must be fixed another way.</param>
-		/// <param name="bufferSize">
-		/// Buffer size per thread.
-		/// Warning! Do not use numbers smaller than 8192!
-		/// Leave zero for auto select.</param>
-		public int Download(Stream outputStream, bool accurateMode, int bufferSize = 0)
+        /// <summary>
+        /// Запустить процесс скачивания.
+        /// </summary>
+        /// <param name="outputStream">
+        /// Поток для сохранения данных. Должен быть доступен для записи!
+        /// Если передать 'null', будет автоматически создан файл по пути, указанному в свойстве 'OutputFileName'.
+        /// Если файл с таким именем уже существует, будет создан файл с пронумерованным именем.
+        /// </param>
+        /// <param name="accurateMode">
+        /// Если 'true' - блокирует внутренний список потоков перед доступом к нему.
+        /// Это позволяет предотвратить потерю скачанных сегментов файла,
+        /// которая иногда случается (по неизвестной причине). Однако, включение
+        /// данного режима может немного увеличить нагрузку системы и/или занизить скорость скачивания (но это не точно!).
+        /// Нужно найти другое решение данной проблемы.
+		/// </param>
+        /// <param name="bufferSize">
+        /// Размер буфера при скачивании.
+        /// Внимание! Если используется больше одного потока, то значения меньше 8192 не рекомендуются!
+        /// Установите значение '0' для автоматического выбора.
+		/// </param>>
+        public int Download(Stream outputStream, bool accurateMode, int bufferSize = 0)
 		{
 			IsActive = true;
 			Preparing?.Invoke(this);
