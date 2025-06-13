@@ -525,7 +525,7 @@ namespace MultiThreadedDownloaderLib
 		{
 			NameValueCollection headers = new NameValueCollection();
 
-			string[] strings = headersText.Split(new string[] { "\r\n" }, System.StringSplitOptions.None);
+			string[] strings = headersText.Split(new string[] { "\r\n" }, StringSplitOptions.None);
 			foreach (string str in strings)
 			{
 				if (!string.IsNullOrEmpty(str) && !string.IsNullOrWhiteSpace(str))
