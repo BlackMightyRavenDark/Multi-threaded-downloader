@@ -732,12 +732,12 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 				return null;
 			};
-			multiThreadedDownloader.DownloadFinished += (s, bytesTransferred, errCode, fileName) =>
+			multiThreadedDownloader.DownloadFinished += (s, bytesTransferred, contentLength, errCode, fileName) =>
 			{
 				Invoke(new MethodInvoker(() =>
 				{
+					string contentLengthString = contentLength > 0L ? contentLength.ToString() : "<Неизвестно>";
 					MultiThreadedDownloader mtd = s as MultiThreadedDownloader;
-					string contentLengthString = mtd.ContentLength > 0L ? mtd.ContentLength.ToString() : "<Неизвестно>";
 					string errorMessage = errCode == MultiThreadedDownloader.DOWNLOAD_ERROR_CUSTOM && mtd.HasErrorMessage ?
 						mtd.LastErrorMessage : MultiThreadedDownloader.ErrorCodeToString(errCode);
 					AddToLog($"Скачивание завершено с кодом {errCode} ({errorMessage}). " +

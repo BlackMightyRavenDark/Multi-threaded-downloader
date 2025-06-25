@@ -109,7 +109,7 @@ namespace MultiThreadedDownloaderLib
 		public delegate void DownloadStartedDelegate(object sender, long contentLength);
 		public delegate void DownloadProgressDelegate(object sender, ConcurrentDictionary<int, DownloadableTask> tasks);
 		public delegate CustomError ChunksDownloadedDelegate(object sender, List<DownloadableChunk> downloadableChunks, long contentLength);
-		public delegate void DownloadFinishedDelegate(object sender, long bytesTransferred, int errorCode, string fileName);
+		public delegate void DownloadFinishedDelegate(object sender, long bytesTransferred, long contentLength, int errorCode, string fileName);
 		public delegate void ChunkMergingStartedDelegate(object sender, int chunkCount);
 		public delegate void ChunkMergingProgressDelegate(object sender, int chunkId,
 			int chunkCount, long chunkPosition, long chunkSize);
@@ -252,7 +252,7 @@ namespace MultiThreadedDownloaderLib
 					stopwatch.Stop();
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
 					LastErrorMessage = "Не удалось получить HTTP-заголовки!";
-					DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
+					DownloadFinished?.Invoke(this, DownloadedBytes, -1L, LastErrorCode, OutputFileName);
 					IsActive = false;
 					return LastErrorCode;
 				}
@@ -624,7 +624,7 @@ namespace MultiThreadedDownloaderLib
 				_cancellationTokenSource.Dispose();
 				_cancellationTokenSource = null;
 				LastErrorCode = (ex is OperationCanceledException) ? DOWNLOAD_ERROR_CANCELED_BY_USER : ex.HResult;
-				DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
+				DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName);
 				IsActive = false;
 				return LastErrorCode;
 			}
@@ -643,7 +643,7 @@ namespace MultiThreadedDownloaderLib
 						LastErrorMessage = customError.ErrorMessage;
 						_cancellationTokenSource.Dispose();
 						_cancellationTokenSource = null;
-						DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
+						DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName);
 						IsActive = false;
 						return LastErrorCode;
 					}
@@ -659,7 +659,7 @@ namespace MultiThreadedDownloaderLib
 						LastErrorMessage = null;
 						_cancellationTokenSource.Dispose();
 						_cancellationTokenSource = null;
-						DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
+						DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName);
 						IsActive = false;
 						return LastErrorCode;
 					}
@@ -780,7 +780,7 @@ namespace MultiThreadedDownloaderLib
 			_cancellationTokenSource.Dispose();
 			_cancellationTokenSource = null;
 
-			DownloadFinished?.Invoke(this, DownloadedBytes, LastErrorCode, OutputFileName);
+			DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName);
 
 			IsActive = false;
 			return LastErrorCode;
