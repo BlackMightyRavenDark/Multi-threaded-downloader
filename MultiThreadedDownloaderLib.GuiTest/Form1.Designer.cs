@@ -679,10 +679,12 @@
 			this.listViewLog.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
 			this.columnHeaderEventDate,
 			this.columnHeaderEventText});
+			this.listViewLog.FullRowSelect = true;
 			this.listViewLog.HideSelection = false;
 			this.listViewLog.Location = new System.Drawing.Point(6, 6);
+			this.listViewLog.MultiSelect = false;
 			this.listViewLog.Name = "listViewLog";
-			this.listViewLog.Size = new System.Drawing.Size(813, 484);
+			this.listViewLog.Size = new System.Drawing.Size(813, 454);
 			this.listViewLog.TabIndex = 0;
 			this.listViewLog.UseCompatibleStateImageBehavior = false;
 			this.listViewLog.View = System.Windows.Forms.View.Details;
