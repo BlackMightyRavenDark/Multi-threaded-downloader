@@ -957,7 +957,11 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			ListViewItem item = new ListViewItem(now.ToString("yyyy-MM-dd HH:mm:ss \"GMT\""));
 			item.SubItems.Add(eventText);
 			listViewLog.Items.Add(item);
-			listViewLog.EnsureVisible(listViewLog.Items.Count - 1);
+
+			if (checkBoxAutoscrollLog.Checked)
+			{
+				listViewLog.EnsureVisible(listViewLog.Items.Count - 1);
+			}
 		}
 
 		private void StopAll()

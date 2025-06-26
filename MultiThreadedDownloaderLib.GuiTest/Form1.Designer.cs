@@ -78,6 +78,7 @@
 			this.listViewLog = new System.Windows.Forms.ListView();
 			this.columnHeaderEventDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
 			this.columnHeaderEventText = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+			this.checkBoxAutoscrollLog = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownProxyPort)).BeginInit();
 			this.tabControl1.SuspendLayout();
 			this.tabPageMain.SuspendLayout();
@@ -666,6 +667,7 @@
 			// tabPageLogger
 			// 
 			this.tabPageLogger.BackColor = System.Drawing.SystemColors.ButtonFace;
+			this.tabPageLogger.Controls.Add(this.checkBoxAutoscrollLog);
 			this.tabPageLogger.Controls.Add(this.listViewLog);
 			this.tabPageLogger.Location = new System.Drawing.Point(4, 22);
 			this.tabPageLogger.Name = "tabPageLogger";
@@ -684,7 +686,7 @@
 			this.listViewLog.Location = new System.Drawing.Point(6, 6);
 			this.listViewLog.MultiSelect = false;
 			this.listViewLog.Name = "listViewLog";
-			this.listViewLog.Size = new System.Drawing.Size(813, 454);
+			this.listViewLog.Size = new System.Drawing.Size(813, 431);
 			this.listViewLog.TabIndex = 0;
 			this.listViewLog.UseCompatibleStateImageBehavior = false;
 			this.listViewLog.View = System.Windows.Forms.View.Details;
@@ -698,6 +700,19 @@
 			// 
 			this.columnHeaderEventText.Text = "Событие";
 			this.columnHeaderEventText.Width = 666;
+			// 
+			// checkBoxAutoscrollLog
+			// 
+			this.checkBoxAutoscrollLog.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.checkBoxAutoscrollLog.AutoSize = true;
+			this.checkBoxAutoscrollLog.Checked = true;
+			this.checkBoxAutoscrollLog.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.checkBoxAutoscrollLog.Location = new System.Drawing.Point(717, 443);
+			this.checkBoxAutoscrollLog.Name = "checkBoxAutoscrollLog";
+			this.checkBoxAutoscrollLog.Size = new System.Drawing.Size(102, 17);
+			this.checkBoxAutoscrollLog.TabIndex = 1;
+			this.checkBoxAutoscrollLog.Text = "Автопрокрутка";
+			this.checkBoxAutoscrollLog.UseVisualStyleBackColor = true;
 			// 
 			// Form1
 			// 
@@ -727,6 +742,7 @@
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownUpdateInterval)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.numericUpDownThreadCount)).EndInit();
 			this.tabPageLogger.ResumeLayout(false);
+			this.tabPageLogger.PerformLayout();
 			this.ResumeLayout(false);
 
 		}
@@ -781,5 +797,6 @@
 		private System.Windows.Forms.ListView listViewLog;
 		private System.Windows.Forms.ColumnHeader columnHeaderEventDate;
 		private System.Windows.Forms.ColumnHeader columnHeaderEventText;
+		private System.Windows.Forms.CheckBox checkBoxAutoscrollLog;
 	}
 }
