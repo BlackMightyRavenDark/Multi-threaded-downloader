@@ -381,11 +381,12 @@ namespace MultiThreadedDownloaderLib
 
 				int taskTryNumber = 0;
 
+				NameValueCollection unrangedHeaders = GetUnrangedHeaders(Headers);
 				FileDownloader downloader = new FileDownloader(this, taskId)
 				{
 					Url = Url,
 					ConnectionTimeout = ConnectionTimeout,
-					Headers = Headers,
+					Headers = unrangedHeaders,
 					Cookies = Cookies,
 					Proxy = Proxy,
 					TryCountLimit = TryCountLimitInsideThread,

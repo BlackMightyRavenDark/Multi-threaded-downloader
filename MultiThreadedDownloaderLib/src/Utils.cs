@@ -546,6 +546,23 @@ namespace MultiThreadedDownloaderLib
 			return headers;
 		}
 
+		internal static NameValueCollection GetUnrangedHeaders(NameValueCollection headers)
+		{
+			NameValueCollection result = new NameValueCollection();
+			if (headers != null && headers.Count > 0)
+			{
+				for (int i = 0; i < headers.Count; ++i)
+				{
+					string headerName = headers.GetKey(i);
+					if (string.Compare(headerName, "Range", true) != 0)
+					{
+						result.Add(headerName, headers.Get(i));
+					}
+				}
+			}
+			return result;
+		}
+
 		public static string HeadersToString(NameValueCollection headers)
 		{
 			string t = string.Empty;
