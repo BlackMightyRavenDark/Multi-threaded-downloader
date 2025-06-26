@@ -524,7 +524,6 @@ namespace MultiThreadedDownloaderLib
 								{
 									isOutOfTries = true;
 #if DEBUG
-
 									System.Diagnostics.Debug.WriteLine($"Task №{taskId}: Out of tries! Aborting all tasks...");
 #endif
 									Abort();
