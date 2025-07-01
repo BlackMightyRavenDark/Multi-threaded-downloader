@@ -42,8 +42,8 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 				return;
 			}
 
-			string requestType = textBoxRequestType.Text;
-			if (string.IsNullOrEmpty(requestType) || string.IsNullOrWhiteSpace(requestType))
+			string requestMethod = textBoxRequestMethod.Text;
+			if (string.IsNullOrEmpty(requestMethod) || string.IsNullOrWhiteSpace(requestMethod))
 			{
 				MessageBox.Show("Введите тип запроса!", "Ошибка!",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -60,16 +60,8 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			NameValueCollection headers = Utils.ParseHeaderList(textBoxRequestHeaders.Text);
 			HttpRequestResult requestResult = await Task.Run(() =>
 			{
-				HttpRequestSenderParameters requestParameters = new HttpRequestSenderParameters()
-				{
-					Method = requestType,
-					Url = requestUrl,
-					Body = string.IsNullOrEmpty(_requestBody) ? null : Encoding.UTF8.GetBytes(_requestBody).ToStream(true),
-					Headers = headers,
-					Cookies = _cookies,
-					Proxy = _proxy
-				};
-				return HttpRequestSender.Send(requestParameters);
+				byte[] body = !string.IsNullOrEmpty(_requestBody) ? Encoding.UTF8.GetBytes(_requestBody) : null;
+				return HttpRequestSender.Send(requestMethod, requestUrl, body, headers, _cookies, _proxy);
 			});
 			lblStatusCode.Text = $"Код возврата: {requestResult.ErrorCode}";
 			textBoxServerAnswer.Text = Utils.HeadersToString(requestResult.Headers);

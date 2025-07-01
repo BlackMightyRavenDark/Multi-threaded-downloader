@@ -31,7 +31,7 @@
 			this.components = new System.ComponentModel.Container();
 			this.label1 = new System.Windows.Forms.Label();
 			this.textBoxRequestUrl = new System.Windows.Forms.TextBox();
-			this.textBoxRequestType = new System.Windows.Forms.TextBox();
+			this.textBoxRequestMethod = new System.Windows.Forms.TextBox();
 			this.label2 = new System.Windows.Forms.Label();
 			this.btnSend = new System.Windows.Forms.Button();
 			this.textBoxServerAnswer = new System.Windows.Forms.TextBox();
@@ -67,15 +67,15 @@
 			this.textBoxRequestUrl.TabIndex = 1;
 			this.textBoxRequestUrl.Text = "https://google.com";
 			// 
-			// textBoxRequestType
+			// textBoxRequestMethod
 			// 
-			this.textBoxRequestType.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			this.textBoxRequestMethod.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
 			| System.Windows.Forms.AnchorStyles.Right)));
-			this.textBoxRequestType.Location = new System.Drawing.Point(83, 38);
-			this.textBoxRequestType.Name = "textBoxRequestType";
-			this.textBoxRequestType.Size = new System.Drawing.Size(527, 20);
-			this.textBoxRequestType.TabIndex = 2;
-			this.textBoxRequestType.Text = "HEAD";
+			this.textBoxRequestMethod.Location = new System.Drawing.Point(83, 38);
+			this.textBoxRequestMethod.Name = "textBoxRequestMethod";
+			this.textBoxRequestMethod.Size = new System.Drawing.Size(527, 20);
+			this.textBoxRequestMethod.TabIndex = 2;
+			this.textBoxRequestMethod.Text = "HEAD";
 			// 
 			// label2
 			// 
@@ -218,7 +218,7 @@
 			this.Controls.Add(this.groupBox1);
 			this.Controls.Add(this.btnSend);
 			this.Controls.Add(this.label2);
-			this.Controls.Add(this.textBoxRequestType);
+			this.Controls.Add(this.textBoxRequestMethod);
 			this.Controls.Add(this.textBoxRequestUrl);
 			this.Controls.Add(this.label1);
 			this.MinimumSize = new System.Drawing.Size(600, 300);
@@ -238,7 +238,7 @@
 
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.TextBox textBoxRequestUrl;
-		private System.Windows.Forms.TextBox textBoxRequestType;
+		private System.Windows.Forms.TextBox textBoxRequestMethod;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.Button btnSend;
 		private System.Windows.Forms.TextBox textBoxServerAnswer;
