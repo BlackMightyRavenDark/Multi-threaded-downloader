@@ -252,7 +252,7 @@ namespace MultiThreadedDownloaderLib
 			{
 				HttpRequestSenderParameters requestParameters = new HttpRequestSenderParameters()
 				{
-					Method = "Head",
+					Method = "HEAD",
 					Url = url,
 					Headers = inHeaders,
 					Cookies = cookies,
