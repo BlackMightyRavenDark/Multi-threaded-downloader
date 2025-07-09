@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -72,7 +71,7 @@ namespace MultiThreadedDownloaderLib
 		public int TryCountLimitInsideThread { get; set; } = 1;
 
 		public bool IsActive { get; private set; }
-		public NameValueCollection Headers { get => _headers; set { SetHeaders(value); } }
+		public WebHeaderCollection Headers { get => _headers; set { SetHeaders(value); } }
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public bool MergeChunksAutomatically { get; set; } = true;
@@ -84,7 +83,7 @@ namespace MultiThreadedDownloaderLib
 			!string.IsNullOrWhiteSpace(TempDirectory) && Directory.Exists(TempDirectory);
 		public bool HasErrorMessage => HasErrorMessageText();
 
-		private NameValueCollection _headers = new NameValueCollection();
+		private WebHeaderCollection _headers = new WebHeaderCollection();
 		private bool _isCanceled = false;
 		private bool _isAborted = false;
 		private bool _isDisposed = false;
@@ -105,7 +104,7 @@ namespace MultiThreadedDownloaderLib
 		public delegate void PreparingDelegate(object sender);
 		public delegate void ConnectingDelegate(object sender, string url, int tryNumber, int tryCountLimit);
 		public delegate void ConnectedDelegate(object sender, string url, long contentLength,
-			NameValueCollection headers, int tryNumber, int tryCountLimit, CustomError customError);
+			WebHeaderCollection headers, int tryNumber, int tryCountLimit, CustomError customError);
 		public delegate void DownloadStartedDelegate(object sender, long contentLength);
 		public delegate void DownloadProgressDelegate(object sender, ConcurrentDictionary<int, DownloadableTask> tasks);
 		public delegate CustomError ChunksDownloadedDelegate(object sender, List<DownloadableChunk> downloadableChunks, long contentLength);
@@ -229,7 +228,7 @@ namespace MultiThreadedDownloaderLib
 			bool isInfiniteRetries = TryCountLimitPerThread <= 0;
 			System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 
-			NameValueCollection responseHeaders = null;
+			WebHeaderCollection responseHeaders = null;
 			while (true)
 			{
 				stopwatch.Restart();
@@ -381,7 +380,7 @@ namespace MultiThreadedDownloaderLib
 
 				int taskTryNumber = 0;
 
-				NameValueCollection unrangedHeaders = GetUnrangedHeaders(Headers);
+				WebHeaderCollection unrangedHeaders = GetUnrangedHeaders(Headers);
 				FileDownloader downloader = new FileDownloader(this, taskId)
 				{
 					Url = Url,
@@ -412,7 +411,7 @@ namespace MultiThreadedDownloaderLib
 					System.Diagnostics.Debug.WriteLine(msg);
 				};
 				downloader.HeadersReceived += (object sender, string url,
-					DownloadableChunk downloadableChunk, NameValueCollection headers,
+					DownloadableChunk downloadableChunk, WebHeaderCollection headers,
 					int tryNumber, int tryCountLimit, int errCode) =>
 				{
 					bool infiniteThreadRetries = tryCountLimit <= 0;
@@ -430,7 +429,7 @@ namespace MultiThreadedDownloaderLib
 					CallProgressUpdaterFunc(d, -1L, taskTryNumber, DownloadableTaskState.Connecting);
 				};
 				downloader.Connected += (object sender, string url, long contentLength,
-					NameValueCollection headers, int tryNumber, int tryCountLimit, int errCode) =>
+					WebHeaderCollection headers, int tryNumber, int tryCountLimit, int errCode) =>
 				{
 					FileDownloader d = sender as FileDownloader;
 					lock (ContentCompressionAlgorithm)
@@ -1102,7 +1101,7 @@ namespace MultiThreadedDownloaderLib
 			return string.Empty;
 		}
 
-		private void SetHeaders(NameValueCollection headers)
+		private void SetHeaders(WebHeaderCollection headers)
 		{
 			RangeFrom = 0L;
 			RangeTo = -1L;

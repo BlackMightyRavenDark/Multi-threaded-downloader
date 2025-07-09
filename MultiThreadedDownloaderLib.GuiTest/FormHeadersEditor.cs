@@ -1,16 +1,18 @@
 ﻿using System;
-using System.Collections.Specialized;
+using System.Net;
 using System.Windows.Forms;
 
 namespace MultiThreadedDownloaderLib.GuiTest
 {
 	public partial class FormHeadersEditor : Form
 	{
-		public readonly NameValueCollection Headers = new NameValueCollection();
+		public WebHeaderCollection Headers { get; }
 
-		public FormHeadersEditor(NameValueCollection headers)
+		public FormHeadersEditor(WebHeaderCollection headers)
 		{
 			InitializeComponent();
+
+			Headers = new WebHeaderCollection();
 
 			if (headers != null)
 			{

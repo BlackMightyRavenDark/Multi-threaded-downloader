@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -23,7 +22,7 @@ namespace MultiThreadedDownloaderLib
 		/// </summary>
 		public int TryCountLimit { get; set; } = 1;
 
-		public NameValueCollection Headers { get => _headers; set { SetHeaders(value); } }
+		public WebHeaderCollection Headers { get => _headers; set { SetHeaders(value); } }
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
@@ -50,7 +49,7 @@ namespace MultiThreadedDownloaderLib
 		public bool HasErrors => LastErrorCode != 200 && LastErrorCode != 206;
 		public bool HasErrorMessage => HasErrorMessageText();
 
-		private NameValueCollection _headers = new NameValueCollection();
+		private WebHeaderCollection _headers = new WebHeaderCollection();
 		private CancellationTokenSource _cancellationTokenSource;
 		private bool _isAborted = false;
 		private long _rangeFrom = 0L;
@@ -76,11 +75,11 @@ namespace MultiThreadedDownloaderLib
 		public delegate void HeadersReceivingDelegate(object sender, string url, DownloadableChunk downloadableChunk,
 			int tryNumber, int tryCountLimit);
 		public delegate void HeadersReceivedDelegate(object sender, string url,
-			DownloadableChunk downloadableChunk, NameValueCollection headers,
+			DownloadableChunk downloadableChunk, WebHeaderCollection headers,
 			int tryNumber, int tryCountLimit, int errorCode);
 		public delegate void ConnectingDelegate(object sender, string url, int tryNumber, int tryCountLimit);
 		public delegate int ConnectedDelegate(object sender, string url, long contentLength,
-			NameValueCollection headers, int tryNumber, int tryCountLimit, int errorCode);
+			WebHeaderCollection headers, int tryNumber, int tryCountLimit, int errorCode);
 		public delegate void WorkStartedDelegate(object sender, long contentLength, int tryNumber, int tryCountLimit);
 		public delegate void WorkProgressDelegate(object sender, long bytesTransferred, long contentLength,
 			int tryNumber, int tryCountLimit);
@@ -184,7 +183,7 @@ namespace MultiThreadedDownloaderLib
 			bool isInfiniteRetries = tryCountLimit <= 0;
 
 			Stopwatch stopwatch = new Stopwatch();
-			NameValueCollection responseHeaders = null;
+			WebHeaderCollection responseHeaders = null;
 			if (!SkipHeaderRequest && isIndependent)
 			{
 				while (true)
@@ -771,7 +770,7 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		private void SetHeaders(NameValueCollection headers)
+		private void SetHeaders(WebHeaderCollection headers)
 		{
 			_rangeFrom = 0L;
 			_rangeTo = -1L;

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.IO;
 using System.Net;
 
@@ -9,7 +8,7 @@ namespace MultiThreadedDownloaderLib
 	{
 		public int ErrorCode { get; }
 		public string ErrorMessage { get; }
-		public NameValueCollection Headers { get; }
+		public WebHeaderCollection Headers { get; }
 		public DateTime LastModifiedDate => HttpWebResponse != null ? HttpWebResponse.LastModified : DateTime.MinValue;
 		public bool HasErrorMessage => HasErrorMessageText();
 		public HttpWebResponse HttpWebResponse { get; private set; }
@@ -23,7 +22,7 @@ namespace MultiThreadedDownloaderLib
 			ErrorMessage = errorMessage;
 			HttpWebResponse = httpWebResponse;
 			IsExceptionRaised = exceptionWasRaised;
-			Headers = new NameValueCollection();
+			Headers = new WebHeaderCollection();
 		}
 
 		public void Dispose()

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Specialized;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
@@ -57,7 +56,7 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			lblStatusCode.Text = null;
 			textBoxServerAnswer.Text = null;
 
-			NameValueCollection headers = Utils.ParseHeaderList(textBoxRequestHeaders.Text);
+			WebHeaderCollection headers = Utils.ParseHeaderList(textBoxRequestHeaders.Text);
 			HttpRequestResult requestResult = await Task.Run(() =>
 			{
 				byte[] body = !string.IsNullOrEmpty(_requestBody) ? Encoding.UTF8.GetBytes(_requestBody) : null;

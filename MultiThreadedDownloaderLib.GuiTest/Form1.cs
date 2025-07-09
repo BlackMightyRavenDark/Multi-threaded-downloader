@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -15,7 +14,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 	{
 		private bool isDownloading = false;
 		private bool isClosing = false;
-		private NameValueCollection headerCollection;
+		private WebHeaderCollection headers;
 		private CookieContainer cookies;
 		private FileDownloader singleThreadedDownloader;
 		private MultiThreadedDownloader multiThreadedDownloader;
@@ -32,7 +31,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			lblMergeProgress.Text = null;
 			numericUpDownProxyPort.Maximum = ushort.MaxValue;
 
-			headerCollection = new NameValueCollection()
+			headers = new WebHeaderCollection()
 			{
 				{ "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0" },
 				{ "Accept", "*/*" },
@@ -117,16 +116,10 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 			try
 			{
-				FormHeadersEditor editor = new FormHeadersEditor(headerCollection);
+				FormHeadersEditor editor = new FormHeadersEditor(headers);
 				if (editor.ShowDialog() == DialogResult.OK)
 				{
-					headerCollection.Clear();
-					for (int i = 0; i < editor.Headers.Count; ++i)
-					{
-						string headerName = editor.Headers.GetKey(i);
-						string headerValue = editor.Headers.Get(i);
-						headerCollection.Add(headerName, headerValue);
-					}
+					headers = editor.Headers;
 				}
 			} catch (Exception ex)
 			{
@@ -434,7 +427,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			};
 
 			singleThreadedDownloader.Url = downloadUrl;
-			singleThreadedDownloader.Headers = headerCollection;
+			singleThreadedDownloader.Headers = headers;
 			singleThreadedDownloader.Cookies = cookies;
 			singleThreadedDownloader.Proxy = proxy;
 			singleThreadedDownloader.SkipHeaderRequest = checkBoxSkipHeadRequest.Checked;
@@ -573,7 +566,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				}));
 			};
 			multiThreadedDownloader.Connected += (object s, string url, long contentLength,
-				NameValueCollection headers, int tryNumber, int tryCountLimit, CustomError customError) =>
+				WebHeaderCollection headers, int tryNumber, int tryCountLimit, CustomError customError) =>
 			{
 				Invoke(new MethodInvoker(() =>
 				{
@@ -817,7 +810,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			multiThreadedDownloader.TryCountLimitPerThread = (int)numericUpDownTryCountPerThread.Value;
 			multiThreadedDownloader.TryCountLimitInsideThread = (int)numericUpDownTryCountInsideEachThread.Value;
 			multiThreadedDownloader.RetryIntervalMilliseconds = (int)numericUpDownRetryInterval.Value;
-			multiThreadedDownloader.Headers = headerCollection;
+			multiThreadedDownloader.Headers = headers;
 			multiThreadedDownloader.Cookies = cookies;
 			multiThreadedDownloader.Proxy = proxy;
 			multiThreadedDownloader.UseRamForTempFiles = checkBoxUseRamForTempFiles.Checked;
