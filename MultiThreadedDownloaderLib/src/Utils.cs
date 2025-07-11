@@ -29,10 +29,9 @@ namespace MultiThreadedDownloaderLib
 					string part1 = Path.Combine(path, name);
 					bool isExtensionPresent = !string.IsNullOrEmpty(extension) && !string.IsNullOrWhiteSpace(extension);
 
-					int i = 1;
-					while (true)
+					for (int i = 2; ; ++i)
 					{
-						string newFilePath = isExtensionPresent ? $"{part1}_{++i}{extension}" : $"{part1}_{++i}";
+						string newFilePath = isExtensionPresent ? $"{part1}_{i}{extension}" : $"{part1}_{i}";
 						if (!File.Exists(newFilePath)) { return newFilePath; }
 					}
 				}
