@@ -653,17 +653,5 @@ namespace MultiThreadedDownloaderLib
 		{
 			return !string.IsNullOrEmpty(path1) && !string.IsNullOrEmpty(path2) && IsSameLogicalDrive(path1[0], path2[0]);
 		}
-
-		public static Stream ToStream(this byte[] bytes, bool seekToBeginning = false)
-		{
-			if (bytes.Length > 0)
-			{
-				MemoryStream stream = new MemoryStream();
-				stream.Write(bytes, 0, bytes.Length);
-				if (seekToBeginning) { stream.Position = 0L; }
-				return stream;
-			}
-			return null;
-		}
 	}
 }

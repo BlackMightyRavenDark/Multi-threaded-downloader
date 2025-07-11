@@ -108,7 +108,7 @@ namespace MultiThreadedDownloaderLib
 		public static HttpRequestResult Send(string method, string url, byte[] body,
 			WebHeaderCollection headers, CookieContainer cookies, IWebProxy proxy, int timeout = 0)
 		{
-			Stream bodyStream = body?.ToStream(true);
+			Stream bodyStream = body != null && body.Length > 0 ? new MemoryStream(body) : null;
 			HttpRequestResult result = Send(method, url, bodyStream, cookies, headers, proxy, timeout);
 			bodyStream?.Dispose();
 			return result;
