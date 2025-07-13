@@ -56,14 +56,14 @@ namespace MultiThreadedDownloaderLib.RequestsTest
 			lblStatusCode.Text = null;
 			textBoxServerAnswer.Text = null;
 
-			WebHeaderCollection headers = Utils.ParseHeaderList(textBoxRequestHeaders.Text);
+			WebHeaderCollection headers = Utils.ParseHttpHeaderList(textBoxRequestHeaders.Text);
 			HttpRequestResult requestResult = await Task.Run(() =>
 			{
 				byte[] body = !string.IsNullOrEmpty(_requestBody) ? Encoding.UTF8.GetBytes(_requestBody) : null;
 				return HttpRequestSender.Send(requestMethod, requestUrl, body, headers, _cookies, _proxy);
 			});
 			lblStatusCode.Text = $"Код возврата: {requestResult.ErrorCode}";
-			textBoxServerAnswer.Text = Utils.HeadersToString(requestResult.Headers);
+			textBoxServerAnswer.Text = Utils.HttpHeadersToString(requestResult.Headers);
 			requestResult.Dispose();
 
 			btnSetRequestBody.Enabled = true;

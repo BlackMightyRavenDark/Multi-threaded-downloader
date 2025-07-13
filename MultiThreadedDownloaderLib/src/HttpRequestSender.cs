@@ -27,7 +27,7 @@ namespace MultiThreadedDownloaderLib
 
 				if (headers != null && headers.Count > 0)
 				{
-					SetRequestHeaders(httpWebRequest, headers);
+					SetHttpRequestHeaders(httpWebRequest, headers);
 				}
 
 				bool canSendBody = method == "POST" || method == "PUT";

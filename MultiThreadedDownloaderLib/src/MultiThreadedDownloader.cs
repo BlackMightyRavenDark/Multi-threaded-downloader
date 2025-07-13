@@ -71,7 +71,7 @@ namespace MultiThreadedDownloaderLib
 		public int TryCountLimitInsideThread { get; set; } = 1;
 
 		public bool IsActive { get; private set; }
-		public WebHeaderCollection Headers { get => _headers; set { SetHeaders(value); } }
+		public WebHeaderCollection Headers { get => _headers; set { SetHttpHeaders(value); } }
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public bool MergeChunksAutomatically { get; set; } = true;
@@ -234,7 +234,7 @@ namespace MultiThreadedDownloaderLib
 				stopwatch.Restart();
 				headersReceivingTryNumber++;
 				Connecting?.Invoke(this, Url, headersReceivingTryNumber, TryCountLimitPerThread);
-				LastErrorCode = GetUrlResponseHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
+				LastErrorCode = GetUrlResponseHttpHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
 					out responseHeaders, out string headersErrorMessage);
 				
 				if (_cancellationTokenSource.IsCancellationRequested)
@@ -272,7 +272,7 @@ namespace MultiThreadedDownloaderLib
 			}
 			stopwatch.Stop();
 
-			ExtractContentLengthFromHeaders(responseHeaders, out long fullContentLength);
+			ExtractContentLengthFromHttpHeaders(responseHeaders, out long fullContentLength);
 			ContentLength = fullContentLength == -1L ? -1L :
 				(RangeTo >= 0L ? RangeTo - RangeFrom + 1 : fullContentLength - RangeFrom);
 			if (ContentLength < -1L) { ContentLength = -1L; }
@@ -380,7 +380,7 @@ namespace MultiThreadedDownloaderLib
 
 				int taskTryNumber = 0;
 
-				WebHeaderCollection unrangedHeaders = GetUnrangedHeaders(Headers);
+				WebHeaderCollection unrangedHeaders = GetUnrangedHttpHeaders(Headers);
 				FileDownloader downloader = new FileDownloader(this, taskId)
 				{
 					Url = Url,
@@ -1101,7 +1101,7 @@ namespace MultiThreadedDownloaderLib
 			return string.Empty;
 		}
 
-		private void SetHeaders(WebHeaderCollection headers)
+		private void SetHttpHeaders(WebHeaderCollection headers)
 		{
 			RangeFrom = 0L;
 			RangeTo = -1L;
@@ -1118,7 +1118,7 @@ namespace MultiThreadedDownloaderLib
 
 						if (!string.IsNullOrEmpty(headerValue) && headerName.ToLower().Equals("range"))
 						{
-							ParseRangeHeaderValue(headerValue, out long rangeFrom, out long rangeTo);
+							ParseRangeHttpHeaderValue(headerValue, out long rangeFrom, out long rangeTo);
 							SetRange(rangeFrom, rangeTo);
 							continue;
 						}

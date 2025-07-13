@@ -22,7 +22,7 @@ namespace MultiThreadedDownloaderLib
 		/// </summary>
 		public int TryCountLimit { get; set; } = 1;
 
-		public WebHeaderCollection Headers { get => _headers; set { SetHeaders(value); } }
+		public WebHeaderCollection Headers { get => _headers; set { SetHttpHeaders(value); } }
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
@@ -191,7 +191,7 @@ namespace MultiThreadedDownloaderLib
 					tryNumber++;
 					HeadersReceiving?.Invoke(this, Url, downloadableChunk, tryNumber, tryCountLimit);
 					stopwatch.Restart();
-					LastErrorCode = GetUrlResponseHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
+					LastErrorCode = GetUrlResponseHttpHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
 						out responseHeaders, out string headersErrorText);
 
 					if (_cancellationTokenSource.IsCancellationRequested)
@@ -241,7 +241,7 @@ namespace MultiThreadedDownloaderLib
 					isRangeSupported = responseHeaders != null && IsRangeSupported(responseHeaders);
 					if (isRangeSupported)
 					{
-						ExtractContentLengthFromHeaders(responseHeaders, out contentLength);
+						ExtractContentLengthFromHttpHeaders(responseHeaders, out contentLength);
 						if (isRangeAssigned)
 						{
 							downloadableChunk.Range.ContentLength = contentLength;
@@ -770,7 +770,7 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		private void SetHeaders(WebHeaderCollection headers)
+		private void SetHttpHeaders(WebHeaderCollection headers)
 		{
 			_rangeFrom = 0L;
 			_rangeTo = -1L;
@@ -787,7 +787,7 @@ namespace MultiThreadedDownloaderLib
 
 						if (!string.IsNullOrEmpty(headerValue) && headerName.ToLower().Equals("range"))
 						{
-							if (ParseRangeHeaderValue(headerValue, out long rangeFrom, out long rangeTo))
+							if (ParseRangeHttpHeaderValue(headerValue, out long rangeFrom, out long rangeTo))
 							{
 								SetRange(rangeFrom, rangeTo);
 							}

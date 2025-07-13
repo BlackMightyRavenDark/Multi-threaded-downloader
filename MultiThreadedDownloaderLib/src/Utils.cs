@@ -84,11 +84,11 @@ namespace MultiThreadedDownloaderLib
 			CookieContainer cookies, IWebProxy proxy,
 			out long contentLength, out string errorText, int timeout = 0)
 		{
-			int errorCode = GetUrlResponseHeaders(url, inHeaders, cookies, proxy, timeout,
+			int errorCode = GetUrlResponseHttpHeaders(url, inHeaders, cookies, proxy, timeout,
 				out WebHeaderCollection responseHeaders, out errorText);
 			if (errorCode == 200)
 			{
-				return ExtractContentLengthFromHeaders(responseHeaders, out contentLength);
+				return ExtractContentLengthFromHttpHeaders(responseHeaders, out contentLength);
 			}
 
 			contentLength = -1L;
@@ -109,7 +109,7 @@ namespace MultiThreadedDownloaderLib
 			CookieContainer cookies, IWebProxy proxy,
 			out bool result, out string errorText, int timeout = 0)
 		{
-			int errorCode = GetUrlResponseHeaders(url, inHeaders, cookies, proxy, timeout,
+			int errorCode = GetUrlResponseHttpHeaders(url, inHeaders, cookies, proxy, timeout,
 				out WebHeaderCollection responseHeaders, out errorText);
 			if (errorCode == 200)
 			{
@@ -185,7 +185,7 @@ namespace MultiThreadedDownloaderLib
 			return 404;
 		}
 
-		public static int ExtractContentLengthFromHeaders(WebHeaderCollection responseHeaders, out long contentLength)
+		public static int ExtractContentLengthFromHttpHeaders(WebHeaderCollection responseHeaders, out long contentLength)
 		{
 			for (int i = 0; i < responseHeaders.Count; ++i)
 			{
@@ -242,7 +242,7 @@ namespace MultiThreadedDownloaderLib
 			return IsCompressedContent(contentEncodingHeaderValue, out algorithmId);
 		}
 
-		public static int GetUrlResponseHeaders(string url, WebHeaderCollection inHeaders,
+		public static int GetUrlResponseHttpHeaders(string url, WebHeaderCollection inHeaders,
 			CookieContainer cookies, IWebProxy proxy,
 			int timeout, out WebHeaderCollection outHeaders, out string errorText)
 		{
@@ -288,10 +288,10 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		public static int GetUrlResponseHeaders(string url, WebHeaderCollection inHeaders,
+		public static int GetUrlResponseHttpHeaders(string url, WebHeaderCollection inHeaders,
 			out WebHeaderCollection outHeaders, out string errorText)
 		{
-			return GetUrlResponseHeaders(url, inHeaders, null, null, 0, out outHeaders, out errorText);
+			return GetUrlResponseHttpHeaders(url, inHeaders, null, null, 0, out outHeaders, out errorText);
 		}
 
 		internal static HttpRequestResult CreateHttpRequestResult(int errorCode, string errorMessage,
@@ -300,7 +300,7 @@ namespace MultiThreadedDownloaderLib
 			HttpRequestResult result = new HttpRequestResult(errorCode, errorMessage, httpWebResponse, exceptionWasRaised);
 			if (httpWebResponse != null)
 			{
-				CombineHeaders(httpWebResponse, result.Headers);
+				CombineHttpHeaders(httpWebResponse, result.Headers);
 			}
 			return result;
 		}
@@ -373,7 +373,7 @@ namespace MultiThreadedDownloaderLib
 			return false;
 		}
 
-		public static void SetRequestHeaders(HttpWebRequest request, WebHeaderCollection headers)
+		public static void SetHttpRequestHeaders(HttpWebRequest request, WebHeaderCollection headers)
 		{
 			request.Headers.Clear();
 			for (int i = 0; i < headers.Count; ++i)
@@ -435,7 +435,7 @@ namespace MultiThreadedDownloaderLib
 				}
 				else if (headerNameLowercased.Equals("range"))
 				{
-					if (ParseRangeHeaderValue(headerValue, out long byteFrom, out long byteTo))
+					if (ParseRangeHttpHeaderValue(headerValue, out long byteFrom, out long byteTo))
 					{
 						if (byteFrom >= 0L && byteTo >= 0L && byteTo >= byteFrom)
 						{
@@ -469,7 +469,7 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		public static bool ParseRangeHeaderValue(string headerValue, out long byteFrom, out long byteTo)
+		public static bool ParseRangeHttpHeaderValue(string headerValue, out long byteFrom, out long byteTo)
 		{
 			string[] splitted = headerValue.Split('-');
 			if (splitted.Length == 2)
@@ -519,7 +519,7 @@ namespace MultiThreadedDownloaderLib
 			return false;
 		}
 
-		public static WebHeaderCollection ParseHeaderList(string headersText)
+		public static WebHeaderCollection ParseHttpHeaderList(string headersText)
 		{
 			WebHeaderCollection headers = new WebHeaderCollection();
 
@@ -544,7 +544,7 @@ namespace MultiThreadedDownloaderLib
 			return headers;
 		}
 
-		internal static WebHeaderCollection GetUnrangedHeaders(WebHeaderCollection headers)
+		internal static WebHeaderCollection GetUnrangedHttpHeaders(WebHeaderCollection headers)
 		{
 			WebHeaderCollection result = new WebHeaderCollection();
 			if (headers != null && headers.Count > 0)
@@ -561,7 +561,7 @@ namespace MultiThreadedDownloaderLib
 			return result;
 		}
 
-		public static string HeadersToString(WebHeaderCollection headers)
+		public static string HttpHeadersToString(WebHeaderCollection headers)
 		{
 			string t = string.Empty;
 
@@ -575,7 +575,7 @@ namespace MultiThreadedDownloaderLib
 			return t;
 		}
 
-		public static string HeadersToCode(WebHeaderCollection headers)
+		public static string HttpHeadersToCode(WebHeaderCollection headers)
 		{
 			string code = $"WebHeaderCollection headers = new WebHeaderCollection(){Environment.NewLine}{{{Environment.NewLine}";
 			for (int i = 0; i < headers.Count; ++i)
@@ -590,7 +590,7 @@ namespace MultiThreadedDownloaderLib
 			return code;
 		}
 
-		internal static bool CombineHeaders(this HttpWebResponse response, WebHeaderCollection resultHeaders)
+		internal static bool CombineHttpHeaders(this HttpWebResponse response, WebHeaderCollection resultHeaders)
 		{
 			if (response.Headers != null && resultHeaders != null)
 			{
@@ -633,7 +633,7 @@ namespace MultiThreadedDownloaderLib
 			return false;
 		}
 
-		public static string GetContentEncodingHeaderValue(this HttpWebResponse httpWebResponse)
+		public static string GetContentEncodingHttpHeaderValue(this HttpWebResponse httpWebResponse)
 		{
 			string value = httpWebResponse.Headers?.Get("Content-Encoding");
 			if (string.IsNullOrEmpty(value) || string.IsNullOrWhiteSpace(value))

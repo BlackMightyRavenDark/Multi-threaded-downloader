@@ -55,7 +55,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					Stream stream = HttpWebResponse.GetResponseStream();
 					string encoding = Headers.Get("Content-Encoding");
-					Utils.ExtractContentLengthFromHeaders(Headers, out long contentLength);
+					Utils.ExtractContentLengthFromHttpHeaders(Headers, out long contentLength);
 					WebContent = new WebContent(stream, contentLength, encoding);
 					errorMessage = null;
 					return 200;
