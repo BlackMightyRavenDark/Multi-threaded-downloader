@@ -13,6 +13,7 @@ namespace MultiThreadedDownloaderLib
 		public bool HasErrorMessage => HasErrorMessageText();
 		public HttpWebResponse HttpWebResponse { get; private set; }
 		public bool IsExceptionRaised { get; }
+		public bool HasReadableContent => WebContent?.Data != null && WebContent.Data.CanRead && WebContent.Data.Length > 0L;
 		public WebContent WebContent { get; private set; }
 
 		public HttpRequestResult(int errorCode, string errorMessage,
