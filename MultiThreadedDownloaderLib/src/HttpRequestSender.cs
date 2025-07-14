@@ -35,18 +35,23 @@ namespace MultiThreadedDownloaderLib
 				{
 					if (body != null && body.Length > 0L)
 					{
-						long contentLength = body.Length - body.Position;
-						httpWebRequest.ContentLength = contentLength > 0L ? contentLength : 0L;
-						if (httpWebRequest.ContentLength > 0L)
+						long difference = body.Length - body.Position;
+						long contentLength = difference > 0L ? difference : 0L;
+						if (contentLength > 0L)
 						{
 							using (Stream requestStream = httpWebRequest.GetRequestStream())
 							{
-								byte[] buffer = new byte[4096];
-								while (true)
+								if (requestStream.CanWrite)
 								{
-									int bytesRead = body.Read(buffer, 0, buffer.Length);
-									if (bytesRead <= 0) { break; }
-									requestStream.Write(buffer, 0, bytesRead);
+									byte[] buffer = new byte[4096];
+									while (true)
+									{
+										int bytesRead = body.Read(buffer, 0, buffer.Length);
+										if (bytesRead <= 0) { break; }
+										requestStream.Write(buffer, 0, bytesRead);
+									}
+
+									httpWebRequest.ContentLength = contentLength;
 								}
 							}
 						}
