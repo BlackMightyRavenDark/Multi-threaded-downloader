@@ -381,15 +381,39 @@ namespace MultiThreadedDownloaderLib
 					Timeout = ConnectionTimeout
 				};
 				HttpRequestResult requestResult = HttpRequestSender.Send(requestParameters);
+				if (requestResult.IsExceptionRaised)
+				{
+#if DEBUG
+					Debug.WriteLine($"Downloader №{Id}: The 'GET' request was failed with an exception: {requestResult.ErrorMessage}!. " +
+						$"Error code: {requestResult.ErrorCode}. Restarting...");
+#endif
+					if (!isTryLimitReached)
+					{
+						LastErrorCode = requestResult.ErrorCode;
+						LastErrorMessage = requestResult.ErrorMessage;
+					}
+					requestResult.Dispose();
+
+					WaitInterval(stopwatch, tryNumber, tryCountLimit);
+					continue;
+				}
+
 				requestResult.GetContent(out string webContentErrorMessage);
 				if (requestResult.WebContent == null)
 				{
+#if DEBUG
+					Debug.WriteLine($"Downloader №{Id}: Can't get content! The 'WebContent' property is null! {webContentErrorMessage}. " +
+						$"Error code: {requestResult.ErrorCode}. Restarting...");
+#endif
+					if (!isTryLimitReached)
+					{
+						LastErrorCode = requestResult.ErrorCode;
+						LastErrorMessage = webContentErrorMessage;
+					}
 					requestResult.Dispose();
-					stopwatch.Stop();
-					LastErrorCode = DOWNLOAD_ERROR_NULL_CONTENT;
-					LastErrorMessage = webContentErrorMessage;
-					IsActive = false;
-					return LastErrorCode;
+
+					WaitInterval(stopwatch, tryNumber, tryCountLimit);
+					continue;
 				}
 
 				if (requestResult.WebContent.Length == 0L)
@@ -400,28 +424,6 @@ namespace MultiThreadedDownloaderLib
 					WorkFinished?.Invoke(this, DownloadedInLastSession, -1L, tryNumber, tryCountLimit, LastErrorCode);
 					IsActive = false;
 					return LastErrorCode;
-				}
-
-				if (requestResult.IsExceptionRaised)
-				{
-#if DEBUG
-					Debug.WriteLine($"Downloader №{Id}: The 'GET' request is failed with an exception! " +
-						$"Error code: {requestResult.ErrorCode}. Restarting...");
-#endif
-					if (!isTryLimitReached)
-					{
-						LastErrorCode = requestResult.ErrorCode;
-						if (tryNumber == tryCountLimit)
-						{
-							LastErrorMessage = requestResult.WebContent.ContentToString(
-								out webContentErrorMessage) == 200 ? webContentErrorMessage :
-								(requestResult.HasErrorMessage ? requestResult.ErrorMessage : null);
-						}
-					}
-					requestResult.Dispose();
-
-					WaitInterval(stopwatch, tryNumber, tryCountLimit);
-					continue;
 				}
 
 				LastErrorCode = requestResult.ErrorCode;
