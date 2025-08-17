@@ -363,6 +363,9 @@ namespace MultiThreadedDownloaderLib
 #endif
 						downloadableChunk.OutputStream.Stream.Position = outputStreamInitialPosition;
 					}
+
+					ResetRange();
+					isRangeAssigned = false;
 				}
 
 				Connecting?.Invoke(this, Url, tryNumber, tryCountLimit);
