@@ -697,7 +697,7 @@
 			this.checkBoxAutoscrollLog.AutoSize = true;
 			this.checkBoxAutoscrollLog.Checked = true;
 			this.checkBoxAutoscrollLog.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxAutoscrollLog.Location = new System.Drawing.Point(717, 443);
+			this.checkBoxAutoscrollLog.Location = new System.Drawing.Point(717, 468);
 			this.checkBoxAutoscrollLog.Name = "checkBoxAutoscrollLog";
 			this.checkBoxAutoscrollLog.Size = new System.Drawing.Size(102, 17);
 			this.checkBoxAutoscrollLog.TabIndex = 1;
@@ -714,7 +714,7 @@
 			this.listViewLog.Location = new System.Drawing.Point(6, 6);
 			this.listViewLog.MultiSelect = false;
 			this.listViewLog.Name = "listViewLog";
-			this.listViewLog.Size = new System.Drawing.Size(813, 431);
+			this.listViewLog.Size = new System.Drawing.Size(813, 456);
 			this.listViewLog.TabIndex = 0;
 			this.listViewLog.UseCompatibleStateImageBehavior = false;
 			this.listViewLog.View = System.Windows.Forms.View.Details;
