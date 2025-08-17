@@ -430,6 +430,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			singleThreadedDownloader.Headers = headers;
 			singleThreadedDownloader.Cookies = cookies;
 			singleThreadedDownloader.Proxy = proxy;
+			singleThreadedDownloader.IgnoreHeaderRequestErrors = checkBoxIgnoreHeaderRequestErrors.Checked;
 			singleThreadedDownloader.SkipHeaderRequest = checkBoxSkipHeadRequest.Checked;
 			singleThreadedDownloader.UpdateIntervalMilliseconds = (int)numericUpDownUpdateInterval.Value;
 			singleThreadedDownloader.TryCountLimit = (int)numericUpDownTryCountInsideEachThread.Value;
@@ -871,6 +872,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			checkBoxUseRamForTempFiles.Enabled = enable;
 			checkBoxFakeDownloading.Enabled = enable;
 			checkBoxUseAccurateMode.Enabled = enable;
+			checkBoxIgnoreHeaderRequestErrors.Enabled = enable;
 			checkBoxSkipHeadRequest.Enabled = enable;
 			numericUpDownThreadCount.Enabled = enable;
 			numericUpDownTryCountPerThread.Enabled = enable;
