@@ -51,20 +51,18 @@ namespace MultiThreadedDownloaderLib
 
 		private WebHeaderCollection _headers = new WebHeaderCollection();
 		private CancellationTokenSource _cancellationTokenSource;
-		private bool _isAborted = false;
 		private long _rangeFrom = 0L;
 		private long _rangeTo = -1L;
 
 		public const int DOWNLOAD_ERROR_URL_NOT_DEFINED = -1;
 		public const int DOWNLOAD_ERROR_INVALID_URL = -2;
-		public const int DOWNLOAD_ERROR_CANCELED_BY_USER = -3;
+		public const int DOWNLOAD_ERROR_CANCELED = -3;
 		public const int DOWNLOAD_ERROR_DATA_SIZE_MISMATCH = -4;
 		public const int DOWNLOAD_ERROR_RANGE = -5;
 		public const int DOWNLOAD_ERROR_ZERO_LENGTH_CONTENT = -6;
 		public const int DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE = -7;
 		public const int DOWNLOAD_ERROR_DRIVE_NOT_READY = -8;
 		public const int DOWNLOAD_ERROR_NULL_CONTENT = -9;
-		public const int DOWNLOAD_ERROR_ABORTED = -10;
 		public const int DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT = -11;
 		public const int DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED = -12;
 		public const int DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED = -13;
@@ -127,7 +125,6 @@ namespace MultiThreadedDownloaderLib
 			Preparing?.Invoke(this, Url, downloadableChunk);
 
 			IsActive = true;
-			_isAborted = false;
 			LastErrorMessage = null;
 			DownloadableChunk = downloadableChunk;
 			DownloadedInLastSession = 0L;
@@ -197,7 +194,7 @@ namespace MultiThreadedDownloaderLib
 					if (_cancellationTokenSource.IsCancellationRequested)
 					{
 						stopwatch.Stop();
-						LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
+						LastErrorCode = DOWNLOAD_ERROR_CANCELED;
 						LastErrorMessage = null;
 						IsActive = false;
 						return LastErrorCode;
@@ -500,7 +497,7 @@ namespace MultiThreadedDownloaderLib
 						{
 							chunkProcessingDict[tryNumber] = bytes;
 							DownloadedInLastSession = chunkProcessingDict.Sum(item => item.Value);
-							if (!_isAborted && WorkProgress != null)
+							if (WorkProgress != null)
 							{
 								int currentTime = Environment.TickCount;
 								if (currentTime - lastTime >= UpdateIntervalMilliseconds)
@@ -544,7 +541,7 @@ namespace MultiThreadedDownloaderLib
 
 			if (_cancellationTokenSource.IsCancellationRequested)
 			{
-				LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
+				LastErrorCode = DOWNLOAD_ERROR_CANCELED;
 			}
 			else if (!IgnoreStreamSizeExceededError && !isFakeDownloading &&
 				contentLength > 0L && downloadableChunk.OutputStream.Stream.Length > contentLength)
@@ -552,10 +549,7 @@ namespace MultiThreadedDownloaderLib
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED;
 			}
 
-			if (!_isAborted && WorkFinished != null)
-			{
-				WorkFinished.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
-			}
+			WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
 
 			IsActive = false;
 			return LastErrorCode;
@@ -696,18 +690,10 @@ namespace MultiThreadedDownloaderLib
 			if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
 			{
 				_cancellationTokenSource.Cancel();
-				_isAborted = false;
 				return true;
 			}
 
 			return false;
-		}
-
-		public bool Abort()
-		{
-			bool b = Stop();
-			_isAborted = true;
-			return b;
 		}
 
 		public void GetRange(out DownloadRange downloadRange)
@@ -859,11 +845,8 @@ namespace MultiThreadedDownloaderLib
 				case DOWNLOAD_ERROR_URL_NOT_DEFINED:
 					return "Не указана ссылка!";
 
-				case DOWNLOAD_ERROR_CANCELED_BY_USER:
+				case DOWNLOAD_ERROR_CANCELED:
 					return "Скачивание успешно отменено!";
-
-				case DOWNLOAD_ERROR_ABORTED:
-					return "Скачивание прервано!";
 
 				case DOWNLOAD_ERROR_DATA_SIZE_MISMATCH:
 					return "Размер скачанного не совпадает с заявленным!";

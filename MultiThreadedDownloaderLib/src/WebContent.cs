@@ -66,7 +66,7 @@ namespace MultiThreadedDownloaderLib
 
 			if (cancellationToken.IsCancellationRequested)
 			{
-				return FileDownloader.DOWNLOAD_ERROR_CANCELED_BY_USER;
+				return FileDownloader.DOWNLOAD_ERROR_CANCELED;
 			}
 			else if (!IsCompressed && Length >= 0L && bytesTransferred != Length)
 			{

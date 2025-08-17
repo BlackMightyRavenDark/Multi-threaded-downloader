@@ -100,6 +100,7 @@ namespace MultiThreadedDownloaderLib
 		public const int DOWNLOAD_ERROR_CHUNK_SEQUENCE = -207;
 		public const int DOWNLOAD_ERROR_UNDEFINED = -208;
 		public const int DOWNLOAD_ERROR_FILE_NUMBERING = -209;
+		public const int DOWNLOAD_ERROR_ABORTED = -210;
 
 		public delegate void PreparingDelegate(object sender);
 		public delegate void ConnectingDelegate(object sender, string url, int tryNumber, int tryCountLimit);
@@ -592,7 +593,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					if (_isCanceled)
 					{
-						LastErrorCode = DOWNLOAD_ERROR_CANCELED_BY_USER;
+						LastErrorCode = DOWNLOAD_ERROR_CANCELED;
 						LastErrorMessage = null;
 					}
 					else if (isOutOfTries)
@@ -622,7 +623,7 @@ namespace MultiThreadedDownloaderLib
 				ClearGarbage(downloadableTasks);
 				_cancellationTokenSource.Dispose();
 				_cancellationTokenSource = null;
-				LastErrorCode = (ex is OperationCanceledException) ? DOWNLOAD_ERROR_CANCELED_BY_USER : ex.HResult;
+				LastErrorCode = (ex is OperationCanceledException) ? DOWNLOAD_ERROR_CANCELED : DOWNLOAD_ERROR_ABORTED;
 				DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName);
 				IsActive = false;
 				return LastErrorCode;
@@ -733,7 +734,7 @@ namespace MultiThreadedDownloaderLib
 										}
 										else
 										{
-											LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER;
+											LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED;
 											LastErrorMessage = "Финальное перемещение файла было прервано";
 										}
 									}
@@ -762,7 +763,7 @@ namespace MultiThreadedDownloaderLib
 				}
 			} else if (_isCanceled)
 			{
-				LastErrorCode = DOWNLOAD_ERROR_CANCELED_BY_USER;
+				LastErrorCode = DOWNLOAD_ERROR_CANCELED;
 				LastErrorMessage = null;
 			} else if (isOutOfTries)
 			{
@@ -825,7 +826,7 @@ namespace MultiThreadedDownloaderLib
 		private int GetCancellationErrorCode()
 		{
 			if (_isAborted) { return DOWNLOAD_ERROR_ABORTED; }
-			else if (_isCanceled) { return DOWNLOAD_ERROR_CANCELED_BY_USER; }
+			else if (_isCanceled) { return DOWNLOAD_ERROR_CANCELED; }
 			return DOWNLOAD_ERROR_UNDEFINED;
 		}
 
@@ -951,7 +952,7 @@ namespace MultiThreadedDownloaderLib
 						if (!isSharedStream && outputStream != null) { outputStream.Close(); }
 						ClearGarbage(downloadableChunks);
 						return !_cancellationTokenSource.IsCancellationRequested ? DOWNLOAD_ERROR_MERGING_CHUNKS :
-							(_isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED_BY_USER);
+							(_isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED);
 					}
 
 					if (!isMemoryStream && fileExists)
@@ -982,7 +983,7 @@ namespace MultiThreadedDownloaderLib
 			if (_isCanceled)
 			{
 				ClearGarbage(downloadableChunks);
-				return DOWNLOAD_ERROR_CANCELED_BY_USER;
+				return DOWNLOAD_ERROR_CANCELED;
 			}
 
 			if (!isSharedStream)

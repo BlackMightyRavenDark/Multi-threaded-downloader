@@ -777,7 +777,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				Invoke(new MethodInvoker(() =>
 				{
 					AddToLog($"Объединение чанков завершено с кодом {errCode}.");
-					lblMergeProgress.Text = errCode == 200 || errCode == 206 || errCode == FileDownloader.DOWNLOAD_ERROR_CANCELED_BY_USER ? null : $"Ошибка объединения чанков! Код: {errCode}";
+					lblMergeProgress.Text = errCode == 200 || errCode == 206 || errCode == FileDownloader.DOWNLOAD_ERROR_CANCELED ? null : $"Ошибка объединения чанков! Код: {errCode}";
 				}));
 			};
 			multiThreadedDownloader.MovingFileToDestination += (s, bytesTransferred, fileSize, filePath, sourceDriveLetter, destnationDriveLetter) =>
@@ -941,7 +941,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 		{
 			MessageBoxIcon icon = errorCode == FileDownloader.DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED ?
 				MessageBoxIcon.Exclamation : MessageBoxIcon.Error;
-			string messageCaption = errorCode == FileDownloader.DOWNLOAD_ERROR_CANCELED_BY_USER ?
+			string messageCaption = errorCode == FileDownloader.DOWNLOAD_ERROR_CANCELED ?
 				"Отменятор отменения отмены" : "Ошибка!";
 			MessageBox.Show(errorMessage, messageCaption, MessageBoxButtons.OK, icon);
 		}
