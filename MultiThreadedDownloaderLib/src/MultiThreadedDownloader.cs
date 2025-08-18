@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -234,7 +235,7 @@ namespace MultiThreadedDownloaderLib
 
 			int headersReceivingTryNumber = 0;
 			bool isInfiniteRetries = TryCountLimitPerThread <= 0;
-			System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+			Stopwatch stopwatch = new Stopwatch();
 
 			WebHeaderCollection responseHeaders = null;
 			while (true)
@@ -272,7 +273,7 @@ namespace MultiThreadedDownloaderLib
 					{
 						TimeSpan difference = interval - elapsed;
 #if DEBUG
-						System.Diagnostics.Debug.WriteLine($"Receiving headers: {(int)difference.TotalMilliseconds} milliseconds until next try...");
+						Debug.WriteLine($"Receiving headers: {(int)difference.TotalMilliseconds} milliseconds until next try...");
 #endif
 						Thread.Sleep(difference);
 					}
@@ -346,7 +347,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 			if (!isRangeSupported && ThreadCount != 1)
 			{
-				System.Diagnostics.Debug.WriteLine("The \"Range\" header is not found! " +
+				Debug.WriteLine("The \"Range\" header is not found! " +
 					"Can't use multiple threads! Switching to single-threaded mode!");
 			}
 #endif
@@ -396,6 +397,7 @@ namespace MultiThreadedDownloaderLib
 					Headers = unrangedHeaders,
 					Cookies = Cookies,
 					Proxy = Proxy,
+					SkipHeaderRequest = true,
 					TryCountLimit = TryCountLimitInsideThread,
 					RetryIntervalMilliseconds = RetryIntervalMilliseconds,
 					FakeDownloading = FakeDownloading
@@ -404,23 +406,21 @@ namespace MultiThreadedDownloaderLib
 
 				#region Downloader event handlers
 #if DEBUG
-				downloader.Preparing += (object sender, string url, DownloadableChunk downloadableChunk) =>
+				downloader.Preparing += (sender, url, downloadableChunk) =>
 				{
 					int id = (sender as FileDownloader).Id;
-					System.Diagnostics.Debug.WriteLine($"Task №{id}: Preparing...");
+					Debug.WriteLine($"Task №{id}: Preparing...");
 				};
-				downloader.HeadersReceiving += (object sender, string url, DownloadableChunk downloadableChunk,
-					int tryNumber, int tryCountLimit) =>
+				downloader.HeadersReceiving += (sender, url, downloadableChunk, tryNumber, tryCountLimit) =>
 				{
 					bool infiniteThreadRetries = tryCountLimit <= 0;
 					int id = (sender as FileDownloader).Id;
 					string msg = $"Task №{id}: Receiving headers... Try №{tryNumber}";
 					if (!infiniteThreadRetries) { msg += $" / {tryCountLimit}"; }
-					System.Diagnostics.Debug.WriteLine(msg);
+					Debug.WriteLine(msg);
 				};
-				downloader.HeadersReceived += (object sender, string url,
-					DownloadableChunk downloadableChunk, WebHeaderCollection headers,
-					int tryNumber, int tryCountLimit, int errCode) =>
+				downloader.HeadersReceived += (sender,  url, downloadableChunk, headers,
+					tryNumber, tryCountLimit, errCode) =>
 				{
 					bool infiniteThreadRetries = tryCountLimit <= 0;
 					int id = (sender as FileDownloader).Id;
@@ -428,16 +428,16 @@ namespace MultiThreadedDownloaderLib
 						$"Task №{id}: Headers are received OK with try №{tryNumber}" :
 						$"Task №{id}: Headers not received! Try №{tryNumber}";
 					if (!infiniteThreadRetries) { msg += $" / {tryCountLimit}"; }
-					System.Diagnostics.Debug.WriteLine(msg);
+					Debug.WriteLine(msg);
 				};
 #endif
-				downloader.Connecting += (object sender, string url, int tryNumber, int tryCountLimit) =>
+				downloader.Connecting += (sender, url, tryNumber, tryCountLimit) =>
 				{
 					FileDownloader d = sender as FileDownloader;
 					CallProgressUpdaterFunc(d, -1L, taskTryNumber, DownloadableTaskState.Connecting);
 				};
-				downloader.Connected += (object sender, string url, long contentLength,
-					WebHeaderCollection headers, int tryNumber, int tryCountLimit, int errCode) =>
+				downloader.Connected += (sender, url, contentLength,
+					headers, tryNumber, tryCountLimit, errCode) =>
 				{
 					FileDownloader d = sender as FileDownloader;
 					lock (ContentCompressionAlgorithm)
@@ -458,7 +458,7 @@ namespace MultiThreadedDownloaderLib
 				};
 
 				int lastTime = Environment.TickCount;
-				downloader.WorkProgress += (object sender, long transferred, long contentLen, int tryNumber, int tryCountLimit) =>
+				downloader.WorkProgress += (sender, transferred, contentLen, tryNumber, tryCountLimit) =>
 				{
 					int currentTime = Environment.TickCount;
 					if (currentTime - lastTime >= UpdateIntervalMilliseconds)
@@ -469,7 +469,7 @@ namespace MultiThreadedDownloaderLib
 						lastTime = currentTime;
 					}
 				};
-				downloader.WorkFinished += (object sender, long transferred, long contentLen, int tryNumber, int tryCountLimit, int errCode) =>
+				downloader.WorkFinished += (sender, transferred, contentLen, tryNumber, tryCountLimit, errCode) =>
 				{
 					DownloadableTaskState taskState;
 					FileDownloader d = sender as FileDownloader;
@@ -483,7 +483,7 @@ namespace MultiThreadedDownloaderLib
 								if (isOutOfTries)
 								{
 #if DEBUG
-									System.Diagnostics.Debug.WriteLine($"Task №{d.Id}: Out of tries! Aborting all tasks...");
+									Debug.WriteLine($"Task №{d.Id}: Out of tries! Aborting all tasks...");
 #endif
 									Abort();
 								}
@@ -503,8 +503,8 @@ namespace MultiThreadedDownloaderLib
 						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
 				};
-				downloader.WorkError += (object sender, int errCode, string errorMessage,
-					long transferred, long contentLen, int tryNumber, int tryCountLimit) =>
+				downloader.WorkError += (sender, errCode, errorMessage,
+					transferred, contentLen, tryNumber, tryCountLimit) =>
 				{
 					if (errCode != 200 && errCode != 206)
 					{
@@ -532,7 +532,7 @@ namespace MultiThreadedDownloaderLib
 								{
 									isOutOfTries = true;
 #if DEBUG
-									System.Diagnostics.Debug.WriteLine($"Task №{taskId}: Out of tries! Aborting all tasks...");
+									Debug.WriteLine($"Task №{taskId}: Out of tries! Aborting all tasks...");
 #endif
 									Abort();
 								}
@@ -546,7 +546,7 @@ namespace MultiThreadedDownloaderLib
 						{
 							tryMessage += $" / {TryCountLimitPerThread}";
 						}
-						System.Diagnostics.Debug.WriteLine(tryMessage);
+						Debug.WriteLine(tryMessage);
 #endif
 						if (!GetChunkStream(downloader, taskDownloadRange, chunkFileName,
 							UseRamForTempFiles, isFakeDownloading, out Stream streamChunk))
@@ -576,20 +576,20 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 						else
 						{
-							System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id}: Restarting...");
+							Debug.WriteLine($"Task №{downloader.Id}: Restarting...");
 						}
 #endif
 					}
 					catch (Exception ex)
 					{
 #if DEBUG
-						System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id} catches exception while try №{taskTryNumber}!\n{ex.Message}");
+						Debug.WriteLine($"Task №{downloader.Id} catches exception while try №{taskTryNumber}!\n{ex.Message}");
 #endif
 						LastErrorCode = DOWNLOAD_ERROR_ABORTED;
 						LastErrorMessage = ex.Message;
 						isExceptionRaised = true;
 #if DEBUG
-						System.Diagnostics.Debug.WriteLine($"Task №{downloader.Id}: Aborting all tasks...");
+						Debug.WriteLine($"Task №{downloader.Id}: Aborting all tasks...");
 #endif
 						Abort();
 						break;
@@ -623,7 +623,7 @@ namespace MultiThreadedDownloaderLib
 			catch (Exception ex)
 			{
 #if DEBUG
-				System.Diagnostics.Debug.WriteLine(ex.Message);
+				Debug.WriteLine(ex.Message);
 #endif
 				LastErrorMessage = ex.Message;
 				Abort();
@@ -822,7 +822,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 			if (b)
 			{
-				System.Diagnostics.Debug.WriteLine("All tasks is aborted!");
+				Debug.WriteLine("All tasks is aborted!");
 			}
 #endif
 			_isCanceled = false;
@@ -885,7 +885,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 				catch (Exception ex)
 				{
-					System.Diagnostics.Debug.WriteLine(ex.Message);
+					Debug.WriteLine(ex.Message);
 #else
 				catch
 				{
@@ -975,7 +975,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine(ex.Message);
+				Debug.WriteLine(ex.Message);
 #else
 			catch
 			{
@@ -1018,7 +1018,7 @@ namespace MultiThreadedDownloaderLib
 #if DEBUG
 					catch (Exception ex)
 					{
-						System.Diagnostics.Debug.WriteLine(ex.Message);
+						Debug.WriteLine(ex.Message);
 #else
 					catch
 					{
