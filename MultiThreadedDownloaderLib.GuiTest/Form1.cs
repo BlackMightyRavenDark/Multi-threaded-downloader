@@ -591,11 +591,15 @@ namespace MultiThreadedDownloaderLib.GuiTest
 							$"Подключено! (попытка №{tryNumber}";
 						AddToLog(connectedString);
 						lblDownloadProgress.Text = connectedString;
+						MultiThreadedDownloader mtd = s as MultiThreadedDownloader;
+						if (mtd.IsCompressedContent)
+						{
+							AddToLog($"Алгоритм сжатия данных: {mtd.ContentCompressionAlgorithm}");
+						}
 						if (!checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked && contentLength > 0L)
 						{
 							long minimumFreeSpaceRequired = (long)(contentLength * 1.1);
 
-							MultiThreadedDownloader mtd = s as MultiThreadedDownloader;
 							List<char> driveLetters = mtd.GetUsedDriveLetters();
 							if (driveLetters.Count > 0 && !IsEnoughDiskSpace(driveLetters, minimumFreeSpaceRequired))
 							{

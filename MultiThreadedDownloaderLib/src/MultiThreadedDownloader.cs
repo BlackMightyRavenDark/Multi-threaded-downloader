@@ -281,10 +281,17 @@ namespace MultiThreadedDownloaderLib
 			}
 			stopwatch.Stop();
 
-			ExtractContentLengthFromHttpHeaders(responseHeaders, out long fullContentLength);
-			ContentLength = fullContentLength == -1L ? -1L :
-				(RangeTo >= 0L ? RangeTo - RangeFrom + 1 : fullContentLength - RangeFrom);
-			if (ContentLength < -1L) { ContentLength = -1L; }
+			IsCompressedContent = Utils.IsCompressedContent(responseHeaders, out string algorithmId);
+			ContentCompressionAlgorithm = algorithmId;
+
+			long fullContentLength = -1L;
+			if (!IsCompressedContent)
+			{
+				ExtractContentLengthFromHttpHeaders(responseHeaders, out fullContentLength);
+				ContentLength = fullContentLength == -1L ? -1L :
+					(RangeTo >= 0L ? RangeTo - RangeFrom + 1 : fullContentLength - RangeFrom);
+			}
+			if (fullContentLength < 0L || ContentLength < 0L) { ContentLength = -1L; }
 
 			CustomError customError = new CustomError(LastErrorCode, null);
 			Connected?.Invoke(this, Url, ContentLength, responseHeaders,
@@ -343,7 +350,7 @@ namespace MultiThreadedDownloaderLib
 				OnProgressUpdatedFunc(downloadableTask);
 			}
 
-			bool isRangeSupported = IsRangeSupported(responseHeaders);
+			bool isRangeSupported = !IsCompressedContent && IsRangeSupported(responseHeaders);
 #if DEBUG
 			if (!isRangeSupported && ThreadCount != 1)
 			{
