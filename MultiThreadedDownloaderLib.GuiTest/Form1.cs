@@ -373,9 +373,12 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					lblDownloadProgress.Text = t;
 					progressBarDownload.SetItem("0,000%");
 
-					AddToLog("Скачивание начато.");
+					t = $"Скачивание начато. Размер файла: {contentLengthString}";
+					if (contentLength > 0L) { t += " байт"; }
+					AddToLog(t);
 				}));
 			};
+
 			singleThreadedDownloader.WorkProgress += (s, bytesTransferred, contentLength, tryNumber, tryCountLimit) =>
 			{
 				Invoke(new MethodInvoker(() =>
@@ -629,8 +632,10 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					isPreparing = false;
 					progressBarDownload.SetItem(0, 100, 0);
 					string contentLengthString = contentLength > 0L ? contentLength.ToString() : "<Неизвестно>";
-					lblDownloadProgress.Text = $"Скачано 0 из {contentLengthString}";
-					AddToLog("Скачивание начато.");
+					lblDownloadProgress.Text += $"Скачано 0 из {contentLengthString}";
+					string t = $"Скачивание начато. Размер файла: {contentLengthString}";
+					if (contentLength > 0L) { t += " байт"; }
+					AddToLog(t);
 				}));
 			};
 			multiThreadedDownloader.DownloadProgress += (s, taskDictionary) =>
