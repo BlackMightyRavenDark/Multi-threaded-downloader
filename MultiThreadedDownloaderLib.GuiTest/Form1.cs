@@ -66,6 +66,11 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			}
 		}
 
+		private void Form1_Paint(object sender, PaintEventArgs e)
+		{
+			progressBarDownload.Invalidate();
+		}
+
 		private void btnSelectFile_Click(object sender, EventArgs e)
 		{
 			try
