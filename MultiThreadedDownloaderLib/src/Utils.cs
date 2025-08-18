@@ -242,7 +242,7 @@ namespace MultiThreadedDownloaderLib
 			return IsCompressedContent(contentEncodingHeaderValue, out algorithmId);
 		}
 
-		public static int GetUrlResponseHttpHeaders(string url, WebHeaderCollection inHeaders,
+		public static int GetUrlResponseHttpHeaders(string method, string url, WebHeaderCollection inHeaders,
 			CookieContainer cookies, IWebProxy proxy,
 			int timeout, out WebHeaderCollection outHeaders, out string errorText)
 		{
@@ -250,7 +250,7 @@ namespace MultiThreadedDownloaderLib
 			{
 				HttpRequestSenderParameters requestParameters = new HttpRequestSenderParameters()
 				{
-					Method = "HEAD",
+					Method = method,
 					Url = url,
 					Headers = inHeaders,
 					Cookies = cookies,
@@ -289,9 +289,22 @@ namespace MultiThreadedDownloaderLib
 		}
 
 		public static int GetUrlResponseHttpHeaders(string url, WebHeaderCollection inHeaders,
+			CookieContainer cookies, IWebProxy proxy,
+			int timeout, out WebHeaderCollection outHeaders, out string errorText)
+		{
+			return GetUrlResponseHttpHeaders("HEAD", url, inHeaders, cookies, proxy, timeout, out outHeaders, out errorText);
+		}
+
+		public static int GetUrlResponseHttpHeaders(string method, string url, WebHeaderCollection inHeaders,
 			out WebHeaderCollection outHeaders, out string errorText)
 		{
-			return GetUrlResponseHttpHeaders(url, inHeaders, null, null, 0, out outHeaders, out errorText);
+			return GetUrlResponseHttpHeaders(method, url, inHeaders, null, null, 0, out outHeaders, out errorText); ;
+		}
+
+		public static int GetUrlResponseHttpHeaders(string url, WebHeaderCollection inHeaders,
+			out WebHeaderCollection outHeaders, out string errorText)
+		{
+			return GetUrlResponseHttpHeaders("HEAD", url, inHeaders, out outHeaders, out errorText);
 		}
 
 		internal static HttpRequestResult CreateHttpRequestResult(int errorCode, string errorMessage,

@@ -37,6 +37,8 @@
 			this.checkBoxMergeChunksAutomatically = new System.Windows.Forms.CheckBox();
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabPageMain = new System.Windows.Forms.TabPage();
+			this.label4 = new System.Windows.Forms.Label();
+			this.textBoxHeaderRequestMethod = new System.Windows.Forms.TextBox();
 			this.checkBoxIgnoreHeaderRequestErrors = new System.Windows.Forms.CheckBox();
 			this.checkBoxSkipHeadRequest = new System.Windows.Forms.CheckBox();
 			this.label13 = new System.Windows.Forms.Label();
@@ -106,7 +108,7 @@
 			0,
 			0});
 			this.numericUpDownProxyPort.Name = "numericUpDownProxyPort";
-			this.numericUpDownProxyPort.Size = new System.Drawing.Size(357, 20);
+			this.numericUpDownProxyPort.Size = new System.Drawing.Size(356, 20);
 			this.numericUpDownProxyPort.TabIndex = 2;
 			this.toolTip1.SetToolTip(this.numericUpDownProxyPort, "Введите 0, чтобы не использовать прокси-сервер");
 			// 
@@ -116,7 +118,7 @@
 			| System.Windows.Forms.AnchorStyles.Right)));
 			this.textBoxProxyAddress.Location = new System.Drawing.Point(65, 19);
 			this.textBoxProxyAddress.Name = "textBoxProxyAddress";
-			this.textBoxProxyAddress.Size = new System.Drawing.Size(357, 20);
+			this.textBoxProxyAddress.Size = new System.Drawing.Size(356, 20);
 			this.textBoxProxyAddress.TabIndex = 1;
 			this.toolTip1.SetToolTip(this.textBoxProxyAddress, "Оставьте это поле пустым, чтобы не использовать прокси-сервер");
 			// 
@@ -166,12 +168,14 @@
 			this.tabControl1.Location = new System.Drawing.Point(12, 12);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
-			this.tabControl1.Size = new System.Drawing.Size(833, 517);
+			this.tabControl1.Size = new System.Drawing.Size(833, 531);
 			this.tabControl1.TabIndex = 0;
 			// 
 			// tabPageMain
 			// 
 			this.tabPageMain.BackColor = System.Drawing.SystemColors.ButtonFace;
+			this.tabPageMain.Controls.Add(this.label4);
+			this.tabPageMain.Controls.Add(this.textBoxHeaderRequestMethod);
 			this.tabPageMain.Controls.Add(this.checkBoxIgnoreHeaderRequestErrors);
 			this.tabPageMain.Controls.Add(this.checkBoxSkipHeadRequest);
 			this.tabPageMain.Controls.Add(this.label13);
@@ -212,9 +216,26 @@
 			this.tabPageMain.Location = new System.Drawing.Point(4, 22);
 			this.tabPageMain.Name = "tabPageMain";
 			this.tabPageMain.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPageMain.Size = new System.Drawing.Size(825, 491);
+			this.tabPageMain.Size = new System.Drawing.Size(825, 505);
 			this.tabPageMain.TabIndex = 0;
 			this.tabPageMain.Text = "Скачивание";
+			// 
+			// label4
+			// 
+			this.label4.AutoSize = true;
+			this.label4.Location = new System.Drawing.Point(8, 234);
+			this.label4.Name = "label4";
+			this.label4.Size = new System.Drawing.Size(191, 13);
+			this.label4.TabIndex = 86;
+			this.label4.Text = "Метод получения HTTP-заголовков:";
+			// 
+			// textBoxHeaderRequestMethod
+			// 
+			this.textBoxHeaderRequestMethod.Location = new System.Drawing.Point(331, 231);
+			this.textBoxHeaderRequestMethod.Name = "textBoxHeaderRequestMethod";
+			this.textBoxHeaderRequestMethod.Size = new System.Drawing.Size(67, 20);
+			this.textBoxHeaderRequestMethod.TabIndex = 85;
+			this.textBoxHeaderRequestMethod.Text = "HEAD";
 			// 
 			// checkBoxIgnoreHeaderRequestErrors
 			// 
@@ -234,15 +255,15 @@
 			this.checkBoxSkipHeadRequest.AutoSize = true;
 			this.checkBoxSkipHeadRequest.Location = new System.Drawing.Point(9, 208);
 			this.checkBoxSkipHeadRequest.Name = "checkBoxSkipHeadRequest";
-			this.checkBoxSkipHeadRequest.Size = new System.Drawing.Size(474, 17);
+			this.checkBoxSkipHeadRequest.Size = new System.Drawing.Size(473, 17);
 			this.checkBoxSkipHeadRequest.TabIndex = 83;
-			this.checkBoxSkipHeadRequest.Text = "Не отправлять \'HEAD\'-запрос перед началом скачивания (только однопоточный режим)";
+			this.checkBoxSkipHeadRequest.Text = "Не получать HTTP-заголовки перед началом скачивания (только однопоточный режим)";
 			this.checkBoxSkipHeadRequest.UseVisualStyleBackColor = true;
 			// 
 			// label13
 			// 
 			this.label13.AutoSize = true;
-			this.label13.Location = new System.Drawing.Point(8, 387);
+			this.label13.Location = new System.Drawing.Point(8, 413);
 			this.label13.Name = "label13";
 			this.label13.Size = new System.Drawing.Size(177, 13);
 			this.label13.TabIndex = 82;
@@ -255,7 +276,7 @@
 			0,
 			0,
 			0});
-			this.numericUpDownRetryInterval.Location = new System.Drawing.Point(331, 385);
+			this.numericUpDownRetryInterval.Location = new System.Drawing.Point(331, 411);
 			this.numericUpDownRetryInterval.Maximum = new decimal(new int[] {
 			10000,
 			0,
@@ -281,9 +302,9 @@
 			| System.Windows.Forms.AnchorStyles.Right)));
 			this.groupBox1.Controls.Add(this.lblCookieCount);
 			this.groupBox1.Controls.Add(this.btnCookies);
-			this.groupBox1.Location = new System.Drawing.Point(391, 309);
+			this.groupBox1.Location = new System.Drawing.Point(392, 335);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(422, 44);
+			this.groupBox1.Size = new System.Drawing.Size(427, 44);
 			this.groupBox1.TabIndex = 80;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Cookies";
@@ -313,9 +334,9 @@
 			this.groupBoxProxy.Controls.Add(this.numericUpDownProxyPort);
 			this.groupBoxProxy.Controls.Add(this.textBoxProxyAddress);
 			this.groupBoxProxy.Controls.Add(this.label11);
-			this.groupBoxProxy.Location = new System.Drawing.Point(391, 231);
+			this.groupBoxProxy.Location = new System.Drawing.Point(392, 257);
 			this.groupBoxProxy.Name = "groupBoxProxy";
-			this.groupBoxProxy.Size = new System.Drawing.Size(428, 70);
+			this.groupBoxProxy.Size = new System.Drawing.Size(427, 70);
 			this.groupBoxProxy.TabIndex = 79;
 			this.groupBoxProxy.TabStop = false;
 			this.groupBoxProxy.Text = "Прокси-сервер";
@@ -345,7 +366,7 @@
 			0,
 			0,
 			0});
-			this.numericUpDownConnectionTimeout.Location = new System.Drawing.Point(331, 359);
+			this.numericUpDownConnectionTimeout.Location = new System.Drawing.Point(332, 385);
 			this.numericUpDownConnectionTimeout.Maximum = new decimal(new int[] {
 			100000,
 			0,
@@ -368,7 +389,7 @@
 			// label9
 			// 
 			this.label9.AutoSize = true;
-			this.label9.Location = new System.Drawing.Point(8, 361);
+			this.label9.Location = new System.Drawing.Point(9, 387);
 			this.label9.Name = "label9";
 			this.label9.Size = new System.Drawing.Size(181, 13);
 			this.label9.TabIndex = 74;
@@ -387,7 +408,7 @@
 			// label10
 			// 
 			this.label10.AutoSize = true;
-			this.label10.Location = new System.Drawing.Point(6, 283);
+			this.label10.Location = new System.Drawing.Point(7, 309);
 			this.label10.Name = "label10";
 			this.label10.Size = new System.Drawing.Size(319, 13);
 			this.label10.TabIndex = 72;
@@ -395,7 +416,7 @@
 			// 
 			// numericUpDownTryCountInsideEachThread
 			// 
-			this.numericUpDownTryCountInsideEachThread.Location = new System.Drawing.Point(331, 281);
+			this.numericUpDownTryCountInsideEachThread.Location = new System.Drawing.Point(332, 307);
 			this.numericUpDownTryCountInsideEachThread.Name = "numericUpDownTryCountInsideEachThread";
 			this.numericUpDownTryCountInsideEachThread.Size = new System.Drawing.Size(54, 20);
 			this.numericUpDownTryCountInsideEachThread.TabIndex = 71;
@@ -407,7 +428,7 @@
 			// 
 			// numericUpDownTryCountPerThread
 			// 
-			this.numericUpDownTryCountPerThread.Location = new System.Drawing.Point(331, 255);
+			this.numericUpDownTryCountPerThread.Location = new System.Drawing.Point(332, 281);
 			this.numericUpDownTryCountPerThread.Name = "numericUpDownTryCountPerThread";
 			this.numericUpDownTryCountPerThread.Size = new System.Drawing.Size(54, 20);
 			this.numericUpDownTryCountPerThread.TabIndex = 70;
@@ -420,7 +441,7 @@
 			// label8
 			// 
 			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point(6, 257);
+			this.label8.Location = new System.Drawing.Point(7, 283);
 			this.label8.Name = "label8";
 			this.label8.Size = new System.Drawing.Size(303, 13);
 			this.label8.TabIndex = 69;
@@ -430,9 +451,9 @@
 			// 
 			this.progressBarDownload.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
 			| System.Windows.Forms.AnchorStyles.Right)));
-			this.progressBarDownload.Location = new System.Drawing.Point(9, 462);
+			this.progressBarDownload.Location = new System.Drawing.Point(12, 479);
 			this.progressBarDownload.Name = "progressBarDownload";
-			this.progressBarDownload.Size = new System.Drawing.Size(810, 23);
+			this.progressBarDownload.Size = new System.Drawing.Size(807, 23);
 			this.progressBarDownload.TabIndex = 68;
 			this.progressBarDownload.Text = "multipleProgressBar1";
 			// 
@@ -443,7 +464,7 @@
 			0,
 			0,
 			0});
-			this.numericUpDownChunksMergingUpdateInterval.Location = new System.Drawing.Point(331, 333);
+			this.numericUpDownChunksMergingUpdateInterval.Location = new System.Drawing.Point(332, 359);
 			this.numericUpDownChunksMergingUpdateInterval.Maximum = new decimal(new int[] {
 			1000,
 			0,
@@ -466,7 +487,7 @@
 			// label7
 			// 
 			this.label7.AutoSize = true;
-			this.label7.Location = new System.Drawing.Point(6, 335);
+			this.label7.Location = new System.Drawing.Point(7, 361);
 			this.label7.Name = "label7";
 			this.label7.Size = new System.Drawing.Size(266, 13);
 			this.label7.TabIndex = 66;
@@ -479,7 +500,7 @@
 			0,
 			0,
 			0});
-			this.numericUpDownUpdateInterval.Location = new System.Drawing.Point(331, 307);
+			this.numericUpDownUpdateInterval.Location = new System.Drawing.Point(332, 333);
 			this.numericUpDownUpdateInterval.Maximum = new decimal(new int[] {
 			2000,
 			0,
@@ -502,7 +523,7 @@
 			// label6
 			// 
 			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point(6, 309);
+			this.label6.Location = new System.Drawing.Point(7, 335);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(220, 13);
 			this.label6.TabIndex = 64;
@@ -534,7 +555,7 @@
 			// 
 			this.lblMergeProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lblMergeProgress.AutoSize = true;
-			this.lblMergeProgress.Location = new System.Drawing.Point(70, 446);
+			this.lblMergeProgress.Location = new System.Drawing.Point(73, 463);
 			this.lblMergeProgress.Name = "lblMergeProgress";
 			this.lblMergeProgress.Size = new System.Drawing.Size(88, 13);
 			this.lblMergeProgress.TabIndex = 60;
@@ -543,7 +564,7 @@
 			// label5
 			// 
 			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(6, 231);
+			this.label5.Location = new System.Drawing.Point(7, 257);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(113, 13);
 			this.label5.TabIndex = 59;
@@ -551,7 +572,7 @@
 			// 
 			// numericUpDownThreadCount
 			// 
-			this.numericUpDownThreadCount.Location = new System.Drawing.Point(331, 231);
+			this.numericUpDownThreadCount.Location = new System.Drawing.Point(332, 257);
 			this.numericUpDownThreadCount.Maximum = new decimal(new int[] {
 			25,
 			0,
@@ -642,7 +663,7 @@
 			// 
 			this.lblDownloadProgress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
 			this.lblDownloadProgress.AutoSize = true;
-			this.lblDownloadProgress.Location = new System.Drawing.Point(6, 446);
+			this.lblDownloadProgress.Location = new System.Drawing.Point(9, 463);
 			this.lblDownloadProgress.Name = "lblDownloadProgress";
 			this.lblDownloadProgress.Size = new System.Drawing.Size(58, 13);
 			this.lblDownloadProgress.TabIndex = 47;
@@ -651,7 +672,7 @@
 			// btnDownloadMultiThreaded
 			// 
 			this.btnDownloadMultiThreaded.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnDownloadMultiThreaded.Location = new System.Drawing.Point(156, 414);
+			this.btnDownloadMultiThreaded.Location = new System.Drawing.Point(156, 437);
 			this.btnDownloadMultiThreaded.Name = "btnDownloadMultiThreaded";
 			this.btnDownloadMultiThreaded.Size = new System.Drawing.Size(148, 23);
 			this.btnDownloadMultiThreaded.TabIndex = 46;
@@ -671,7 +692,7 @@
 			// btnDownloadSingleThreaded
 			// 
 			this.btnDownloadSingleThreaded.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnDownloadSingleThreaded.Location = new System.Drawing.Point(12, 414);
+			this.btnDownloadSingleThreaded.Location = new System.Drawing.Point(12, 437);
 			this.btnDownloadSingleThreaded.Name = "btnDownloadSingleThreaded";
 			this.btnDownloadSingleThreaded.Size = new System.Drawing.Size(138, 23);
 			this.btnDownloadSingleThreaded.TabIndex = 44;
@@ -687,7 +708,7 @@
 			this.tabPageLogger.Location = new System.Drawing.Point(4, 22);
 			this.tabPageLogger.Name = "tabPageLogger";
 			this.tabPageLogger.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPageLogger.Size = new System.Drawing.Size(825, 491);
+			this.tabPageLogger.Size = new System.Drawing.Size(825, 505);
 			this.tabPageLogger.TabIndex = 1;
 			this.tabPageLogger.Text = "Лог";
 			// 
@@ -697,7 +718,7 @@
 			this.checkBoxAutoscrollLog.AutoSize = true;
 			this.checkBoxAutoscrollLog.Checked = true;
 			this.checkBoxAutoscrollLog.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.checkBoxAutoscrollLog.Location = new System.Drawing.Point(717, 468);
+			this.checkBoxAutoscrollLog.Location = new System.Drawing.Point(717, 482);
 			this.checkBoxAutoscrollLog.Name = "checkBoxAutoscrollLog";
 			this.checkBoxAutoscrollLog.Size = new System.Drawing.Size(102, 17);
 			this.checkBoxAutoscrollLog.TabIndex = 1;
@@ -714,7 +735,7 @@
 			this.listViewLog.Location = new System.Drawing.Point(6, 6);
 			this.listViewLog.MultiSelect = false;
 			this.listViewLog.Name = "listViewLog";
-			this.listViewLog.Size = new System.Drawing.Size(813, 456);
+			this.listViewLog.Size = new System.Drawing.Size(813, 470);
 			this.listViewLog.TabIndex = 0;
 			this.listViewLog.UseCompatibleStateImageBehavior = false;
 			this.listViewLog.View = System.Windows.Forms.View.Details;
@@ -733,7 +754,7 @@
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(857, 541);
+			this.ClientSize = new System.Drawing.Size(857, 555);
 			this.Controls.Add(this.tabControl1);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
 			this.MaximizeBox = false;
@@ -814,5 +835,7 @@
 		private System.Windows.Forms.ColumnHeader columnHeaderEventText;
 		private System.Windows.Forms.CheckBox checkBoxAutoscrollLog;
 		private System.Windows.Forms.CheckBox checkBoxIgnoreHeaderRequestErrors;
+		private System.Windows.Forms.TextBox textBoxHeaderRequestMethod;
+		private System.Windows.Forms.Label label4;
 	}
 }

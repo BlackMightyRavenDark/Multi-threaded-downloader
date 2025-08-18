@@ -28,6 +28,14 @@ namespace MultiThreadedDownloaderLib
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
 		public int RetryIntervalMilliseconds { get; set; } = 1000;
 		public bool IgnoreStreamSizeExceededError { get; set; } = false;
+
+		/// <summary>
+		/// Для получения HTTP-заголовков существует метод "HEAD".
+		/// Но иногда серверы отказываются отвечать на запрос "HEAD" (или возвращают неверные данные).
+		/// Тогда для получения заголовков можно использовать другой метод. Например, "GET".
+		/// </summary>
+		public string HeaderRequestMethod { get; set; } = "HEAD";
+
 		public bool IgnoreHeaderRequestErrors { get; set; } = true;
 		public bool SkipHeaderRequest { get; set; } = false;
 		public long DownloadedInLastSession { get; private set; } = 0L;
@@ -188,7 +196,7 @@ namespace MultiThreadedDownloaderLib
 					tryNumber++;
 					HeadersReceiving?.Invoke(this, Url, downloadableChunk, tryNumber, tryCountLimit);
 					stopwatch.Restart();
-					LastErrorCode = GetUrlResponseHttpHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
+					LastErrorCode = GetUrlResponseHttpHeaders(HeaderRequestMethod, Url, Headers, Cookies, Proxy, ConnectionTimeout,
 						out responseHeaders, out string headersErrorText);
 
 					if (_cancellationTokenSource.IsCancellationRequested)

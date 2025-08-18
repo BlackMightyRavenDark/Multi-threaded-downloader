@@ -70,6 +70,13 @@ namespace MultiThreadedDownloaderLib
 		/// </summary>
 		public int TryCountLimitInsideThread { get; set; } = 1;
 
+		/// <summary>
+		/// Для получения HTTP-заголовков существует метод "HEAD".
+		/// Но иногда серверы отказываются отвечать на запрос "HEAD" (или возвращают неверные данные).
+		/// Тогда для получения заголовков можно использовать другой метод. Например, "GET".
+		/// </summary>
+		public string HeaderRequestMethod { get; set; } = "HEAD";
+
 		public bool IsActive { get; private set; }
 		public WebHeaderCollection Headers { get => _headers; set { SetHttpHeaders(value); } }
 		public CookieContainer Cookies { get; set; }
@@ -235,7 +242,7 @@ namespace MultiThreadedDownloaderLib
 				stopwatch.Restart();
 				headersReceivingTryNumber++;
 				Connecting?.Invoke(this, Url, headersReceivingTryNumber, TryCountLimitPerThread);
-				LastErrorCode = GetUrlResponseHttpHeaders(Url, Headers, Cookies, Proxy, ConnectionTimeout,
+				LastErrorCode = GetUrlResponseHttpHeaders(HeaderRequestMethod, Url, Headers, Cookies, Proxy, ConnectionTimeout,
 					out responseHeaders, out string headersErrorMessage);
 				
 				if (_cancellationTokenSource.IsCancellationRequested)
