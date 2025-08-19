@@ -345,8 +345,8 @@ namespace MultiThreadedDownloaderLib
 					fd.GetRange(out DownloadRange range);
 					downloadableChunk = new DownloadableChunk(fd.DownloadableChunk.OutputStream, range);
 				}
-				DownloadableTask downloadableTask = new DownloadableTask(
-					downloadableChunk, fd.Id, fullContentLength, processedBytes, tryNumber, TryCountLimitPerThread, state);
+				DownloadableTask downloadableTask = new DownloadableTask(fd.Url, downloadableChunk, fd.Id,
+					fullContentLength, processedBytes, tryNumber, TryCountLimitPerThread, state);
 				OnProgressUpdatedFunc(downloadableTask);
 			}
 
@@ -376,8 +376,8 @@ namespace MultiThreadedDownloaderLib
 			ThreadCount = chunkCount;
 			for (int i = 0; i < chunkCount; ++i)
 			{
-				downloadableTasks[i] = new DownloadableTask(
-					null, i, fullContentLength, 0L, -1, TryCountLimitPerThread, DownloadableTaskState.Preparing);
+				downloadableTasks[i] = new DownloadableTask(Url, null, i, fullContentLength,
+					0L, -1, TryCountLimitPerThread, DownloadableTaskState.Preparing);
 			}
 
 			var tasks = chunkRanges.Select((taskDownloadRange, taskId) => Task.Run(() =>
@@ -506,7 +506,7 @@ namespace MultiThreadedDownloaderLib
 
 					d.GetRange(out DownloadRange range);
 					DownloadableChunk downloadableChunk = new DownloadableChunk(d.DownloadableChunk.OutputStream, range);
-					DownloadableTask downloadableTask = new DownloadableTask(
+					DownloadableTask downloadableTask = new DownloadableTask(d.Url,
 						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
 				};
@@ -518,7 +518,7 @@ namespace MultiThreadedDownloaderLib
 						FileDownloader d = sender as FileDownloader;
 						d.GetRange(out DownloadRange range);
 						DownloadableChunk downloadableChunk = new DownloadableChunk(d.DownloadableChunk.OutputStream, range);
-						DownloadableTask downloadableTask = new DownloadableTask(
+						DownloadableTask downloadableTask = new DownloadableTask(d.Url,
 							downloadableChunk, d.Id, fullContentLength, transferred,
 							taskTryNumber, TryCountLimitPerThread, DownloadableTaskState.Errored);
 						OnProgressUpdatedFunc(downloadableTask);

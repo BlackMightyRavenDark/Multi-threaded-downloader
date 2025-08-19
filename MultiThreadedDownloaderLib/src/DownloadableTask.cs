@@ -3,6 +3,7 @@ namespace MultiThreadedDownloaderLib
 {
 	public sealed class DownloadableTask
 	{
+		public string Url { get; }
 		public DownloadableChunk DownloadableChunk { get; }
 		public int TaskId { get; }
 		public long FullContentLength { get; }
@@ -12,10 +13,11 @@ namespace MultiThreadedDownloaderLib
 		public int TryCountLimit { get; }
 		public DownloadableTaskState State { get; }
 
-		public DownloadableTask(DownloadableChunk downloadableChunk, int taskId,
+		public DownloadableTask(string url, DownloadableChunk downloadableChunk, int taskId,
 			long fullContentLength, long processedBytes, int tryNumber, int tryCountLimit,
 			DownloadableTaskState state)
 		{
+			Url = url;
 			DownloadableChunk = downloadableChunk;
 			TaskId = taskId;
 			FullContentLength = fullContentLength;
