@@ -232,7 +232,7 @@ namespace MultiThreadedDownloaderLib
 				}
 			}
 
-			algorithmId = null;
+			algorithmId = string.Empty;
 			return false;
 		}
 
