@@ -818,6 +818,83 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					}
 				}));
 			};
+			multiThreadedDownloader.TaskPreparing += (s, task) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					AddToLog($"Task №{task.TaskId}: Подготовка...");
+				}));
+			};
+			multiThreadedDownloader.TaskHeadersReceiving += (s, task, tryNumber, tryCountLimit) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string t = $"Task №{task.TaskId}: Получение HTTP-заголовков... Попытка №{tryNumber}";
+					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+					AddToLog(t);
+				}));
+			};
+			multiThreadedDownloader.TaskHeadersReceived += (s, task, headers, tryNumber, tryCountLimit, errCode) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string t = $"Task №{task.TaskId}: Получено {headers.Count} HTTP-заголовков с кодом ошибки {errCode}. Попытка №{tryNumber}";
+					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+					AddToLog(t);
+				}));
+			};
+			multiThreadedDownloader.TaskConnecting += (s, task, tryNumber, tryCountLimit) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string t = $"Task №{task.TaskId}: Подключение... Попытка №{tryNumber}";
+					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+					AddToLog(t);
+				}));
+			};
+			multiThreadedDownloader.TaskConnected += (s, task, tryNumber, tryCountLimit, taskContentLength, errCode) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string t = $"Task №{task.TaskId}: Подключено! Код: {errCode}. " +
+						$"Task range: {task.DownloadableChunk.Range.GetFormattedString()}/{task.FullContentLength}";
+					AddToLog(t);
+				}));
+				return errCode;
+			};
+			multiThreadedDownloader.TaskStarted += (s, task, taskContentLength, tryNumber, tryCountLimit) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string t = $"Task №{task.TaskId}: Скачивание начато. " +
+						$"Range: {task.DownloadableChunk.Range.GetFormattedString()}/{task.FullContentLength}";
+					AddToLog(t);
+				}));
+			};
+			multiThreadedDownloader.TaskFinished += (s, task,
+				bytesTransferred, taskContentLength, tryNumber, tryCountLimit, errCode) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string contentLengthString = taskContentLength > 0L ? taskContentLength.ToString() : "<Неизвестно>";
+					string t = $"Task №{task.TaskId}: Скачивание завершено с кодом {errCode} ({MultiThreadedDownloader.ErrorCodeToString(errCode)})! " +
+						$"Скачано {bytesTransferred} из {contentLengthString}. Попытка №{tryNumber}";
+					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+					AddToLog(t);
+				}));
+			};
+			multiThreadedDownloader.TaskError += (s, task, errCode, errorMessage,
+				bytesTransferred, taskContentLength, tryNumber, tryCountLimit) =>
+			{
+				Invoke(new MethodInvoker(() =>
+				{
+					string contentLengthString = taskContentLength > 0L ? taskContentLength.ToString() : "<Неизвестно>";
+					string t = $"Task №{task.TaskId}: Ошибка {errCode} ({errorMessage})! " +
+						$"Скачано {bytesTransferred} из {contentLengthString}. Попытка №{tryNumber}";
+					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
+					AddToLog(t);
+				}));
+			};
 
 			multiThreadedDownloader.Url = textBoxUrl.Text;
 			multiThreadedDownloader.OutputFileName = textBoxOutputFileName.Text;

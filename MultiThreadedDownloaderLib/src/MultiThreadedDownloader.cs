@@ -125,6 +125,22 @@ namespace MultiThreadedDownloaderLib
 		public delegate void MovingFileToDestinationDelegate(object sender, long bytesTransferred, long fileSize, string destinationFilePath,
 			char sourceDriveLetter, char destnationDriveLetter);
 
+		public delegate void TaskPreparingDelegate(object sender, DownloadableTask task);
+		public delegate void TaskHeadersReceivingDelegate(object sender, DownloadableTask task, int tryNumber, int tryCountLimit);
+		public delegate void TaskHeadersReceivedDelegate(object sender, DownloadableTask task, WebHeaderCollection headers,
+			int tryNumber, int tryCountLimit, int errorCode);
+		public delegate void TaskConnectingDelegate(object sender, DownloadableTask task, int tryNumber, int tryCountLimit);
+		public delegate int TaskConnectedDelegate(object sender, DownloadableTask task,
+			int tryNumber, int tryCountLimit, long taskContentLength, int errorCode);
+		public delegate void TaskStartedDelegate(object sender, DownloadableTask task,
+			long taskContentLength, int tryNumber, int tryCountLimit);
+		public delegate void TaskProgressDelegate(object sender, DownloadableTask task,
+			long bytesTransferred, long taskContentLength, int tryNumber, int tryCountLimit);
+		public delegate void TaskErrorDelegate(object sender, DownloadableTask task, int errorCode, string errorMessage,
+			long bytesTransferred, long contentLength, int tryNumber, int tryCountLimit);
+		public delegate void TaskFinishedDelegate(object sender, DownloadableTask task,
+			long bytesTransferred, long taskContentLength, int tryNumber, int tryCountLimit, int errorCode);
+
 		public PreparingDelegate Preparing;
 		public ConnectingDelegate Connecting;
 		public ConnectedDelegate Connected;
@@ -136,6 +152,16 @@ namespace MultiThreadedDownloaderLib
 		public ChunkMergingProgressDelegate ChunkMergingProgress;
 		public ChunkMergingFinishedDelegate ChunkMergingFinished;
 		public MovingFileToDestinationDelegate MovingFileToDestination;
+
+		public TaskPreparingDelegate TaskPreparing;
+		public TaskHeadersReceivingDelegate TaskHeadersReceiving;
+		public TaskHeadersReceivedDelegate TaskHeadersReceived;
+		public TaskConnectingDelegate TaskConnecting;
+		public TaskConnectedDelegate TaskConnected;
+		public TaskStartedDelegate TaskStarted;
+		public TaskProgressDelegate TaskProgress;
+		public TaskErrorDelegate TaskError;
+		public TaskFinishedDelegate TaskFinished;
 
 		public void Dispose()
 		{
@@ -336,8 +362,8 @@ namespace MultiThreadedDownloaderLib
 				DownloadProgress?.Invoke(this, downloadableTasks);
 			}
 
-			void CallProgressUpdaterFunc(FileDownloader fd, long processedBytes,
-				int tryNumber, DownloadableTaskState state)
+			DownloadableTask MakeDownloadableTaskFunc(FileDownloader fd, long processedBytes,
+				int tryNumber, DownloadableTaskState state, bool callProgressUpdaterFunction)
 			{
 				DownloadableChunk downloadableChunk = null;
 				if (state != DownloadableTaskState.Preparing)
@@ -347,7 +373,8 @@ namespace MultiThreadedDownloaderLib
 				}
 				DownloadableTask downloadableTask = new DownloadableTask(fd.Url, downloadableChunk, fd.Id,
 					fullContentLength, processedBytes, tryNumber, TryCountLimitPerThread, state);
-				OnProgressUpdatedFunc(downloadableTask);
+				if (callProgressUpdaterFunction) { OnProgressUpdatedFunc(downloadableTask); }
+				return downloadableTask;
 			}
 
 			bool isRangeSupported = !IsCompressedContent && IsRangeSupported(responseHeaders);
@@ -412,23 +439,34 @@ namespace MultiThreadedDownloaderLib
 				lock (downloaders) { downloaders.Add(downloader); }
 
 				#region Downloader event handlers
-#if DEBUG
 				downloader.Preparing += (sender, url, downloadableChunk) =>
 				{
-					int id = (sender as FileDownloader).Id;
-					Debug.WriteLine($"Task №{id}: Preparing...");
+					FileDownloader fd = sender as FileDownloader;
+#if DEBUG
+					Debug.WriteLine($"Task №{fd.Id}: Preparing...");
+#endif
+					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
+						fd, -1L, taskTryNumber, DownloadableTaskState.Preparing, false);
+					TaskPreparing?.Invoke(this, downloadableTask);
 				};
 				downloader.HeadersReceiving += (sender, url, downloadableChunk, tryNumber, tryCountLimit) =>
 				{
+					FileDownloader fd = sender as FileDownloader;
+#if DEBUG
 					bool infiniteThreadRetries = tryCountLimit <= 0;
-					int id = (sender as FileDownloader).Id;
-					string msg = $"Task №{id}: Receiving headers... Try №{tryNumber}";
+					string msg = $"Task №{fd.Id}: Receiving headers... Try №{tryNumber}";
 					if (!infiniteThreadRetries) { msg += $" / {tryCountLimit}"; }
 					Debug.WriteLine(msg);
+#endif
+					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
+						fd, -1L, taskTryNumber, DownloadableTaskState.Preparing, false);
+					TaskHeadersReceiving?.Invoke(this, downloadableTask, tryNumber, tryCountLimit);
 				};
-				downloader.HeadersReceived += (sender,  url, downloadableChunk, headers,
+				downloader.HeadersReceived += (sender, url, downloadableChunk, headers,
 					tryNumber, tryCountLimit, errCode) =>
 				{
+					FileDownloader fd = sender as FileDownloader;
+#if DEBUG
 					bool infiniteThreadRetries = tryCountLimit <= 0;
 					int id = (sender as FileDownloader).Id;
 					string msg = errCode == 200 || errCode == 206 ?
@@ -436,12 +474,17 @@ namespace MultiThreadedDownloaderLib
 						$"Task №{id}: Headers not received! Try №{tryNumber}";
 					if (!infiniteThreadRetries) { msg += $" / {tryCountLimit}"; }
 					Debug.WriteLine(msg);
-				};
 #endif
+					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
+						fd, -1L, taskTryNumber, DownloadableTaskState.Preparing, false);
+					TaskHeadersReceived?.Invoke(this, downloadableTask, headers, tryNumber, tryCountLimit, errCode);
+				};
 				downloader.Connecting += (sender, url, tryNumber, tryCountLimit) =>
 				{
 					FileDownloader d = sender as FileDownloader;
-					CallProgressUpdaterFunc(d, -1L, taskTryNumber, DownloadableTaskState.Connecting);
+					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
+						d, -1L, taskTryNumber, DownloadableTaskState.Connecting, true);
+					TaskConnecting?.Invoke(this, downloadableTask, tryNumber, tryCountLimit);
 				};
 				downloader.Connected += (sender, url, contentLength,
 					headers, tryNumber, tryCountLimit, errCode) =>
@@ -459,24 +502,40 @@ namespace MultiThreadedDownloaderLib
 
 					DownloadableTaskState state = errCode == 200 || errCode == 206 ?
 						DownloadableTaskState.Connected : DownloadableTaskState.Errored;
-					CallProgressUpdaterFunc(d, 0L, taskTryNumber, state);
+					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
+						d, 0L, taskTryNumber, state, true);
+					if (TaskConnected != null)
+					{
+						errCode = TaskConnected.Invoke(this, downloadableTask, tryNumber, tryCountLimit, contentLength, errCode);
+					}
 
 					return errCode;
 				};
+				downloader.WorkStarted += (sender, contentLength, tryNumber, tryCountLimit) =>
+				{
+					FileDownloader fd = sender as FileDownloader;
+					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
+						fd, 0L, taskTryNumber, DownloadableTaskState.Downloading, true);
+					TaskStarted?.Invoke(this, downloadableTask, contentLength, tryNumber, tryCountLimit);
+				};
 
 				int lastTime = Environment.TickCount;
-				downloader.WorkProgress += (sender, transferred, contentLen, tryNumber, tryCountLimit) =>
+				downloader.WorkProgress += (sender, transferred, contentLength, tryNumber, tryCountLimit) =>
 				{
 					int currentTime = Environment.TickCount;
 					if (currentTime - lastTime >= UpdateIntervalMilliseconds)
 					{
 						FileDownloader d = sender as FileDownloader;
-						CallProgressUpdaterFunc(d, transferred, taskTryNumber, DownloadableTaskState.Downloading);
+						DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
+							d, transferred, taskTryNumber, DownloadableTaskState.Downloading, true);
+
+						OnProgressUpdatedFunc(downloadableTask);
+						TaskProgress?.Invoke(this, downloadableTask, transferred, contentLength, tryNumber, tryCountLimit);
 
 						lastTime = currentTime;
 					}
 				};
-				downloader.WorkFinished += (sender, transferred, contentLen, tryNumber, tryCountLimit, errCode) =>
+				downloader.WorkFinished += (sender, transferred, contentLength, tryNumber, tryCountLimit, errCode) =>
 				{
 					DownloadableTaskState taskState;
 					FileDownloader d = sender as FileDownloader;
@@ -509,9 +568,11 @@ namespace MultiThreadedDownloaderLib
 					DownloadableTask downloadableTask = new DownloadableTask(d.Url,
 						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
+
+					TaskFinished?.Invoke(this, downloadableTask, transferred, contentLength, tryNumber, tryCountLimit, errCode);
 				};
 				downloader.WorkError += (sender, errCode, errorMessage,
-					transferred, contentLen, tryNumber, tryCountLimit) =>
+					transferred, contentLength, tryNumber, tryCountLimit) =>
 				{
 					if (errCode != 200 && errCode != 206)
 					{
@@ -522,9 +583,11 @@ namespace MultiThreadedDownloaderLib
 							downloadableChunk, d.Id, fullContentLength, transferred,
 							taskTryNumber, TryCountLimitPerThread, DownloadableTaskState.Errored);
 						OnProgressUpdatedFunc(downloadableTask);
+
+						TaskError?.Invoke(this, downloadableTask, errCode, errorMessage, transferred, contentLength, tryNumber, tryCountLimit);
 					}
 				};
-				#endregion
+#endregion
 
 				while (true)
 				{
