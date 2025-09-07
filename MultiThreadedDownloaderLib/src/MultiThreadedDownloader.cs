@@ -424,7 +424,9 @@ namespace MultiThreadedDownloaderLib
 				int taskTryNumber = 0;
 
 				WebHeaderCollection unrangedHeaders = GetUnrangedHttpHeaders(Headers);
-				FileDownloader downloader = new FileDownloader(this, taskId)
+				DependentTaskInfo dti = new DependentTaskInfo(this,
+					taskDownloadRange.Length, isRangeSupported, ContentCompressionAlgorithm);
+				FileDownloader downloader = new FileDownloader(dti, taskId)
 				{
 					Url = Url,
 					ConnectionTimeout = ConnectionTimeout,
@@ -566,7 +568,7 @@ namespace MultiThreadedDownloaderLib
 					d.GetRange(out DownloadRange range);
 					DownloadableChunk downloadableChunk = new DownloadableChunk(d.DownloadableChunk.OutputStream, range);
 					DownloadableTask downloadableTask = new DownloadableTask(d.Url,
-						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
+						downloadableChunk, d.Id, contentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
 
 					TaskFinished?.Invoke(this, downloadableTask, transferred, contentLength, tryNumber, tryCountLimit, errCode);

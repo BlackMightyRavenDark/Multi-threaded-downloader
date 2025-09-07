@@ -51,7 +51,7 @@ namespace MultiThreadedDownloaderLib
 		public bool FakeDownloading { get; set; } = false;
 
 		public bool IsActive { get; private set; } = false;
-		public MultiThreadedDownloader Owner { get; }
+		public DependentTaskInfo DependentTaskInfo { get; } = null;
 		public int LastErrorCode { get; private set; } = 200;
 		public string LastErrorMessage { get; private set; }
 		public bool HasErrors => LastErrorCode != 200 && LastErrorCode != 206;
@@ -105,8 +105,8 @@ namespace MultiThreadedDownloaderLib
 
 		public FileDownloader(int id) { Id = id; }
 		public FileDownloader() : this(0) { }
-		internal FileDownloader(MultiThreadedDownloader owner, int id)
-			: this(id) { Owner = owner; }
+		internal FileDownloader(DependentTaskInfo dependentTaskInfo, int id)
+			: this(id) { DependentTaskInfo = dependentTaskInfo; }
 
 		public void Dispose()
 		{
@@ -164,7 +164,7 @@ namespace MultiThreadedDownloaderLib
 				return LastErrorCode;
 			}
 
-			bool isIndependent = Owner == null;
+			bool isIndependent = DependentTaskInfo == null;
 			bool isRangeAssigned = downloadableChunk.Range != null;
 			if (isIndependent)
 			{
@@ -269,10 +269,10 @@ namespace MultiThreadedDownloaderLib
 			}
 			else
 			{
-				isRangeSupported = Owner.IsRangeSupported;
-				contentLength = Owner.ContentLength;
-				IsCompressedContent = Owner.IsCompressedContent;
-				ContentCompressionAlgorithm = Owner.ContentCompressionAlgorithm;
+				isRangeSupported = DependentTaskInfo.IsRangeSupported;
+				contentLength = DependentTaskInfo.ContentLength;
+				IsCompressedContent = DependentTaskInfo.IsCompressedContent;
+				ContentCompressionAlgorithm = DependentTaskInfo.ContentCompressionAlgorithm;
 				if (isRangeSupported && isRangeAssigned)
 				{
 					downloadableChunk.Range.ContentLength = contentLength;
