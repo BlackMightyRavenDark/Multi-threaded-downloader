@@ -52,31 +52,30 @@ namespace MultiThreadedDownloaderLib
 		internal static IEnumerable<DownloadRange> SplitContentToChunks(
 			long contentLength, long rangeFrom, long rangeTo, int chunkCount)
 		{
-			if (rangeTo < 0L) { rangeTo = contentLength; }
+			long lastByte = contentLength > 0L ? contentLength - 1L : contentLength;
+			if (rangeTo < 0L) { rangeTo = lastByte; }
 			if (contentLength <= 0L || rangeTo < rangeFrom || chunkCount <= 1)
 			{
-				yield return new DownloadRange(0L, contentLength - 1L, contentLength);
+				yield return new DownloadRange(0L, lastByte, contentLength);
 				yield break;
 			}
 
-			long contentLengthRanged = rangeTo >= 0L ? rangeTo - rangeFrom : contentLength - rangeFrom;
+			long contentLengthRanged = (rangeTo >= 0L ? rangeTo - rangeFrom : lastByte - rangeFrom) + 1L;
 			if (chunkCount <= 1 || contentLengthRanged <= ONE_MEGABYTE)
 			{
-				long byteTo = rangeTo >= 0L ? rangeTo : contentLengthRanged + rangeFrom - 1L;
+				long byteTo = rangeTo >= 0L ? rangeTo : contentLengthRanged + rangeFrom;
 				yield return new DownloadRange(rangeFrom, byteTo, contentLength);
 				yield break;
 			}
 
+			lastByte = contentLengthRanged + rangeFrom - 1L;
 			long chunkSize = contentLengthRanged / chunkCount;
-			long startPos = rangeFrom;
+			long chunkStartPos = rangeFrom;
 			for (int i = 0; i < chunkCount; ++i)
 			{
-				bool lastChunk = i == chunkCount - 1;
-				long endPos = lastChunk ? (rangeTo >= 0L ? rangeTo : contentLength - 1L) : (startPos + chunkSize);
-
-				yield return new DownloadRange(startPos, endPos, contentLength);
-
-				if (!lastChunk) { startPos += chunkSize + 1L; }
+				long chunkEndPos = i == chunkCount - 1 ? (rangeTo >= 0L ? rangeTo : lastByte) : (chunkStartPos + chunkSize);
+				yield return new DownloadRange(chunkStartPos, chunkEndPos, contentLength);
+				chunkStartPos += chunkSize + 1L;
 			}
 		}
 
