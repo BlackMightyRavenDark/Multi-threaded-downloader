@@ -878,7 +878,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				{
 					string contentLengthString = taskContentLength > 0L ? taskContentLength.ToString() : "<Неизвестно>";
 					string t = $"Task №{task.TaskId}: Скачивание завершено с кодом {errCode} ({MultiThreadedDownloader.ErrorCodeToString(errCode)})! " +
-						$"Скачано {bytesTransferred} из {contentLengthString}. Попытка №{tryNumber}";
+						$"Скачано {bytesTransferred} из {contentLengthString} / {task.FullContentLength}. Попытка №{tryNumber}";
 					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
 					AddToLog(t);
 				}));
@@ -890,7 +890,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				{
 					string contentLengthString = taskContentLength > 0L ? taskContentLength.ToString() : "<Неизвестно>";
 					string t = $"Task №{task.TaskId}: Ошибка {errCode} ({errorMessage})! " +
-						$"Скачано {bytesTransferred} из {contentLengthString}. Попытка №{tryNumber}";
+						$"Скачано {bytesTransferred} из {contentLengthString} / {task.FullContentLength}. Попытка №{tryNumber}";
 					if (tryCountLimit > 0) { t += $" / {tryCountLimit}"; }
 					AddToLog(t);
 				}));
