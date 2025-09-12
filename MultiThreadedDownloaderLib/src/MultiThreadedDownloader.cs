@@ -310,6 +310,17 @@ namespace MultiThreadedDownloaderLib
 			IsCompressedContent = Utils.IsCompressedContent(responseHeaders, out string algorithmId);
 			ContentCompressionAlgorithm = algorithmId;
 
+			bool isRangeSupported = !IsCompressedContent && IsRangeSupported(responseHeaders);
+			if (!isRangeSupported)
+			{
+				LastErrorMessage = "Невозможно начать скачивание, так как HTTP-заголовок \"Range\" " +
+					"не поддерживается сервером и/или контент является сжатым! Используйте класс \"FileDownloader\".";
+				LastErrorCode = DOWNLOAD_ERROR_ABORTED;
+				DownloadFinished?.Invoke(this, DownloadedBytes, -1L, LastErrorCode, null);
+				IsActive = false;
+				return LastErrorCode;
+			}
+
 			long fullContentLength = -1L;
 			if (!IsCompressedContent)
 			{
@@ -376,8 +387,6 @@ namespace MultiThreadedDownloaderLib
 				if (callProgressUpdaterFunction) { OnProgressUpdatedFunc(downloadableTask); }
 				return downloadableTask;
 			}
-
-			bool isRangeSupported = !IsCompressedContent && IsRangeSupported(responseHeaders);
 #if DEBUG
 			if (!isRangeSupported && ThreadCount != 1)
 			{
