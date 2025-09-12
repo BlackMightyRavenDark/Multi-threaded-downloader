@@ -568,7 +568,7 @@ namespace MultiThreadedDownloaderLib
 					d.GetRange(out DownloadRange range);
 					DownloadableChunk downloadableChunk = new DownloadableChunk(d.DownloadableChunk.OutputStream, range);
 					DownloadableTask downloadableTask = new DownloadableTask(d.Url,
-						downloadableChunk, d.Id, contentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
+						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
 
 					TaskFinished?.Invoke(this, downloadableTask, transferred, contentLength, tryNumber, tryCountLimit, errCode);
