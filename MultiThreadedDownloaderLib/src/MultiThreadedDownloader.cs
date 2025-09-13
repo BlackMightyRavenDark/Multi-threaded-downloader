@@ -33,7 +33,6 @@ namespace MultiThreadedDownloaderLib
 		public long ContentLength { get; private set; } = -1L;
 		public long RangeFrom { get; private set; } = 0L;
 		public long RangeTo { get; private set; } = -1L;
-		internal bool IsRangeSupported { get; private set; }
 
 		/// <summary>
 		/// Если 'true', скачанные данные не будут никуда сохранены.
@@ -310,8 +309,7 @@ namespace MultiThreadedDownloaderLib
 			IsCompressedContent = Utils.IsCompressedContent(responseHeaders, out string algorithmId);
 			ContentCompressionAlgorithm = algorithmId;
 
-			bool isRangeSupported = !IsCompressedContent && IsRangeSupported(responseHeaders);
-			if (!isRangeSupported)
+			if (IsCompressedContent || !IsRangeSupported(responseHeaders))
 			{
 				LastErrorMessage = "Невозможно начать скачивание, так как HTTP-заголовок \"Range\" " +
 					"не поддерживается сервером и/или контент является сжатым! Используйте класс \"FileDownloader\".";
@@ -321,13 +319,9 @@ namespace MultiThreadedDownloaderLib
 				return LastErrorCode;
 			}
 
-			long fullContentLength = -1L;
-			if (!IsCompressedContent)
-			{
-				ExtractContentLengthFromHttpHeaders(responseHeaders, out fullContentLength);
-				ContentLength = fullContentLength == -1L ? -1L :
-					(RangeTo >= 0L ? RangeTo - RangeFrom + 1 : fullContentLength - RangeFrom);
-			}
+			ExtractContentLengthFromHttpHeaders(responseHeaders, out long fullContentLength);
+			ContentLength = fullContentLength == -1L ? -1L :
+				(RangeTo >= 0L ? RangeTo - RangeFrom + 1 : fullContentLength - RangeFrom);
 			if (fullContentLength < 0L || ContentLength < 0L) { ContentLength = -1L; }
 
 			CustomError customError = new CustomError(LastErrorCode, null);
@@ -387,28 +381,16 @@ namespace MultiThreadedDownloaderLib
 				if (callProgressUpdaterFunction) { OnProgressUpdatedFunc(downloadableTask); }
 				return downloadableTask;
 			}
-#if DEBUG
-			if (!isRangeSupported && ThreadCount != 1)
-			{
-				Debug.WriteLine("The \"Range\" header is not found! " +
-					"Can't use multiple threads! Switching to single-threaded mode!");
-			}
-#endif
-			IsRangeSupported = isRangeSupported;
-
-			if (bufferSize == 0)
-			{
-				bufferSize = isRangeSupported ? 8192 : 4096;
-			}
 
 			bool isOutOfTries = false;
 			bool isExceptionRaised = false;
 			bool isHeadersReceived = false;
 
 			List<FileDownloader> downloaders = new List<FileDownloader>();
-			int predictedChunkCount = isRangeSupported && ContentLength > ONE_MEGABYTE ? ThreadCount : 1;
+			int predictedChunkCount = ContentLength > ONE_MEGABYTE ? ThreadCount : 1;
 			var chunkRanges = SplitContentToChunks(fullContentLength, RangeFrom, RangeTo, predictedChunkCount);
 			int chunkCount = chunkRanges.Count();
+			if (bufferSize == 0) { bufferSize = chunkCount > 1 ? 8192 : 4096; }
 			ThreadCount = chunkCount;
 			for (int i = 0; i < chunkCount; ++i)
 			{
@@ -434,7 +416,7 @@ namespace MultiThreadedDownloaderLib
 
 				WebHeaderCollection unrangedHeaders = GetUnrangedHttpHeaders(Headers);
 				DependentTaskInfo dti = new DependentTaskInfo(this,
-					taskDownloadRange.Length, isRangeSupported, ContentCompressionAlgorithm);
+					taskDownloadRange.Length, true, ContentCompressionAlgorithm);
 				FileDownloader downloader = new FileDownloader(dti, taskId)
 				{
 					Url = Url,
@@ -636,10 +618,7 @@ namespace MultiThreadedDownloaderLib
 							return;
 						}
 
-						if (isRangeSupported)
-						{
-							downloader.SetRange(taskDownloadRange);
-						}
+						downloader.SetRange(taskDownloadRange);
 
 						ContentChunkStream chunkStream = new ContentChunkStream(
 							streamChunk, UseRamForTempFiles || isFakeDownloading ? null : chunkFileName);
