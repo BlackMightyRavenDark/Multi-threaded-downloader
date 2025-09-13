@@ -466,7 +466,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				else
 				{
 					progressBarDownload.ClearItems();
-					string errorMessage = FileDownloader.ErrorCodeToString(errorCode);
+					string errorMessage = singleThreadedDownloader.HasErrorMessage ?
+						singleThreadedDownloader.LastErrorMessage : FileDownloader.ErrorCodeToString(errorCode);
 					lblDownloadProgress.Text = $"Ошибка {errorCode}: {errorMessage}";
 
 					if (errorCode == FileDownloader.DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED_PREDICTED)
@@ -486,7 +487,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					}
 					else if (singleThreadedDownloader.HasErrorMessage)
 					{
-						errorMessage += $"\n{singleThreadedDownloader.LastErrorMessage}";
+						errorMessage = $"{FileDownloader.ErrorCodeToString(errorCode)}{Environment.NewLine}{singleThreadedDownloader.LastErrorMessage}";
 					}
 
 					ShowErrorMessage(errorCode, errorMessage);
@@ -933,10 +934,13 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				if (errorCode != 200 && errorCode != 206)
 				{
 					if (isPreparing) { progressBarDownload.ClearItems(); }
-					string errorMessage = errorCode == MultiThreadedDownloader.DOWNLOAD_ERROR_CUSTOM && multiThreadedDownloader.HasErrorMessage ?
-						multiThreadedDownloader.LastErrorMessage : MultiThreadedDownloader.ErrorCodeToString(errorCode);
-
+					string errorMessage = multiThreadedDownloader.HasErrorMessage ? multiThreadedDownloader.LastErrorMessage :
+						MultiThreadedDownloader.ErrorCodeToString(errorCode);
 					lblDownloadProgress.Text = $"Ошибка {errorCode}: {errorMessage}";
+					if (multiThreadedDownloader.HasErrorMessage)
+					{
+						errorMessage = $"{MultiThreadedDownloader.ErrorCodeToString(errorCode)}{Environment.NewLine}{errorMessage}";
+					}
 					lblMergeProgress.Left = lblDownloadProgress.Left + lblDownloadProgress.Width + 4;
 
 					ShowErrorMessage(errorCode, errorMessage);
