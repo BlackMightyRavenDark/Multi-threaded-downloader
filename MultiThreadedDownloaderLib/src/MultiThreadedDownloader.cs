@@ -1287,6 +1287,9 @@ namespace MultiThreadedDownloaderLib
 				case DOWNLOAD_ERROR_FILE_NUMBERING:
 					return "Ошибка при нумерации файла!";
 
+				case DOWNLOAD_ERROR_ABORTED:
+					return "Скачивание прервано!";
+
 				default:
 					return FileDownloader.ErrorCodeToString(errorCode);
 			}
