@@ -138,67 +138,60 @@ namespace MultiThreadedDownloaderLib
 			return result;
 		}
 
-		private static int IsAcceptRangeBytes(WebHeaderCollection responseHeaders, out bool result)
+		private static int IsAcceptRangeBytes(WebHeaderCollection headers, out bool result)
 		{
-			for (int i = 0; i < responseHeaders.Count; ++i)
+			string acceptRangesValue = headers?.Get("Accept-Ranges");
+			if (!string.IsNullOrEmpty(acceptRangesValue))
 			{
-				string headerName = responseHeaders.GetKey(i);
-				if (string.Compare(headerName, "accept-ranges", StringComparison.OrdinalIgnoreCase) == 0)
+				if (acceptRangesValue.ToLower().Contains("bytes"))
 				{
-					string headerValue = responseHeaders.Get(i);
-					if (headerValue.ToLower().Contains("bytes"))
-					{
-						result = true;
-						return 200;
-					}
-
-					result = false;
-					return 204;
-				}
-			}
-
-			result = false;
-			return 404;
-		}
-
-		private static int IsContentRangeBytes(WebHeaderCollection responseHeaders, out bool result)
-		{
-			for (int i = 0; i < responseHeaders.Count; ++i)
-			{
-				string headerName = responseHeaders.GetKey(i);
-				if (string.Compare(headerName, "content-range", StringComparison.OrdinalIgnoreCase) == 0)
-				{
-					string headerValue = responseHeaders.Get(i);
-					if (headerValue.ToLower().Contains("bytes"))
-					{
-						result = true;
-						return 200;
-					}
-
-					result = false;
-					return 204;
-				}
-			}
-
-			result = false;
-			return 404;
-		}
-
-		public static int ExtractContentLengthFromHttpHeaders(WebHeaderCollection responseHeaders, out long contentLength)
-		{
-			for (int i = 0; i < responseHeaders.Count; ++i)
-			{
-				string headerName = responseHeaders.GetKey(i);
-				if (headerName.Equals("Content-Length"))
-				{
-					string headerValue = responseHeaders.Get(i);
-					if (!long.TryParse(headerValue, out contentLength))
-					{
-						contentLength = -1L;
-						return 204;
-					}
+					result = true;
 					return 200;
 				}
+				else
+				{
+					result = false;
+					return 204;
+				}
+			}
+
+			result = false;
+			return 404;
+		}
+
+		private static int IsContentRangeBytes(WebHeaderCollection headers, out bool result)
+		{
+			string contentRangeValue = headers?.Get("Content-Range");
+			if (!string.IsNullOrEmpty(contentRangeValue))
+			{
+				if (contentRangeValue.ToLower().Contains("bytes"))
+				{
+					result = true;
+					return 200;
+				}
+				else
+				{
+					result = false;
+					return 204;
+				}
+			}
+
+			result = false;
+			return 404;
+		}
+
+		public static int ExtractContentLengthFromHttpHeaders(WebHeaderCollection headers, out long contentLength)
+		{
+			string contentLengthValue = headers?.Get("Content-Length");
+			if (!string.IsNullOrEmpty(contentLengthValue))
+			{
+				if (!long.TryParse(contentLengthValue, out contentLength))
+				{
+					contentLength = -1L;
+					return 204;
+				}
+
+				return 200;
 			}
 
 			contentLength = -1L;
@@ -447,7 +440,7 @@ namespace MultiThreadedDownloaderLib
 				}
 				else if (headerNameLowercased.Equals("range"))
 				{
-					if (ParseRangeHttpHeaderValue(headerValue, out long byteFrom, out long byteTo))
+					if (ParseHttpHeaderRangeValue(headerValue, out long byteFrom, out long byteTo))
 					{
 						if (byteFrom >= 0L && byteTo >= 0L && byteTo >= byteFrom)
 						{
@@ -481,9 +474,9 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
-		public static bool ParseRangeHttpHeaderValue(string headerValue, out long byteFrom, out long byteTo)
+		public static bool ParseHttpHeaderRangeValue(string rangeHeaderValue, out long byteFrom, out long byteTo)
 		{
-			string[] splitted = headerValue.Split('-');
+			string[] splitted = rangeHeaderValue.Split('-');
 			if (splitted.Length == 2)
 			{
 				bool isStr0Empty = string.IsNullOrEmpty(splitted[0]) || string.IsNullOrWhiteSpace(splitted[0]);

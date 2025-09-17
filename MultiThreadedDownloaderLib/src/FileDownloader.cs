@@ -786,7 +786,7 @@ namespace MultiThreadedDownloaderLib
 
 						if (!string.IsNullOrEmpty(headerValue) && headerName.ToLower().Equals("range"))
 						{
-							if (ParseRangeHttpHeaderValue(headerValue, out long rangeFrom, out long rangeTo))
+							if (ParseHttpHeaderRangeValue(headerValue, out long rangeFrom, out long rangeTo))
 							{
 								SetRange(rangeFrom, rangeTo);
 							}
