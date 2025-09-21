@@ -6,6 +6,7 @@ namespace MultiThreadedDownloaderLib
 		public long StartPosition { get; }
 		public long EndPosition { get; }
 		public long ContentLength { get; internal set; }
+		public bool IsAssigned => IsAssignedRange(StartPosition, EndPosition);
 		public bool IsValid => IsValidRange(StartPosition, EndPosition, ContentLength);
 		public long Length => EndPosition - StartPosition + 1L;
 
@@ -20,6 +21,11 @@ namespace MultiThreadedDownloaderLib
 		{
 			return ContentLength >= 0 && EndPosition < 0L ?
 				$"{StartPosition}-{ContentLength}" : $"{StartPosition}-{EndPosition}";
+		}
+
+		public static bool IsAssignedRange(long startPosition, long endPosition)
+		{
+			return startPosition >= 0L && endPosition >= 0L;
 		}
 
 		public static bool IsValidRange(long startPosition, long endPosition, long contentLength = -1L)

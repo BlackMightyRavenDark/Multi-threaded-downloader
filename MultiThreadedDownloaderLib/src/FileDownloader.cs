@@ -22,7 +22,7 @@ namespace MultiThreadedDownloaderLib
 		/// </summary>
 		public int TryCountLimit { get; set; } = 1;
 
-		public WebHeaderCollection Headers { get => _headers; set { SetHttpHeaders(value); } }
+		public WebHeaderCollection Headers { get; set; }
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
@@ -57,10 +57,7 @@ namespace MultiThreadedDownloaderLib
 		public bool HasErrors => LastErrorCode != 200 && LastErrorCode != 206;
 		public bool HasErrorMessage => HasErrorMessageText();
 
-		private WebHeaderCollection _headers = new WebHeaderCollection();
 		private CancellationTokenSource _cancellationTokenSource;
-		private long _rangeFrom = 0L;
-		private long _rangeTo = -1L;
 
 		public const int DOWNLOAD_ERROR_URL_NOT_DEFINED = -1;
 		public const int DOWNLOAD_ERROR_INVALID_URL = -2;
@@ -165,7 +162,7 @@ namespace MultiThreadedDownloaderLib
 			}
 
 			bool isIndependent = DependentTaskInfo == null;
-			bool isRangeAssigned = downloadableChunk.Range != null;
+			bool isRangeAssigned = downloadableChunk.Range != null && downloadableChunk.Range.IsAssigned;
 			if (isIndependent)
 			{
 				if (!isRangeAssigned)
@@ -179,6 +176,15 @@ namespace MultiThreadedDownloaderLib
 					IsActive = false;
 					return LastErrorCode;
 				}
+				else
+				{
+					SetRange(downloadableChunk.Range);
+				}
+			}
+
+			if ((!isIndependent || !isRangeAssigned) && Headers != null && Headers.Count > 0)
+			{
+				Headers.Remove(HttpRequestHeader.Range);
 			}
 
 			_cancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
@@ -596,7 +602,8 @@ namespace MultiThreadedDownloaderLib
 		public int Download(ContentChunkStream contentChunkStream, int bufferSize,
 			CancellationTokenSource cancellationTokenSource = null)
 		{
-			return Download(contentChunkStream, _rangeFrom, _rangeTo, bufferSize, cancellationTokenSource);
+			ExtractRangeFromHttpHeaders(Headers, out long rangeFrom, out long rangeTo, out _);
+			return Download(contentChunkStream, rangeFrom, rangeTo, bufferSize, cancellationTokenSource);
 		}
 
 		public int Download(ContentChunkStream contentChunkStream,
@@ -632,7 +639,8 @@ namespace MultiThreadedDownloaderLib
 		public int Download(Stream outputStream, string outputFilePath, int bufferSize,
 			CancellationTokenSource cancellationTokenSource = null)
 		{
-			return Download(outputStream, outputFilePath, _rangeFrom, _rangeTo,
+			ExtractRangeFromHttpHeaders(Headers, out long rangeFrom, out long rangeTo, out _);
+			return Download(outputStream, outputFilePath, rangeFrom, rangeTo,
 				bufferSize, cancellationTokenSource);
 		}
 
@@ -710,9 +718,7 @@ namespace MultiThreadedDownloaderLib
 		public void GetRange(out DownloadRange downloadRange)
 		{
 			downloadRange = DownloadableChunk?.Range != null ?
-				DownloadableChunk.Range :
-				new DownloadRange(_rangeFrom, _rangeTo,
-				DownloadableChunk?.Range != null ? DownloadableChunk.Range.ContentLength : -1L);
+				DownloadableChunk.Range : new DownloadRange(0L, -1L);
 		}
 
 		public void GetRange(out long startPosition, out long endPosition)
@@ -724,8 +730,8 @@ namespace MultiThreadedDownloaderLib
 			}
 			else
 			{
-				startPosition = _rangeFrom;
-				endPosition = _rangeTo;
+				startPosition = 0L;
+				endPosition = -1L;
 			}
 		}
 
@@ -742,67 +748,17 @@ namespace MultiThreadedDownloaderLib
 			}
 
 			ResetRange();
-			_rangeFrom = startPosition;
-			_rangeTo = endPosition;
 
-			string rangeValue = endPosition >= 0L ? $"{startPosition}-{endPosition}" : $"{startPosition}-";
-			Headers.Add("Range", rangeValue);
+			string rangeValue = FormatHttpHeadersRangeValue(startPosition, endPosition);
+			if (Headers == null) { Headers = new WebHeaderCollection(); }
+			Headers["Range"] = rangeValue;
 
 			return true;
 		}
 
 		public void ResetRange()
 		{
-			_rangeFrom = 0L;
-			_rangeTo = -1L;
-
-			for (int i = 0; i < Headers.Count; ++i)
-			{
-				string headerName = Headers.GetKey(i);
-
-				if (!string.IsNullOrEmpty(headerName) && !string.IsNullOrWhiteSpace(headerName) &&
-					headerName.ToLower().Equals("range"))
-				{
-					Headers.Remove(headerName);
-					break;
-				}
-			}
-		}
-
-		private void SetHttpHeaders(WebHeaderCollection headers)
-		{
-			_rangeFrom = 0L;
-			_rangeTo = -1L;
-			Headers.Clear();
-			if (headers != null)
-			{
-				for (int i = 0; i < headers.Count; ++i)
-				{
-					string headerName = headers.GetKey(i);
-
-					if (!string.IsNullOrEmpty(headerName) && !string.IsNullOrWhiteSpace(headerName))
-					{
-						string headerValue = headers.Get(i);
-
-						if (!string.IsNullOrEmpty(headerValue) && headerName.ToLower().Equals("range"))
-						{
-							if (ParseHttpHeaderRangeValue(headerValue, out long rangeFrom, out long rangeTo))
-							{
-								SetRange(rangeFrom, rangeTo);
-							}
-#if DEBUG
-							else
-							{
-								Debug.WriteLine("Failed to parse the \"Range\" header!");
-							}
-#endif
-							continue;
-						}
-
-						Headers.Add(headerName, headerValue);
-					}
-				}
-			}
+			Headers?.Remove("Range");
 		}
 
 		private void WaitInterval(Stopwatch stopwatch, int tryNumber, int tryCountLimit)

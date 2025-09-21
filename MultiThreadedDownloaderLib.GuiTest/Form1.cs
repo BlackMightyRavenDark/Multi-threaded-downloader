@@ -897,6 +897,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				}));
 			};
 
+			Utils.ExtractRangeFromHttpHeaders(headers, out DownloadRange range);
+
 			multiThreadedDownloader.Url = textBoxUrl.Text;
 			multiThreadedDownloader.OutputFileName = textBoxOutputFileName.Text;
 			multiThreadedDownloader.TempDirectory = tempDirectory;
@@ -904,6 +906,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			multiThreadedDownloader.TryCountLimitPerThread = (int)numericUpDownTryCountPerThread.Value;
 			multiThreadedDownloader.TryCountLimitInsideThread = (int)numericUpDownTryCountInsideEachThread.Value;
 			multiThreadedDownloader.RetryIntervalMilliseconds = (int)numericUpDownRetryInterval.Value;
+			multiThreadedDownloader.SetRange(range);
 			multiThreadedDownloader.Headers = headers;
 			multiThreadedDownloader.Cookies = cookies;
 			multiThreadedDownloader.Proxy = proxy;

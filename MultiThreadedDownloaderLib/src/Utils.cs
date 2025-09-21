@@ -49,33 +49,25 @@ namespace MultiThreadedDownloaderLib
 			return null;
 		}
 
-		internal static IEnumerable<DownloadRange> SplitContentToChunks(
+		public static IEnumerable<DownloadRange> SplitContentToChunks(
 			long contentLength, long rangeFrom, long rangeTo, int chunkCount)
 		{
-			long lastByte = contentLength > 0L ? contentLength - 1L : contentLength;
-			if (rangeTo < 0L) { rangeTo = lastByte; }
-			if (contentLength <= 0L || rangeTo < rangeFrom || chunkCount <= 1)
+			if (rangeTo < 0L) { rangeTo = contentLength - 1L; }
+			if (chunkCount <= 1)
 			{
-				yield return new DownloadRange(0L, lastByte, contentLength);
+				yield return new DownloadRange(rangeFrom, rangeTo, contentLength);
 				yield break;
 			}
 
-			long contentLengthRanged = (rangeTo >= 0L ? rangeTo - rangeFrom : lastByte - rangeFrom) + 1L;
-			if (chunkCount <= 1 || contentLengthRanged <= ONE_MEGABYTE)
+			long rangedContentLength = rangeTo - rangeFrom + 1L;
+			long chunkSize = rangedContentLength / chunkCount;
+			long chunkStart = rangeFrom;
+			while (chunkStart < rangeTo)
 			{
-				long byteTo = rangeTo >= 0L ? rangeTo : contentLengthRanged + rangeFrom;
-				yield return new DownloadRange(rangeFrom, byteTo, contentLength);
-				yield break;
-			}
-
-			lastByte = contentLengthRanged + rangeFrom - 1L;
-			long chunkSize = contentLengthRanged / chunkCount;
-			long chunkStartPos = rangeFrom;
-			for (int i = 0; i < chunkCount; ++i)
-			{
-				long chunkEndPos = i == chunkCount - 1 ? (rangeTo >= 0L ? rangeTo : lastByte) : (chunkStartPos + chunkSize);
-				yield return new DownloadRange(chunkStartPos, chunkEndPos, contentLength);
-				chunkStartPos += chunkSize + 1L;
+				long chunkEndPredicted = chunkStart + chunkSize;
+				long chunkEnd = chunkEndPredicted > rangeTo ? rangeTo : chunkEndPredicted;
+				yield return new DownloadRange(chunkStart, chunkEnd, contentLength);
+				chunkStart = chunkEnd + 1L;
 			}
 		}
 
@@ -196,6 +188,50 @@ namespace MultiThreadedDownloaderLib
 
 			contentLength = -1L;
 			return 404;
+		}
+
+		public static int ExtractRangeFromHttpHeaders(WebHeaderCollection headers,
+			out long rangeFrom, out long rangeTo, out long contentLength)
+		{
+			string rangeHeaderValue = headers.Get("Range");
+			if (!string.IsNullOrEmpty(rangeHeaderValue))
+			{
+				bool success = ParseHttpHeaderRangeValue(rangeHeaderValue, out rangeFrom, out rangeTo);
+				ExtractContentLengthFromHttpHeaders(headers, out contentLength);
+				return success ? 200 : 404;
+			}
+
+			rangeFrom = 0L;
+			rangeTo = contentLength = -1L;
+			return 404;
+		}
+
+		public static int ExtractRangeFromHttpHeaders(WebHeaderCollection headers, out DownloadRange range)
+		{
+			int errorCode = ExtractRangeFromHttpHeaders(headers, out long rangeFrom, out long rangeTo, out long contentLength);
+			range = new DownloadRange(rangeFrom, rangeTo, contentLength);
+			return errorCode;
+		}
+
+		public static string FormatHttpHeadersRangeValue(long rangeStart, long rangeEnd)
+		{
+			if (DownloadRange.IsValidRange(rangeStart, rangeEnd))
+			{
+				if (rangeStart >= 0L && rangeEnd >= 0L)
+				{
+					return $"bytes={rangeStart}-{rangeEnd}";
+				}
+				else if (rangeStart < 0L && rangeEnd >= 0L)
+				{
+					return $"bytes=0-{rangeEnd}";
+				}
+				else if (rangeStart >= 0L && rangeEnd < 0L)
+				{
+					return $"bytes={rangeStart}-";
+				}
+			}
+
+			return string.Empty;
 		}
 
 		public static bool IsCompressedContent(string contentEncodingHeaderValue, out string algorithmId)
@@ -476,47 +512,51 @@ namespace MultiThreadedDownloaderLib
 
 		public static bool ParseHttpHeaderRangeValue(string rangeHeaderValue, out long byteFrom, out long byteTo)
 		{
-			string[] splitted = rangeHeaderValue.Split('-');
-			if (splitted.Length == 2)
+			if (!string.IsNullOrEmpty(rangeHeaderValue) && !string.IsNullOrWhiteSpace(rangeHeaderValue))
 			{
-				bool isStr0Empty = string.IsNullOrEmpty(splitted[0]) || string.IsNullOrWhiteSpace(splitted[0]);
-				bool isStr1Empty = string.IsNullOrEmpty(splitted[1]) || string.IsNullOrWhiteSpace(splitted[1]);
-				if (isStr0Empty && isStr1Empty)
+				if (rangeHeaderValue.StartsWith("bytes=")) { rangeHeaderValue = rangeHeaderValue.Substring(6); }
+				string[] splitted = rangeHeaderValue.Split('-');
+				if (splitted.Length == 2)
 				{
-					byteFrom = 0L;
-					byteTo = -1L;
-					return false;
-				}
-
-				if (!isStr0Empty)
-				{
-					if (!long.TryParse(splitted[0], out byteFrom))
+					bool isStr0Empty = string.IsNullOrEmpty(splitted[0]) || string.IsNullOrWhiteSpace(splitted[0]);
+					bool isStr1Empty = string.IsNullOrEmpty(splitted[1]) || string.IsNullOrWhiteSpace(splitted[1]);
+					if (isStr0Empty && isStr1Empty)
 					{
 						byteFrom = 0L;
 						byteTo = -1L;
 						return false;
 					}
-				}
-				else
-				{
-					byteFrom = 0L;
-				}
 
-				if (!isStr1Empty)
-				{
-					if (!long.TryParse(splitted[1], out byteTo))
+					if (!isStr0Empty)
+					{
+						if (!long.TryParse(splitted[0], out byteFrom))
+						{
+							byteFrom = 0L;
+							byteTo = -1L;
+							return false;
+						}
+					}
+					else
 					{
 						byteFrom = 0L;
-						byteTo = -1L;
-						return false;
 					}
-				}
-				else
-				{
-					byteTo = -1L;
-				}
 
-				return true;
+					if (!isStr1Empty)
+					{
+						if (!long.TryParse(splitted[1], out byteTo))
+						{
+							byteFrom = 0L;
+							byteTo = -1L;
+							return false;
+						}
+					}
+					else
+					{
+						byteTo = -1L;
+					}
+
+					return true;
+				}
 			}
 
 			byteFrom = 0L;
@@ -564,6 +604,16 @@ namespace MultiThreadedDownloaderLib
 				}
 			}
 			return result;
+		}
+
+		public static WebHeaderCollection CopyHttpHeaders(WebHeaderCollection headers)
+		{
+			WebHeaderCollection newCopy = new WebHeaderCollection();
+			for (int i = 0; i < headers.Count; ++i)
+			{
+				newCopy[headers.GetKey(i)] = headers.Get(i);
+			}
+			return newCopy;
 		}
 
 		public static string HttpHeadersToString(WebHeaderCollection headers)

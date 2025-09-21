@@ -31,8 +31,6 @@ namespace MultiThreadedDownloaderLib
 		public int ChunksMergingUpdateIntervalMilliseconds { get; set; } = 100;
 		public long DownloadedBytes { get; private set; } = 0L;
 		public long ContentLength { get; private set; } = -1L;
-		public long RangeFrom { get; private set; } = 0L;
-		public long RangeTo { get; private set; } = -1L;
 
 		/// <summary>
 		/// Если 'true', скачанные данные не будут никуда сохранены.
@@ -78,7 +76,7 @@ namespace MultiThreadedDownloaderLib
 		public string HeaderRequestMethod { get; set; } = "HEAD";
 
 		public bool IsActive { get; private set; }
-		public WebHeaderCollection Headers { get => _headers; set { SetHttpHeaders(value); } }
+		public WebHeaderCollection Headers { get; set; }
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public bool MergeChunksAutomatically { get; set; } = true;
@@ -90,7 +88,6 @@ namespace MultiThreadedDownloaderLib
 			!string.IsNullOrWhiteSpace(TempDirectory) && Directory.Exists(TempDirectory);
 		public bool HasErrorMessage => HasErrorMessageText();
 
-		private WebHeaderCollection _headers = new WebHeaderCollection();
 		private bool _isCanceled = false;
 		private bool _isAborted = false;
 		private bool _isDisposed = false;
@@ -262,13 +259,14 @@ namespace MultiThreadedDownloaderLib
 			bool isInfiniteRetries = TryCountLimitPerThread <= 0;
 			Stopwatch stopwatch = new Stopwatch();
 
+			WebHeaderCollection unrangedHeaders = GetUnrangedHttpHeaders(Headers);
 			WebHeaderCollection responseHeaders = null;
 			while (true)
 			{
 				stopwatch.Restart();
 				headersReceivingTryNumber++;
 				Connecting?.Invoke(this, Url, headersReceivingTryNumber, TryCountLimitPerThread);
-				LastErrorCode = GetUrlResponseHttpHeaders(HeaderRequestMethod, Url, Headers, Cookies, Proxy, ConnectionTimeout,
+				LastErrorCode = GetUrlResponseHttpHeaders(HeaderRequestMethod, Url, unrangedHeaders, Cookies, Proxy, ConnectionTimeout,
 					out responseHeaders, out string headersErrorMessage);
 				
 				if (_cancellationTokenSource.IsCancellationRequested)
@@ -319,10 +317,28 @@ namespace MultiThreadedDownloaderLib
 				return LastErrorCode;
 			}
 
+			ExtractRangeFromHttpHeaders(Headers, out long rangeFrom, out long rangeTo, out _);
 			ExtractContentLengthFromHttpHeaders(responseHeaders, out long fullContentLength);
 			ContentLength = fullContentLength == -1L ? -1L :
-				(RangeTo >= 0L ? RangeTo - RangeFrom + 1 : fullContentLength - RangeFrom);
+				(rangeTo >= 0L ? rangeTo - rangeFrom + 1 : fullContentLength - rangeFrom);
 			if (fullContentLength < 0L || ContentLength < 0L) { ContentLength = -1L; }
+
+			if (fullContentLength <= 0L)
+			{
+				LastErrorMessage = "Невозможно начать скачивание, так как размер скачиваемых данных не определён!";
+				LastErrorCode = DOWNLOAD_ERROR_ABORTED;
+				DownloadFinished?.Invoke(this, DownloadedBytes, fullContentLength, LastErrorCode, null);
+				IsActive = false;
+				return LastErrorCode;
+			}
+
+			if (!DownloadRange.IsValidRange(rangeFrom, rangeTo, fullContentLength))
+			{
+				LastErrorCode = DOWNLOAD_ERROR_RANGE;
+				DownloadFinished?.Invoke(this, DownloadedBytes, fullContentLength, LastErrorCode, null);
+				IsActive = false;
+				return LastErrorCode;
+			}
 
 			CustomError customError = new CustomError(LastErrorCode, null);
 			Connected?.Invoke(this, Url, ContentLength, responseHeaders,
@@ -388,7 +404,7 @@ namespace MultiThreadedDownloaderLib
 
 			List<FileDownloader> downloaders = new List<FileDownloader>();
 			int predictedChunkCount = ContentLength > ONE_MEGABYTE ? ThreadCount : 1;
-			var chunkRanges = SplitContentToChunks(fullContentLength, RangeFrom, RangeTo, predictedChunkCount);
+			var chunkRanges = SplitContentToChunks(fullContentLength, rangeFrom, rangeTo, predictedChunkCount);
 			int chunkCount = chunkRanges.Count();
 			if (bufferSize == 0) { bufferSize = chunkCount > 1 ? 8192 : 4096; }
 			ThreadCount = chunkCount;
@@ -414,14 +430,13 @@ namespace MultiThreadedDownloaderLib
 
 				int taskTryNumber = 0;
 
-				WebHeaderCollection unrangedHeaders = GetUnrangedHttpHeaders(Headers);
 				DependentTaskInfo dti = new DependentTaskInfo(this,
 					taskDownloadRange.Length, true, ContentCompressionAlgorithm);
 				FileDownloader downloader = new FileDownloader(dti, taskId)
 				{
 					Url = Url,
 					ConnectionTimeout = ConnectionTimeout,
-					Headers = unrangedHeaders,
+					Headers = CopyHttpHeaders(unrangedHeaders),
 					Cookies = Cookies,
 					Proxy = Proxy,
 					SkipHeaderRequest = true,
@@ -1169,34 +1184,6 @@ namespace MultiThreadedDownloaderLib
 			return string.Empty;
 		}
 
-		private void SetHttpHeaders(WebHeaderCollection headers)
-		{
-			RangeFrom = 0L;
-			RangeTo = -1L;
-			Headers.Clear();
-			if (headers != null)
-			{
-				for (int i = 0; i < headers.Count; ++i)
-				{
-					string headerName = headers.GetKey(i);
-
-					if (!string.IsNullOrEmpty(headerName) && !string.IsNullOrWhiteSpace(headerName))
-					{
-						string headerValue = headers.Get(i);
-
-						if (!string.IsNullOrEmpty(headerValue) && headerName.ToLower().Equals("range"))
-						{
-							ParseHttpHeaderRangeValue(headerValue, out long rangeFrom, out long rangeTo);
-							SetRange(rangeFrom, rangeTo);
-							continue;
-						}
-
-						Headers.Add(headerName, headerValue);
-					}
-				}
-			}
-		}
-
 		public bool SetRange(DownloadRange downloadRange)
 		{
 			return SetRange(downloadRange.StartPosition, downloadRange.EndPosition);
@@ -1206,11 +1193,17 @@ namespace MultiThreadedDownloaderLib
 		{
 			if (DownloadRange.IsValidRange(rangeFrom, rangeTo))
 			{
-				RangeFrom = rangeFrom;
-				RangeTo = rangeTo;
+				if (Headers == null) { Headers = new WebHeaderCollection(); }
+				string formattedRange = FormatHttpHeadersRangeValue(rangeFrom, rangeTo);
+				Headers["Range"] = formattedRange;
 				return true;
 			}
 			return false;
+		}
+
+		public void ResetRange()
+		{
+			Headers?.Remove(HttpRequestHeader.Range);
 		}
 
 		public List<char> GetUsedDriveLetters()
