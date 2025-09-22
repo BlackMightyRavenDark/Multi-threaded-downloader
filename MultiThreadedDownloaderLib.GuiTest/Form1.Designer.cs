@@ -291,7 +291,7 @@
 			this.numericUpDownRetryInterval.Size = new System.Drawing.Size(54, 20);
 			this.numericUpDownRetryInterval.TabIndex = 81;
 			this.numericUpDownRetryInterval.Value = new decimal(new int[] {
-			1000,
+			3000,
 			0,
 			0,
 			0});
