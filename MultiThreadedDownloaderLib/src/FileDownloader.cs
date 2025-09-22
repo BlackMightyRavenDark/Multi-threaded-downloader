@@ -301,8 +301,7 @@ namespace MultiThreadedDownloaderLib
 
 			do
 			{
-				tryNumber++;
-				bool isTryLimitReached = !isInfiniteRetries && tryNumber > tryCountLimit;
+				bool isTryLimitReached = !isInfiniteRetries && tryNumber + 1 > tryCountLimit;
 				if (isTryLimitReached)
 				{
 #if DEBUG
@@ -314,6 +313,8 @@ namespace MultiThreadedDownloaderLib
 					IsActive = false;
 					return LastErrorCode;
 				}
+
+				tryNumber++;
 #if DEBUG
 				Debug.WriteLine(isInfiniteRetries ?
 					$"Downloader №{Id}: Try №{tryNumber}" :
