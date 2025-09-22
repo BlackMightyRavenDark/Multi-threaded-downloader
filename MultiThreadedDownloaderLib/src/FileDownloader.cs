@@ -566,6 +566,11 @@ namespace MultiThreadedDownloaderLib
 			{
 				LastErrorCode = DOWNLOAD_ERROR_STREAM_SIZE_EXCEEDED;
 			}
+			else if (LastErrorCode == 200 && (!isIndependent || isRangeAssigned))
+			{
+				LastErrorCode = 206;
+				LastErrorMessage = "Partial Content";
+			}
 
 			WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
 
