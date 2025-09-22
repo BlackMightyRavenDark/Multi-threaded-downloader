@@ -784,7 +784,8 @@ namespace MultiThreadedDownloaderLib
 		{
 			return !string.IsNullOrEmpty(LastErrorMessage) &&
 				!string.IsNullOrWhiteSpace(LastErrorMessage) &&
-				string.Compare(LastErrorMessage, "ok", true) != 0;
+				string.Compare(LastErrorMessage, "ok", true) != 0 &&
+				string.Compare(LastErrorMessage, "partial content", true) != 0;
 		}
 
 		public static string ErrorCodeToString(int errorCode)
@@ -792,8 +793,10 @@ namespace MultiThreadedDownloaderLib
 			switch (errorCode)
 			{
 				case 200:
-				case 206:
 					return "OK";
+
+				case 206:
+					return "Partial Content";
 
 				case 204:
 					return "Сервер не выдал полезных данных!";
@@ -850,7 +853,7 @@ namespace MultiThreadedDownloaderLib
 					return "Не указан поток для сохранения данных!";
 
 				default:
-					return $"Неведомая ранее ошибка!";
+					return "Неведомая ранее ошибка!";
 			}
 		}
 	}
