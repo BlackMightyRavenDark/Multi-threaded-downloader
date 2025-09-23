@@ -122,20 +122,25 @@ namespace MultiThreadedDownloaderLib
 			char sourceDriveLetter, char destnationDriveLetter);
 
 		public delegate void TaskPreparingDelegate(object sender, DownloadableTask task);
-		public delegate void TaskHeadersReceivingDelegate(object sender, DownloadableTask task, int tryNumber, int tryCountLimit);
+		public delegate void TaskHeadersReceivingDelegate(object sender, DownloadableTask task,
+			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit);
 		public delegate void TaskHeadersReceivedDelegate(object sender, DownloadableTask task, WebHeaderCollection headers,
-			int tryNumber, int tryCountLimit, int errorCode);
-		public delegate void TaskConnectingDelegate(object sender, DownloadableTask task, int tryNumber, int tryCountLimit);
+			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit, int errorCode);
+		public delegate void TaskConnectingDelegate(object sender, DownloadableTask task,
+			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit);
 		public delegate int TaskConnectedDelegate(object sender, DownloadableTask task,
-			int tryNumber, int tryCountLimit, long taskContentLength, int errorCode);
-		public delegate void TaskStartedDelegate(object sender, DownloadableTask task,
-			long taskContentLength, int tryNumber, int tryCountLimit);
+			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit, long innerContentLength, int errorCode);
+		public delegate void TaskStartedDelegate(object sender, DownloadableTask task, long innerContentLength,
+			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit);
 		public delegate void TaskProgressDelegate(object sender, DownloadableTask task,
-			long bytesTransferred, long taskContentLength, int tryNumber, int tryCountLimit);
+			long bytesTransferred, long innerContentLength,
+			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit);
 		public delegate void TaskErrorDelegate(object sender, DownloadableTask task, int errorCode, string errorMessage,
-			long bytesTransferred, long contentLength, int tryNumber, int tryCountLimit);
+			long bytesTransferred, long innerContentLength,
+			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit);
 		public delegate void TaskFinishedDelegate(object sender, DownloadableTask task,
-			long bytesTransferred, long taskContentLength, int tryNumber, int tryCountLimit, int errorCode);
+			long bytesTransferred, long innerContentLength,
+			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit, int errorCode);
 
 		public PreparingDelegate Preparing;
 		public ConnectingDelegate Connecting;
@@ -468,7 +473,8 @@ namespace MultiThreadedDownloaderLib
 #endif
 					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
 						fd, -1L, taskTryNumber, DownloadableTaskState.Preparing, false);
-					TaskHeadersReceiving?.Invoke(this, downloadableTask, tryNumber, tryCountLimit);
+					TaskHeadersReceiving?.Invoke(this, downloadableTask,
+						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
 				};
 				downloader.HeadersReceived += (sender, url, downloadableChunk, headers,
 					tryNumber, tryCountLimit, errCode) =>
@@ -485,14 +491,16 @@ namespace MultiThreadedDownloaderLib
 #endif
 					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
 						fd, -1L, taskTryNumber, DownloadableTaskState.Preparing, false);
-					TaskHeadersReceived?.Invoke(this, downloadableTask, headers, tryNumber, tryCountLimit, errCode);
+					TaskHeadersReceived?.Invoke(this, downloadableTask, headers,
+						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread, errCode);
 				};
 				downloader.Connecting += (sender, url, tryNumber, tryCountLimit) =>
 				{
 					FileDownloader d = sender as FileDownloader;
 					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
 						d, -1L, taskTryNumber, DownloadableTaskState.Connecting, true);
-					TaskConnecting?.Invoke(this, downloadableTask, tryNumber, tryCountLimit);
+					TaskConnecting?.Invoke(this, downloadableTask,
+						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
 				};
 				downloader.Connected += (sender, url, contentLength,
 					headers, tryNumber, tryCountLimit, errCode) =>
@@ -514,7 +522,8 @@ namespace MultiThreadedDownloaderLib
 						d, 0L, taskTryNumber, state, true);
 					if (TaskConnected != null)
 					{
-						errCode = TaskConnected.Invoke(this, downloadableTask, tryNumber, tryCountLimit, contentLength, errCode);
+						errCode = TaskConnected.Invoke(this, downloadableTask,
+							tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread, contentLength, errCode);
 					}
 
 					return errCode;
@@ -524,7 +533,8 @@ namespace MultiThreadedDownloaderLib
 					FileDownloader fd = sender as FileDownloader;
 					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
 						fd, 0L, taskTryNumber, DownloadableTaskState.Downloading, true);
-					TaskStarted?.Invoke(this, downloadableTask, contentLength, tryNumber, tryCountLimit);
+					TaskStarted?.Invoke(this, downloadableTask, contentLength,
+						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
 				};
 
 				int lastTime = Environment.TickCount;
@@ -538,7 +548,8 @@ namespace MultiThreadedDownloaderLib
 							d, transferred, taskTryNumber, DownloadableTaskState.Downloading, true);
 
 						OnProgressUpdatedFunc(downloadableTask);
-						TaskProgress?.Invoke(this, downloadableTask, transferred, contentLength, tryNumber, tryCountLimit);
+						TaskProgress?.Invoke(this, downloadableTask, transferred, contentLength,
+							tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
 
 						lastTime = currentTime;
 					}
@@ -577,7 +588,8 @@ namespace MultiThreadedDownloaderLib
 						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
 
-					TaskFinished?.Invoke(this, downloadableTask, transferred, contentLength, tryNumber, tryCountLimit, errCode);
+					TaskFinished?.Invoke(this, downloadableTask, transferred, contentLength,
+						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread, errCode);
 				};
 				downloader.WorkError += (sender, errCode, errorMessage,
 					transferred, contentLength, tryNumber, tryCountLimit) =>
@@ -592,7 +604,8 @@ namespace MultiThreadedDownloaderLib
 							taskTryNumber, TryCountLimitPerThread, DownloadableTaskState.Errored);
 						OnProgressUpdatedFunc(downloadableTask);
 
-						TaskError?.Invoke(this, downloadableTask, errCode, errorMessage, transferred, contentLength, tryNumber, tryCountLimit);
+						TaskError?.Invoke(this, downloadableTask, errCode, errorMessage, transferred, contentLength,
+							tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
 					}
 				};
 #endregion
