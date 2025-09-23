@@ -796,19 +796,19 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					lblMergeProgress.Text = errCode == 200 || errCode == 206 || errCode == FileDownloader.DOWNLOAD_ERROR_CANCELED ? null : $"Ошибка объединения чанков! Код: {errCode}";
 				}));
 			};
-			multiThreadedDownloader.MovingFileToDestination += (s, bytesTransferred, fileSize, filePath, sourceDriveLetter, destnationDriveLetter) =>
+			multiThreadedDownloader.MovingFileToDestination += (s, bytesTransferred, fileSize, filePath, sourceDriveLetter, destinationDriveLetter) =>
 			{
 				Invoke(new MethodInvoker(() =>
 				{
 					if (bytesTransferred == 0L)
 					{
 						lblMergeProgress.Text = null;
-						AddToLog($"Финальное перемещение файла начато. {sourceDriveLetter}: -> {destnationDriveLetter}:");
+						AddToLog($"Финальное перемещение файла начато. {sourceDriveLetter}: -> {destinationDriveLetter}:");
 					}
 
 					double percent = 100.0 / fileSize * bytesTransferred;
 					string percentFormatted = string.Format("{0:F2}", percent);
-					lblDownloadProgress.Text = $"Финальное перемещение файла ({sourceDriveLetter}: -> {destnationDriveLetter}:): " +
+					lblDownloadProgress.Text = $"Финальное перемещение файла ({sourceDriveLetter}: -> {destinationDriveLetter}:): " +
 						$"{bytesTransferred} / {fileSize} ({percentFormatted}%)";
 					progressBarDownload.SetItem(0, 100, (int)percent);
 

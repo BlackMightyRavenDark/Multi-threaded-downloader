@@ -119,7 +119,7 @@ namespace MultiThreadedDownloaderLib
 			int chunkCount, long chunkPosition, long chunkSize);
 		public delegate void ChunkMergingFinishedDelegate(object sender, int errorCode);
 		public delegate void MovingFileToDestinationDelegate(object sender, long bytesTransferred, long fileSize, string destinationFilePath,
-			char sourceDriveLetter, char destnationDriveLetter);
+			char sourceDriveLetter, char destinationDriveLetter);
 
 		public delegate void TaskPreparingDelegate(object sender, DownloadableTask task);
 		public delegate void TaskHeadersReceivingDelegate(object sender, DownloadableTask task,
