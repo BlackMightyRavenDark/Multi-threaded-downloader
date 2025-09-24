@@ -261,7 +261,8 @@ namespace MultiThreadedDownloaderLib
 			_cancellationTokenSource = new CancellationTokenSource();
 
 			int headersReceivingTryNumber = 0;
-			bool isInfiniteRetries = TryCountLimitPerThread <= 0;
+			int taskTryCountLimit = TryCountLimitPerThread;
+			bool isInfiniteRetries = taskTryCountLimit <= 0;
 			Stopwatch stopwatch = new Stopwatch();
 
 			WebHeaderCollection unrangedHeaders = GetUnrangedHttpHeaders(Headers);
@@ -270,7 +271,7 @@ namespace MultiThreadedDownloaderLib
 			{
 				stopwatch.Restart();
 				headersReceivingTryNumber++;
-				Connecting?.Invoke(this, Url, headersReceivingTryNumber, TryCountLimitPerThread);
+				Connecting?.Invoke(this, Url, headersReceivingTryNumber, taskTryCountLimit);
 				LastErrorCode = GetUrlResponseHttpHeaders(HeaderRequestMethod, Url, unrangedHeaders, Cookies, Proxy, ConnectionTimeout,
 					out responseHeaders, out string headersErrorMessage);
 				
@@ -283,7 +284,7 @@ namespace MultiThreadedDownloaderLib
 					return LastErrorCode;
 				}
 				else if (LastErrorCode == 200 || LastErrorCode == 206) { break; }
-				else if (!isInfiniteRetries && headersReceivingTryNumber + 1 > TryCountLimitPerThread)
+				else if (!isInfiniteRetries && headersReceivingTryNumber + 1 > taskTryCountLimit)
 				{
 					stopwatch.Stop();
 					LastErrorCode = DOWNLOAD_ERROR_OUT_OF_TRIES_LEFT;
@@ -293,7 +294,7 @@ namespace MultiThreadedDownloaderLib
 					return LastErrorCode;
 				}
 
-				if (isInfiniteRetries || !isInfiniteRetries && headersReceivingTryNumber < TryCountLimitPerThread)
+				if (isInfiniteRetries || !isInfiniteRetries && headersReceivingTryNumber < taskTryCountLimit)
 				{
 					TimeSpan interval = TimeSpan.FromMilliseconds(RetryIntervalMilliseconds);
 					TimeSpan elapsed = stopwatch.Elapsed;
@@ -347,7 +348,7 @@ namespace MultiThreadedDownloaderLib
 
 			CustomError customError = new CustomError(LastErrorCode, null);
 			Connected?.Invoke(this, Url, ContentLength, responseHeaders,
-				headersReceivingTryNumber, TryCountLimitPerThread, customError);
+				headersReceivingTryNumber, taskTryCountLimit, customError);
 			if (LastErrorCode != customError.ErrorCode)
 			{
 				LastErrorCode = customError.ErrorCode;
@@ -398,7 +399,7 @@ namespace MultiThreadedDownloaderLib
 					downloadableChunk = new DownloadableChunk(fd.DownloadableChunk.OutputStream, range);
 				}
 				DownloadableTask downloadableTask = new DownloadableTask(fd.Url, downloadableChunk, fd.Id,
-					fullContentLength, processedBytes, tryNumber, TryCountLimitPerThread, state);
+					fullContentLength, processedBytes, tryNumber, taskTryCountLimit, state);
 				if (callProgressUpdaterFunction) { OnProgressUpdatedFunc(downloadableTask); }
 				return downloadableTask;
 			}
@@ -416,7 +417,7 @@ namespace MultiThreadedDownloaderLib
 			for (int i = 0; i < chunkCount; ++i)
 			{
 				downloadableTasks[i] = new DownloadableTask(Url, null, i, fullContentLength,
-					0L, -1, TryCountLimitPerThread, DownloadableTaskState.Preparing);
+					0L, -1, taskTryCountLimit, DownloadableTaskState.Preparing);
 			}
 
 			var tasks = chunkRanges.Select((taskDownloadRange, taskId) => Task.Run(() =>
@@ -474,7 +475,7 @@ namespace MultiThreadedDownloaderLib
 					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
 						fd, -1L, taskTryNumber, DownloadableTaskState.Preparing, false);
 					TaskHeadersReceiving?.Invoke(this, downloadableTask,
-						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
+						tryNumber, tryCountLimit, taskTryNumber, taskTryCountLimit);
 				};
 				downloader.HeadersReceived += (sender, url, downloadableChunk, headers,
 					tryNumber, tryCountLimit, errCode) =>
@@ -492,7 +493,7 @@ namespace MultiThreadedDownloaderLib
 					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
 						fd, -1L, taskTryNumber, DownloadableTaskState.Preparing, false);
 					TaskHeadersReceived?.Invoke(this, downloadableTask, headers,
-						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread, errCode);
+						tryNumber, tryCountLimit, taskTryNumber, taskTryCountLimit, errCode);
 				};
 				downloader.Connecting += (sender, url, tryNumber, tryCountLimit) =>
 				{
@@ -500,7 +501,7 @@ namespace MultiThreadedDownloaderLib
 					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
 						d, -1L, taskTryNumber, DownloadableTaskState.Connecting, true);
 					TaskConnecting?.Invoke(this, downloadableTask,
-						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
+						tryNumber, tryCountLimit, taskTryNumber, taskTryCountLimit);
 				};
 				downloader.Connected += (sender, url, contentLength,
 					headers, tryNumber, tryCountLimit, errCode) =>
@@ -523,7 +524,7 @@ namespace MultiThreadedDownloaderLib
 					if (TaskConnected != null)
 					{
 						errCode = TaskConnected.Invoke(this, downloadableTask,
-							tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread, contentLength, errCode);
+							tryNumber, tryCountLimit, taskTryNumber, taskTryCountLimit, contentLength, errCode);
 					}
 
 					return errCode;
@@ -534,7 +535,7 @@ namespace MultiThreadedDownloaderLib
 					DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
 						fd, 0L, taskTryNumber, DownloadableTaskState.Downloading, true);
 					TaskStarted?.Invoke(this, downloadableTask, contentLength,
-						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
+						tryNumber, tryCountLimit, taskTryNumber, taskTryCountLimit);
 				};
 
 				int lastTime = Environment.TickCount;
@@ -549,7 +550,7 @@ namespace MultiThreadedDownloaderLib
 
 						OnProgressUpdatedFunc(downloadableTask);
 						TaskProgress?.Invoke(this, downloadableTask, transferred, contentLength,
-							tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
+							tryNumber, tryCountLimit, taskTryNumber, taskTryCountLimit);
 
 						lastTime = currentTime;
 					}
@@ -564,7 +565,7 @@ namespace MultiThreadedDownloaderLib
 						{
 							if (!isOutOfTries)
 							{
-								isOutOfTries = !isInfiniteRetries && taskTryNumber + 1 > TryCountLimitPerThread;
+								isOutOfTries = !isInfiniteRetries && taskTryNumber + 1 > taskTryCountLimit;
 								if (isOutOfTries)
 								{
 #if DEBUG
@@ -585,11 +586,11 @@ namespace MultiThreadedDownloaderLib
 					d.GetRange(out DownloadRange range);
 					DownloadableChunk downloadableChunk = new DownloadableChunk(d.DownloadableChunk.OutputStream, range);
 					DownloadableTask downloadableTask = new DownloadableTask(d.Url,
-						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, TryCountLimitPerThread, taskState);
+						downloadableChunk, d.Id, fullContentLength, transferred, taskTryNumber, tryCountLimit, taskState);
 					OnProgressUpdatedFunc(downloadableTask);
 
 					TaskFinished?.Invoke(this, downloadableTask, transferred, contentLength,
-						tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread, errCode);
+						tryNumber, tryCountLimit, taskTryNumber, taskTryCountLimit, errCode);
 				};
 				downloader.WorkError += (sender, errCode, errorMessage,
 					transferred, contentLength, tryNumber, tryCountLimit) =>
@@ -601,11 +602,11 @@ namespace MultiThreadedDownloaderLib
 						DownloadableChunk downloadableChunk = new DownloadableChunk(d.DownloadableChunk.OutputStream, range);
 						DownloadableTask downloadableTask = new DownloadableTask(d.Url,
 							downloadableChunk, d.Id, fullContentLength, transferred,
-							taskTryNumber, TryCountLimitPerThread, DownloadableTaskState.Errored);
+							taskTryNumber, taskTryCountLimit, DownloadableTaskState.Errored);
 						OnProgressUpdatedFunc(downloadableTask);
 
 						TaskError?.Invoke(this, downloadableTask, errCode, errorMessage, transferred, contentLength,
-							tryNumber, tryCountLimit, taskTryNumber, TryCountLimitPerThread);
+							tryNumber, tryCountLimit, taskTryNumber, taskTryCountLimit);
 					}
 				};
 #endregion
@@ -615,7 +616,7 @@ namespace MultiThreadedDownloaderLib
 					try
 					{
 						taskTryNumber++;
-						if (!isInfiniteRetries && taskTryNumber > TryCountLimitPerThread)
+						if (!isInfiniteRetries && taskTryNumber > taskTryCountLimit)
 						{
 							lock (downloaders)
 							{
@@ -635,7 +636,7 @@ namespace MultiThreadedDownloaderLib
 						string tryMessage = $"Task №{taskId}: Try №{taskTryNumber}";
 						if (!isInfiniteRetries)
 						{
-							tryMessage += $" / {TryCountLimitPerThread}";
+							tryMessage += $" / {taskTryCountLimit}";
 						}
 						Debug.WriteLine(tryMessage);
 #endif
