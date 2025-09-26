@@ -972,7 +972,7 @@ namespace MultiThreadedDownloaderLib
 				{
 					LastErrorCode = DOWNLOAD_ERROR_FILE_NUMBERING;
 					LastErrorMessage = null;
-					outputStream?.Close();
+					outputStream?.Dispose();
 					return LastErrorCode;
 				}
 
@@ -988,7 +988,7 @@ namespace MultiThreadedDownloaderLib
 				catch
 				{
 #endif
-					if (!isSharedStream && outputStream != null) { outputStream.Close(); }
+					if (!isSharedStream && outputStream != null) { outputStream.Dispose(); }
 					ClearGarbage(downloadableChunks);
 					return DOWNLOAD_ERROR_CREATE_FILE;
 				}
@@ -1049,12 +1049,12 @@ namespace MultiThreadedDownloaderLib
 					}
 					else
 					{
-						tmpStream.Close();
+						tmpStream.Dispose();
 					}
 
 					if (!appended)
 					{
-						if (!isSharedStream && outputStream != null) { outputStream.Close(); }
+						if (!isSharedStream && outputStream != null) { outputStream.Dispose(); }
 						ClearGarbage(downloadableChunks);
 						return !_cancellationTokenSource.IsCancellationRequested ? DOWNLOAD_ERROR_MERGING_CHUNKS :
 							(_isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED);
@@ -1078,12 +1078,12 @@ namespace MultiThreadedDownloaderLib
 			catch
 			{
 #endif
-				if (!isSharedStream && outputStream != null) { outputStream.Close(); }
+				if (!isSharedStream && outputStream != null) { outputStream.Dispose(); }
 				ClearGarbage(downloadableChunks);
 				return DOWNLOAD_ERROR_MERGING_CHUNKS;
 			}
 
-			if (!isSharedStream && outputStream != null) { outputStream.Close(); }
+			if (!isSharedStream && outputStream != null) { outputStream.Dispose(); }
 
 			if (_isCanceled)
 			{

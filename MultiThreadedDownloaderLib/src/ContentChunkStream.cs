@@ -18,7 +18,7 @@ namespace MultiThreadedDownloaderLib
 		{
 			if (Stream != null)
 			{
-				Stream.Close();
+				Stream.Dispose();
 				Stream = null;
 			}
 		}

@@ -450,7 +450,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			Stream outputStream = checkBoxFakeDownloading.Checked ? null :
 				(checkBoxDownloadToRAM.Checked ? new MemoryStream() : (Stream)File.OpenWrite(actualOutputFilePath));
 			int errorCode = await Task.Run(() => singleThreadedDownloader.Download(outputStream, actualOutputFilePath));
-			outputStream?.Close();
+			outputStream?.Dispose();
 			if (checkBoxDownloadToRAM.Checked && !checkBoxFakeDownloading.Checked) { GC.Collect(); }
 #if DEBUG
 			System.Diagnostics.Debug.WriteLine($"Error code = {errorCode}");
@@ -955,11 +955,6 @@ namespace MultiThreadedDownloaderLib.GuiTest
 #if DEBUG
 			System.Diagnostics.Debug.WriteLine($"Error code = {errorCode}");
 #endif
-			if (!checkBoxFakeDownloading.Checked &&
-				(multiThreadedDownloader.UseRamForTempFiles || checkBoxDownloadToRAM.Checked))
-			{
-				GC.Collect();
-			}
 
 			if (!isClosing)
 			{
@@ -969,6 +964,14 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					if (isPreparing) { progressBarDownload.ClearItems(); }
 					string errorMessage = multiThreadedDownloader.HasErrorMessage ? multiThreadedDownloader.LastErrorMessage :
 						MultiThreadedDownloader.ErrorCodeToString(errorCode);
+
+					multiThreadedDownloader = null;
+					if (!checkBoxFakeDownloading.Checked &&
+						(checkBoxUseRamForTempFiles.Checked || checkBoxDownloadToRAM.Checked))
+					{
+						GC.Collect();
+					}
+
 					lblDownloadProgress.Text = $"Ошибка {errorCode}: {errorMessage}";
 					if (multiThreadedDownloader.HasErrorMessage)
 					{
@@ -980,7 +983,6 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				}
 
 				isDownloading = false;
-				multiThreadedDownloader = null;
 
 				btnDownloadMultiThreaded.Text = "Download multi threaded";
 				btnDownloadMultiThreaded.Enabled = true;
