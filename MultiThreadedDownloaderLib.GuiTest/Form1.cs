@@ -742,10 +742,35 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 				return null;
 			};
-			multiThreadedDownloader.DownloadFinished += (s, bytesTransferred, contentLength, errCode, fileName) =>
+			multiThreadedDownloader.DownloadFinished += (s, bytesTransferred, contentLength, errCode, fileName, temporaryChunks) =>
 			{
 				Invoke(new MethodInvoker(() =>
 				{
+					if (errCode != 200 && checkBoxDeleteTempFiles.Checked && temporaryChunks != null)
+					{
+						foreach (DownloadableChunk chunk in temporaryChunks)
+						{
+							if (chunk.OutputStream != null && !string.IsNullOrEmpty(chunk.OutputStream.FilePath) &&
+								!string.IsNullOrWhiteSpace(chunk.OutputStream.FilePath) && File.Exists(chunk.OutputStream.FilePath))
+							{
+								try
+								{
+									File.Delete(chunk.OutputStream.FilePath);
+									AddToLog($"Удалён временный файл: {chunk.OutputStream.FilePath}");
+#if DEBUG
+									System.Diagnostics.Debug.WriteLine($"Deleted temporary file: {chunk.OutputStream.FilePath}");
+#endif
+								} catch (Exception ex)
+								{
+#if DEBUG
+									System.Diagnostics.Debug.WriteLine($"Failed to delete temporary file: {chunk.OutputStream.FilePath}");
+#endif
+									AddToLog($"Ошибка удаления временного файла: {chunk.OutputStream.FilePath}, {ex.Message}");
+								}
+							}
+						}
+					}
+
 					string contentLengthString = contentLength > 0L ? contentLength.ToString() : "<Неизвестно>";
 					MultiThreadedDownloader mtd = s as MultiThreadedDownloader;
 					string errorMessage = errCode == MultiThreadedDownloader.DOWNLOAD_ERROR_CUSTOM && mtd.HasErrorMessage ?
@@ -977,6 +1002,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			checkBoxUseAccurateMode.Enabled = enable;
 			checkBoxIgnoreHeaderRequestErrors.Enabled = enable;
 			checkBoxSkipHeadRequest.Enabled = enable;
+			checkBoxDeleteTempFiles.Enabled = enable;
 			textBoxHeaderRequestMethod.Enabled = enable;
 			numericUpDownThreadCount.Enabled = enable;
 			numericUpDownTryCountPerThread.Enabled = enable;
