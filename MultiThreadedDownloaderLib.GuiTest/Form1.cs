@@ -742,30 +742,32 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 				return null;
 			};
-			multiThreadedDownloader.DownloadFinished += (s, bytesTransferred, contentLength, errCode, fileName, temporaryChunks) =>
+			multiThreadedDownloader.DownloadFinished += (s, bytesTransferred, contentLength, errCode, fileName, downloadableTasks) =>
 			{
 				Invoke(new MethodInvoker(() =>
 				{
-					if (errCode != 200 && checkBoxDeleteTempFiles.Checked && temporaryChunks != null)
+					if (errCode != 200 && checkBoxDeleteTempFiles.Checked && downloadableTasks != null)
 					{
-						foreach (DownloadableChunk chunk in temporaryChunks)
+						foreach (DownloadableTask task in downloadableTasks)
 						{
-							if (chunk.OutputStream != null && !string.IsNullOrEmpty(chunk.OutputStream.FilePath) &&
-								!string.IsNullOrWhiteSpace(chunk.OutputStream.FilePath) && File.Exists(chunk.OutputStream.FilePath))
+							if (task.DownloadableChunk.OutputStream != null &&
+								!string.IsNullOrEmpty(task.DownloadableChunk.OutputStream.FilePath) &&
+								!string.IsNullOrWhiteSpace(task.DownloadableChunk.OutputStream.FilePath) &&
+								File.Exists(task.DownloadableChunk.OutputStream.FilePath))
 							{
 								try
 								{
-									File.Delete(chunk.OutputStream.FilePath);
-									AddToLog($"Удалён временный файл: {chunk.OutputStream.FilePath}");
+									File.Delete(task.DownloadableChunk.OutputStream.FilePath);
+									AddToLog($"Удалён временный файл: {task.DownloadableChunk.OutputStream.FilePath}");
 #if DEBUG
-									System.Diagnostics.Debug.WriteLine($"Deleted temporary file: {chunk.OutputStream.FilePath}");
+									System.Diagnostics.Debug.WriteLine($"Deleted temporary file: {task.DownloadableChunk.OutputStream.FilePath}");
 #endif
 								} catch (Exception ex)
 								{
 #if DEBUG
-									System.Diagnostics.Debug.WriteLine($"Failed to delete temporary file: {chunk.OutputStream.FilePath}");
+									System.Diagnostics.Debug.WriteLine($"Failed to delete temporary file: {task.DownloadableChunk.OutputStream.FilePath}");
 #endif
-									AddToLog($"Ошибка удаления временного файла: {chunk.OutputStream.FilePath}, {ex.Message}");
+									AddToLog($"Ошибка удаления временного файла: {task.DownloadableChunk.OutputStream.FilePath}, {ex.Message}");
 								}
 							}
 						}

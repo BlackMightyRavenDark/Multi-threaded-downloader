@@ -114,7 +114,7 @@ namespace MultiThreadedDownloaderLib
 		public delegate void DownloadProgressDelegate(object sender, ConcurrentDictionary<int, DownloadableTask> tasks);
 		public delegate CustomError ChunksDownloadedDelegate(object sender, List<DownloadableChunk> downloadableChunks, long contentLength);
 		public delegate void DownloadFinishedDelegate(object sender, long bytesTransferred, long contentLength, int errorCode, string fileName,
-			IEnumerable<DownloadableChunk> temporaryChunks);
+			IEnumerable<DownloadableTask> downloadableTasks);
 		public delegate void ChunkMergingStartedDelegate(object sender, int chunkCount);
 		public delegate void ChunkMergingProgressDelegate(object sender, int chunkId,
 			int chunkCount, long chunkPosition, long chunkSize);
@@ -369,25 +369,25 @@ namespace MultiThreadedDownloaderLib
 
 			DownloadStarted?.Invoke(this, ContentLength);
 
-			ConcurrentDictionary<int, DownloadableTask> downloadableTasks = new ConcurrentDictionary<int, DownloadableTask>();
+			ConcurrentDictionary<int, DownloadableTask> downloadableTaskDictionary = new ConcurrentDictionary<int, DownloadableTask>();
 
 			void OnProgressUpdatedFunc(DownloadableTask downloadableTask)
 			{
 				if (accurateMode && ThreadCount > 1)
 				{
-					lock (downloadableTasks)
+					lock (downloadableTaskDictionary)
 					{
-						downloadableTasks[downloadableTask.TaskId] = downloadableTask;
-						DownloadedBytes = downloadableTasks.Sum(item => item.Value.ProcessedBytes);
+						downloadableTaskDictionary[downloadableTask.TaskId] = downloadableTask;
+						DownloadedBytes = downloadableTaskDictionary.Sum(item => item.Value.ProcessedBytes);
 					}
 				}
 				else
 				{
-					downloadableTasks[downloadableTask.TaskId] = downloadableTask;
-					DownloadedBytes = downloadableTasks.Sum(item => item.Value.ProcessedBytes);
+					downloadableTaskDictionary[downloadableTask.TaskId] = downloadableTask;
+					DownloadedBytes = downloadableTaskDictionary.Sum(item => item.Value.ProcessedBytes);
 				}
 
-				DownloadProgress?.Invoke(this, downloadableTasks);
+				DownloadProgress?.Invoke(this, downloadableTaskDictionary);
 			}
 
 			DownloadableTask MakeDownloadableTaskFunc(FileDownloader fd, long processedBytes,
@@ -417,7 +417,7 @@ namespace MultiThreadedDownloaderLib
 			ThreadCount = chunkCount;
 			for (int i = 0; i < chunkCount; ++i)
 			{
-				downloadableTasks[i] = new DownloadableTask(Url, null, i, fullContentLength,
+				downloadableTaskDictionary[i] = new DownloadableTask(Url, null, i, fullContentLength,
 					0L, -1, taskTryCountLimit, DownloadableTaskState.Preparing);
 			}
 
@@ -717,12 +717,13 @@ namespace MultiThreadedDownloaderLib
 #endif
 				LastErrorMessage = ex.Message;
 				Abort();
-				ClearGarbage(downloadableTasks);
+				ClearGarbage(downloadableTaskDictionary);
 				_cancellationTokenSource.Dispose();
 				_cancellationTokenSource = null;
 				LastErrorCode = (ex is OperationCanceledException) ? DOWNLOAD_ERROR_CANCELED : DOWNLOAD_ERROR_ABORTED;
-				var downloadableChunks = downloadableTasks?.Select(item => item.Value.DownloadableChunk).Where(item => item?.OutputStream != null);
-				DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableChunks);
+				var downloadableTasks = downloadableTaskDictionary?.Select(item => item.Value);
+				DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableTasks);
+				downloadableTasks = null;
 				IsActive = false;
 				return LastErrorCode;
 			}
@@ -730,18 +731,20 @@ namespace MultiThreadedDownloaderLib
 			downloaders = null;
 			if (!_isCanceled && (LastErrorCode == 200 || LastErrorCode == 206))
 			{
-				List<DownloadableChunk> downloadableChunks = BuildChunkSequence(downloadableTasks, chunkCount, out bool isValidChunkSequence);
+				List<DownloadableChunk> downloadableChunks = BuildChunkSequence(downloadableTaskDictionary, chunkCount, out bool isValidChunkSequence);
 				if (downloadableChunks != null && ChunksDownloaded != null && isValidChunkSequence)
 				{
 					customError = ChunksDownloaded.Invoke(this, downloadableChunks, ContentLength);
 					if (customError != null && customError.ErrorCode != 200)
 					{
-						ClearGarbage(downloadableTasks);
+						ClearGarbage(downloadableTaskDictionary);
 						LastErrorCode = customError.ErrorCode;
 						LastErrorMessage = customError.ErrorMessage;
 						_cancellationTokenSource.Dispose();
 						_cancellationTokenSource = null;
-						DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableChunks);
+						var downloadableTasks = downloadableTaskDictionary?.Select(item => item.Value);
+						DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableTasks);
+						downloadableTasks = null;
 						IsActive = false;
 						return LastErrorCode;
 					}
@@ -751,18 +754,20 @@ namespace MultiThreadedDownloaderLib
 				{
 					if (!isValidChunkSequence || downloadableChunks == null || downloadableChunks.Count <= 0)
 					{
-						downloadableTasks = null;
+						downloadableTaskDictionary = null;
 						if (UseRamForTempFiles && downloadableChunks != null) { ClearGarbage(downloadableChunks); }
 						LastErrorCode = DOWNLOAD_ERROR_CHUNK_SEQUENCE;
 						LastErrorMessage = null;
 						_cancellationTokenSource.Dispose();
 						_cancellationTokenSource = null;
-						DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableChunks);
+						var downloadableTasks = downloadableTaskDictionary?.Select(item => item.Value);
+						DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableTasks);
+						downloadableTasks = null;
 						IsActive = false;
 						return LastErrorCode;
 					}
 
-					downloadableTasks = null;
+					downloadableTaskDictionary = null;
 
 					if (MergeChunksAutomatically)
 					{
@@ -872,13 +877,14 @@ namespace MultiThreadedDownloaderLib
 			_cancellationTokenSource.Dispose();
 			_cancellationTokenSource = null;
 
-			var temporaryChunks = downloadableTasks?.Select(item => item.Value.DownloadableChunk).Where(item => item?.OutputStream != null);
-			DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, temporaryChunks);
+			var downloadableTasksFinal = downloadableTaskDictionary?.Select(item => item.Value);
+			DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableTasksFinal);
+			downloadableTasksFinal = null;
 
-			if (downloadableTasks != null)
+			if (downloadableTaskDictionary != null)
 			{
-				ClearGarbage(downloadableTasks);
-				downloadableTasks = null;
+				ClearGarbage(downloadableTaskDictionary);
+				downloadableTaskDictionary = null;
 			}
 
 			IsActive = false;
