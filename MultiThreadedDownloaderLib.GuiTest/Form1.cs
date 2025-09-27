@@ -750,7 +750,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					{
 						foreach (DownloadableTask task in downloadableTasks)
 						{
-							bool canDelete = (checkBoxDeleteOnlyIncompleteChunks.Checked && task.ProcessedBytes != task.ChunkFileSize) ||
+							bool canDelete = (checkBoxDeleteOnlyIncompleteChunks.Checked && !task.IsCompleted) ||
 								!checkBoxDeleteOnlyIncompleteChunks.Checked;
 							if (canDelete && task.DownloadableChunk.OutputStream != null &&
 								!string.IsNullOrEmpty(task.DownloadableChunk.OutputStream.FilePath) &&

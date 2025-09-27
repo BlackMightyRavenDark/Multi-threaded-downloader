@@ -9,6 +9,8 @@ namespace MultiThreadedDownloaderLib
 		public long FullContentLength { get; }
 		public long ChunkFileSize { get; }
 		public long ProcessedBytes { get; }
+		public bool IsCompleted => State == DownloadableTaskState.Finished &&
+			ChunkFileSize > 0L && ProcessedBytes == ChunkFileSize;
 		public int TryNumber { get; }
 		public int TryCountLimit { get; }
 		public DownloadableTaskState State { get; }
