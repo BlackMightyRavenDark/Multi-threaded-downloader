@@ -750,7 +750,9 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					{
 						foreach (DownloadableTask task in downloadableTasks)
 						{
-							if (task.DownloadableChunk.OutputStream != null &&
+							bool canDelete = (checkBoxDeleteOnlyIncompleteChunks.Checked && task.ProcessedBytes != task.ChunkFileSize) ||
+								!checkBoxDeleteOnlyIncompleteChunks.Checked;
+							if (canDelete && task.DownloadableChunk.OutputStream != null &&
 								!string.IsNullOrEmpty(task.DownloadableChunk.OutputStream.FilePath) &&
 								!string.IsNullOrWhiteSpace(task.DownloadableChunk.OutputStream.FilePath) &&
 								File.Exists(task.DownloadableChunk.OutputStream.FilePath))
@@ -1007,6 +1009,7 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			checkBoxIgnoreHeaderRequestErrors.Enabled = enable;
 			checkBoxSkipHeadRequest.Enabled = enable;
 			checkBoxDeleteTempFiles.Enabled = enable;
+			checkBoxDeleteOnlyIncompleteChunks.Enabled = enable;
 			textBoxHeaderRequestMethod.Enabled = enable;
 			numericUpDownThreadCount.Enabled = enable;
 			numericUpDownTryCountPerThread.Enabled = enable;
