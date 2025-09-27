@@ -965,19 +965,19 @@ namespace MultiThreadedDownloaderLib.GuiTest
 					string errorMessage = multiThreadedDownloader.HasErrorMessage ? multiThreadedDownloader.LastErrorMessage :
 						MultiThreadedDownloader.ErrorCodeToString(errorCode);
 
-					multiThreadedDownloader = null;
-					if (!checkBoxFakeDownloading.Checked &&
-						(checkBoxUseRamForTempFiles.Checked || checkBoxDownloadToRAM.Checked))
-					{
-						GC.Collect();
-					}
-
 					lblDownloadProgress.Text = $"Ошибка {errorCode}: {errorMessage}";
 					if (multiThreadedDownloader.HasErrorMessage)
 					{
 						errorMessage = $"{MultiThreadedDownloader.ErrorCodeToString(errorCode)}{Environment.NewLine}{errorMessage}";
 					}
 					lblMergeProgress.Left = lblDownloadProgress.Left + lblDownloadProgress.Width + 4;
+
+					multiThreadedDownloader = null;
+					if (!checkBoxFakeDownloading.Checked &&
+						(checkBoxUseRamForTempFiles.Checked || checkBoxDownloadToRAM.Checked))
+					{
+						GC.Collect();
+					}
 
 					ShowErrorMessage(errorCode, errorMessage);
 				}
