@@ -752,24 +752,22 @@ namespace MultiThreadedDownloaderLib.GuiTest
 						{
 							bool canDelete = (checkBoxDeleteOnlyIncompleteChunks.Checked && !task.IsCompleted) ||
 								!checkBoxDeleteOnlyIncompleteChunks.Checked;
-							if (canDelete && task.DownloadableChunk.OutputStream != null &&
-								!string.IsNullOrEmpty(task.DownloadableChunk.OutputStream.FilePath) &&
-								!string.IsNullOrWhiteSpace(task.DownloadableChunk.OutputStream.FilePath) &&
-								File.Exists(task.DownloadableChunk.OutputStream.FilePath))
+							if (canDelete && task.DownloadableChunk.OutputStream != null)
 							{
-								try
+								if (task.DownloadableChunk.OutputStream.DeleteFile(out string msg))
 								{
 									File.Delete(task.DownloadableChunk.OutputStream.FilePath);
 									AddToLog($"Удалён временный файл: {task.DownloadableChunk.OutputStream.FilePath}");
 #if DEBUG
 									System.Diagnostics.Debug.WriteLine($"Deleted temporary file: {task.DownloadableChunk.OutputStream.FilePath}");
 #endif
-								} catch (Exception ex)
+								}
+								else
 								{
 #if DEBUG
 									System.Diagnostics.Debug.WriteLine($"Failed to delete temporary file: {task.DownloadableChunk.OutputStream.FilePath}");
 #endif
-									AddToLog($"Ошибка удаления временного файла: {task.DownloadableChunk.OutputStream.FilePath}, {ex.Message}");
+									AddToLog($"Ошибка удаления временного файла: {task.DownloadableChunk.OutputStream.FilePath}, {msg}");
 								}
 							}
 						}

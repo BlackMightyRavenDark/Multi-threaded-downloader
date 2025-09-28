@@ -22,5 +22,26 @@ namespace MultiThreadedDownloaderLib
 				Stream = null;
 			}
 		}
+
+		public bool DeleteFile(out string errorMessage)
+		{
+			try
+			{
+				if (!string.IsNullOrEmpty(FilePath) && !string.IsNullOrWhiteSpace(FilePath) &&
+					File.Exists(FilePath))
+				{
+					File.Delete(FilePath);
+					errorMessage = null;
+					return true;
+				}
+
+				errorMessage = "File not found";
+			} catch (Exception ex)
+			{
+				errorMessage = ex.Message;
+			}
+
+			return false;
+		}
 	}
 }
