@@ -16,7 +16,7 @@ namespace MultiThreadedDownloaderLib
 	public sealed class MultiThreadedDownloader : IDisposable
 	{
 		public string Url { get; set; } = null;
-		public int ConnectionTimeout { get; set; }
+		public int ConnectionTimeout { get; set; } = 10000;
 
 		/// <summary>
 		/// Путь к файлу, куда будут сохранены скачанные данные.
