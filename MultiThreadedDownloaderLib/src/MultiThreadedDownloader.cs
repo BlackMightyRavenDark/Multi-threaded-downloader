@@ -766,7 +766,10 @@ namespace MultiThreadedDownloaderLib
 						return LastErrorCode;
 					}
 
-					downloadableTaskDictionary = null;
+					if (UseRamForTempFiles)
+					{
+						downloadableTaskDictionary = null;
+					}
 
 					if (MergeChunksAutomatically)
 					{
@@ -858,11 +861,7 @@ namespace MultiThreadedDownloaderLib
 					}
 				}
 
-				if (downloadableChunks != null)
-				{
-					ClearGarbage(downloadableChunks);
-					downloadableChunks = null;
-				}
+				downloadableChunks = null;
 			} else if (_isCanceled)
 			{
 				LastErrorCode = DOWNLOAD_ERROR_CANCELED;
