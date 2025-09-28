@@ -656,7 +656,6 @@ namespace MultiThreadedDownloaderLib
 
 						if (LastErrorCode == 200 || LastErrorCode == 206)
 						{
-							if (!UseRamForTempFiles && !isFakeDownloading) { downloader.DisposeOutputStream(); }
 							break;
 						}
 						downloader.DisposeOutputStream();
@@ -956,7 +955,8 @@ namespace MultiThreadedDownloaderLib
 					return false;
 				}
 
-				outputStream = File.OpenWrite(chunkFileName);
+				outputStream = File.Open(chunkFileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
+				outputStream.Position = 0L;
 			}
 
 			return true;
@@ -1003,26 +1003,6 @@ namespace MultiThreadedDownloaderLib
 				int i = 0;
 				foreach (DownloadableChunk downloadableChunk in downloadableChunks)
 				{
-					string chunkFilePath = downloadableChunk.OutputStream.FilePath;
-					bool fileExists;
-					Stream tmpStream = downloadableChunk.OutputStream.Stream;
-					bool isMemoryStream = tmpStream != null && tmpStream is MemoryStream;
-					if (!isMemoryStream)
-					{
-						fileExists = !string.IsNullOrEmpty(chunkFilePath) && !string.IsNullOrWhiteSpace(chunkFilePath) &&
-							File.Exists(chunkFilePath);
-						if (!fileExists)
-						{
-							return DOWNLOAD_ERROR_MERGING_CHUNKS;
-						}
-						tmpStream = File.OpenRead(chunkFilePath);
-					}
-					else
-					{
-						tmpStream.Position = 0L;
-						fileExists = false;
-					}
-
 					void updateProgressFunc(long chunkPosition, long chunkSize)
 					{
 						chunkMergeProgresses[i] = chunkPosition;
@@ -1035,21 +1015,19 @@ namespace MultiThreadedDownloaderLib
 						updateProgressFunc(bytesTransferred, sourceLength);
 					};
 
-					bool appended = Append(tmpStream, outputStream,
+					downloadableChunk.OutputStream.Stream.Position = 0L;
+					bool appended = Append(downloadableChunk.OutputStream.Stream, outputStream,
 						(sourcePosition, sourceLength, destinationPosition, destinationLength) =>
 							updateProgressFunc(0L, sourceLength)
 						, func, func,
 						_cancellationTokenSource.Token, ChunksMergingUpdateIntervalMilliseconds);
 
+					bool isMemoryStream = downloadableChunk.OutputStream.Stream != null && downloadableChunk.OutputStream.Stream is MemoryStream;
 					downloadableChunk.OutputStream.Dispose();
 					if (isMemoryStream)
 					{
 						//TODO: Fix possible memory leaking
 						GC.Collect();
-					}
-					else
-					{
-						tmpStream.Dispose();
 					}
 
 					if (!appended)
@@ -1060,9 +1038,12 @@ namespace MultiThreadedDownloaderLib
 							(_isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED);
 					}
 
-					if (!isMemoryStream && fileExists)
+					if (!isMemoryStream &&
+						!string.IsNullOrEmpty(downloadableChunk.OutputStream.FilePath) &&
+						!string.IsNullOrWhiteSpace(downloadableChunk.OutputStream.FilePath) &&
+						File.Exists(downloadableChunk.OutputStream.FilePath))
 					{
-						File.Delete(chunkFilePath);
+						File.Delete(downloadableChunk.OutputStream.FilePath);
 					}
 
 					if (_isCanceled) { break; }
@@ -1131,31 +1112,25 @@ namespace MultiThreadedDownloaderLib
 
 		private void ClearGarbage(ConcurrentDictionary<int, DownloadableTask> dictionary)
 		{
-			if (UseRamForTempFiles)
-			{
-				var tasks = dictionary.Values.Where(item => item.DownloadableChunk != null).Select(item => item.DownloadableChunk);
-				ClearGarbage(tasks);
-			}
+			var tasks = dictionary.Values.Where(item => item.DownloadableChunk != null).Select(item => item.DownloadableChunk);
+			ClearGarbage(tasks);
 		}
 
 		private void ClearGarbage(IEnumerable<DownloadableChunk> downloadableChunks)
 		{
-			if (UseRamForTempFiles)
-			{
-				var chunks = downloadableChunks.Where(item => item.OutputStream != null).Select(item => item.OutputStream);
-				ClearGarbage(chunks);
-			}
+			var chunks = downloadableChunks.Where(item => item.OutputStream != null).Select(item => item.OutputStream);
+			ClearGarbage(chunks);
 		}
 
 		private void ClearGarbage(IEnumerable<ContentChunkStream> contentChunkStreams)
 		{
+			foreach (ContentChunkStream chunk in contentChunkStreams)
+			{
+				chunk.Dispose();
+			}
+
 			if (UseRamForTempFiles)
 			{
-				foreach (ContentChunkStream chunk in contentChunkStreams)
-				{
-					chunk.Dispose();
-				}
-
 				//TODO: Fix possible memory leaking
 				GC.Collect();
 			}
