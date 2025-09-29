@@ -13,10 +13,13 @@ namespace MultiThreadedDownloaderLib
 			ChunkFileSize > 0L && ProcessedBytes == ChunkFileSize;
 		public int TryNumber { get; }
 		public int TryCountLimit { get; }
+		public int InnerTryNumber { get; }
+		public int InnerTryCountLimit { get; }
 		public DownloadableTaskState State { get; }
 
 		public DownloadableTask(string url, DownloadableChunk downloadableChunk, int taskId,
-			long fullContentLength, long processedBytes, int tryNumber, int tryCountLimit,
+			long fullContentLength, long processedBytes,
+			int tryNumber, int tryCountLimit, int innerTryNumber, int innerTryCountLimit,
 			DownloadableTaskState state)
 		{
 			Url = url;
@@ -28,6 +31,8 @@ namespace MultiThreadedDownloaderLib
 			ProcessedBytes = processedBytes;
 			TryNumber = tryNumber;
 			TryCountLimit = tryCountLimit;
+			InnerTryNumber = innerTryNumber;
+			InnerTryCountLimit = innerTryCountLimit;
 			State = state;
 		}
 	}

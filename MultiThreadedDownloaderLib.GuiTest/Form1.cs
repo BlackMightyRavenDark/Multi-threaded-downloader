@@ -682,6 +682,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 										$"{processedBytesString} / <Неизвестно>";
 								}
 
+								itemText += $" [{FormatTries(task.InnerTryNumber, task.InnerTryCountLimit, task.TryNumber, task.TryCountLimit)}]";
+
 								if (task.State == DownloadableTaskState.Errored)
 								{
 									itemText += ", Error!";
