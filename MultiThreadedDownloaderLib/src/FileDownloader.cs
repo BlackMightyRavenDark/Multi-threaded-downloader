@@ -772,7 +772,7 @@ namespace MultiThreadedDownloaderLib
 		private void WaitInterval(Stopwatch stopwatch, int tryNumber, int tryCountLimit)
 		{
 			if (stopwatch != null && RetryIntervalMilliseconds > 0 &&
-				(tryCountLimit <= 0 || tryCountLimit > 0 && tryNumber < tryCountLimit))
+				(tryCountLimit <= 0 || (tryCountLimit > 0 && tryNumber < tryCountLimit)))
 			{
 				TimeSpan interval = TimeSpan.FromMilliseconds(RetryIntervalMilliseconds);
 				TimeSpan elapsed = stopwatch.Elapsed;
