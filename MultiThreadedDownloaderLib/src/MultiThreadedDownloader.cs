@@ -941,26 +941,41 @@ namespace MultiThreadedDownloaderLib
 		private bool GetChunkStream(DownloadRange range, string chunkFileName,
 			bool useRamForTempFiles, bool isFakeDownloading, out Stream outputStream)
 		{
-			if (useRamForTempFiles || isFakeDownloading)
+			try
 			{
-				outputStream = isFakeDownloading ? null : new MemoryStream();
-			}
-			else
-			{
-				long bytesNeeded = range.Length + ONE_MEGABYTE;
-				if (!IsEnoughDiskSpace(chunkFileName[0], bytesNeeded, out string errorMsg))
+				if (useRamForTempFiles || isFakeDownloading)
 				{
-					LastErrorCode = DOWNLOAD_ERROR_ABORTED;
-					LastErrorMessage = errorMsg;
-					outputStream = null;
-					return false;
+					outputStream = isFakeDownloading ? null : new MemoryStream();
+				}
+				else
+				{
+					long bytesNeeded = range.Length + ONE_MEGABYTE;
+					if (!IsEnoughDiskSpace(chunkFileName[0], bytesNeeded, out string errorMsg))
+					{
+						LastErrorCode = DOWNLOAD_ERROR_ABORTED;
+						LastErrorMessage = errorMsg;
+						outputStream = null;
+						return false;
+					}
+
+					outputStream = File.Open(chunkFileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
+					outputStream.Position = 0L;
 				}
 
-				outputStream = File.Open(chunkFileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
-				outputStream.Position = 0L;
+				return true;
+			}
+#if DEBUG
+			catch (Exception ex)
+			{
+				Debug.WriteLine(ex.Message);
+#else
+			catch
+			{
+#endif
 			}
 
-			return true;
+			outputStream = null;
+			return false;
 		}
 
 		private int MergeChunks(IEnumerable<DownloadableChunk> downloadableChunks, Stream outputStream)
