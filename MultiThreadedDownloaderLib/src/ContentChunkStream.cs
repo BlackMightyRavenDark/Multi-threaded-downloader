@@ -23,12 +23,22 @@ namespace MultiThreadedDownloaderLib
 			}
 		}
 
+		public bool IsFileStream()
+		{
+			return !string.IsNullOrEmpty(FilePath) && !string.IsNullOrWhiteSpace(FilePath);
+		}
+
 		public bool DeleteFile(out string errorMessage)
 		{
 			try
 			{
-				if (!string.IsNullOrEmpty(FilePath) && !string.IsNullOrWhiteSpace(FilePath) &&
-					File.Exists(FilePath))
+				if (!IsFileStream())
+				{
+					errorMessage = "Not a file stream";
+					return false;
+				}
+
+				if (File.Exists(FilePath))
 				{
 					File.Delete(FilePath);
 					errorMessage = null;

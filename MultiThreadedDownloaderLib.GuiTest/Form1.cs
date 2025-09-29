@@ -752,11 +752,10 @@ namespace MultiThreadedDownloaderLib.GuiTest
 						{
 							bool canDelete = (checkBoxDeleteOnlyIncompleteChunks.Checked && !task.IsCompleted) ||
 								!checkBoxDeleteOnlyIncompleteChunks.Checked;
-							if (canDelete && task.DownloadableChunk.OutputStream != null)
+							if (canDelete && task.DownloadableChunk.OutputStream != null && task.DownloadableChunk.OutputStream.IsFileStream())
 							{
 								if (task.DownloadableChunk.OutputStream.DeleteFile(out string msg))
 								{
-									File.Delete(task.DownloadableChunk.OutputStream.FilePath);
 									AddToLog($"Удалён временный файл: {task.DownloadableChunk.OutputStream.FilePath}");
 #if DEBUG
 									System.Diagnostics.Debug.WriteLine($"Deleted temporary file: {task.DownloadableChunk.OutputStream.FilePath}");
