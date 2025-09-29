@@ -644,7 +644,9 @@ namespace MultiThreadedDownloaderLib
 						}
 						Debug.WriteLine(tryMessage);
 #endif
-						if (!GetChunkStream(downloader, taskDownloadRange, chunkFileName,
+						downloader.DisposeOutputStream();
+						if (UseRamForTempFiles) { GC.Collect(); }
+						if (!GetChunkStream(taskDownloadRange, chunkFileName,
 							UseRamForTempFiles, isFakeDownloading, out Stream streamChunk))
 						{
 							Abort();
@@ -936,14 +938,11 @@ namespace MultiThreadedDownloaderLib
 			return DOWNLOAD_ERROR_UNDEFINED;
 		}
 
-		private bool GetChunkStream(FileDownloader downloader, DownloadRange range,
-			string chunkFileName,
+		private bool GetChunkStream(DownloadRange range, string chunkFileName,
 			bool useRamForTempFiles, bool isFakeDownloading, out Stream outputStream)
 		{
 			if (useRamForTempFiles || isFakeDownloading)
 			{
-				downloader.DisposeOutputStream();
-				GC.Collect();
 				outputStream = isFakeDownloading ? null : new MemoryStream();
 			}
 			else
