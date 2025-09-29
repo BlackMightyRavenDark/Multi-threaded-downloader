@@ -107,12 +107,7 @@ namespace MultiThreadedDownloaderLib
 
 		public void Dispose()
 		{
-			if (_cancellationTokenSource != null)
-			{
-				Stop();
-				_cancellationTokenSource.Dispose();
-				_cancellationTokenSource = null;
-			}
+			if (IsActive) { Stop(); }
 		}
 
 		public void DisposeOutputStream()
@@ -187,6 +182,7 @@ namespace MultiThreadedDownloaderLib
 				Headers.Remove(HttpRequestHeader.Range);
 			}
 
+			bool isSharedCancellationToken = cancellationTokenSource != null;
 			_cancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
 
 			int tryNumber = 0;
@@ -571,6 +567,12 @@ namespace MultiThreadedDownloaderLib
 				LastErrorCode = 206;
 				LastErrorMessage = "Partial Content";
 			}
+
+			if (!isSharedCancellationToken && _cancellationTokenSource != null)
+			{
+				_cancellationTokenSource.Dispose();
+			}
+			_cancellationTokenSource = null;
 
 			WorkFinished?.Invoke(this, DownloadedInLastSession, contentLength, tryNumber, tryCountLimit, LastErrorCode);
 
