@@ -725,7 +725,7 @@ namespace MultiThreadedDownloaderLib
 				_cancellationTokenSource.Dispose();
 				_cancellationTokenSource = null;
 				LastErrorCode = (ex is OperationCanceledException) ? DOWNLOAD_ERROR_CANCELED : DOWNLOAD_ERROR_ABORTED;
-				var downloadableTasks = downloadableTaskDictionary?.Select(item => item.Value);
+				var downloadableTasks = ExtractTasks(downloadableTaskDictionary);
 				DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableTasks);
 				downloadableTasks = null;
 				IsActive = false;
@@ -746,7 +746,7 @@ namespace MultiThreadedDownloaderLib
 						LastErrorMessage = customError.ErrorMessage;
 						_cancellationTokenSource.Dispose();
 						_cancellationTokenSource = null;
-						var downloadableTasks = downloadableTaskDictionary?.Select(item => item.Value);
+						var downloadableTasks = ExtractTasks(downloadableTaskDictionary);
 						DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableTasks);
 						downloadableTasks = null;
 						IsActive = false;
@@ -764,7 +764,7 @@ namespace MultiThreadedDownloaderLib
 						LastErrorMessage = null;
 						_cancellationTokenSource.Dispose();
 						_cancellationTokenSource = null;
-						var downloadableTasks = downloadableTaskDictionary?.Select(item => item.Value);
+						var downloadableTasks = ExtractTasks(downloadableTaskDictionary);
 						DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableTasks);
 						downloadableTasks = null;
 						IsActive = false;
@@ -880,7 +880,7 @@ namespace MultiThreadedDownloaderLib
 			_cancellationTokenSource.Dispose();
 			_cancellationTokenSource = null;
 
-			var downloadableTasksFinal = downloadableTaskDictionary?.Select(item => item.Value);
+			var downloadableTasksFinal = ExtractTasks(downloadableTaskDictionary);
 			DownloadFinished?.Invoke(this, DownloadedBytes, ContentLength, LastErrorCode, OutputFileName, downloadableTasksFinal);
 			downloadableTasksFinal = null;
 
@@ -1218,6 +1218,11 @@ namespace MultiThreadedDownloaderLib
 		public void ResetRange()
 		{
 			Headers?.Remove(HttpRequestHeader.Range);
+		}
+
+		private static IEnumerable<DownloadableTask> ExtractTasks(ConcurrentDictionary<int, DownloadableTask> dictionary)
+		{
+			return dictionary?.Where(item => item.Value?.DownloadableChunk != null).Select(item => item.Value);
 		}
 
 		public List<char> GetUsedDriveLetters()
