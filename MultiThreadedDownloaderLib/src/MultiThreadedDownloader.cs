@@ -797,75 +797,19 @@ namespace MultiThreadedDownloaderLib
 						}
 						else if (!UseRamForTempFiles && downloadableChunks.Count == 1)
 						{
-							try
+							LastErrorCode = MoveFileToDestination(downloadableChunks[0].OutputStream, out string errorMessage);
+							if (LastErrorCode != 200)
 							{
-								string chunkFilePath = downloadableChunks[0].OutputStream.FilePath;
-								if (!string.IsNullOrEmpty(chunkFilePath) && !string.IsNullOrWhiteSpace(chunkFilePath) &&
-									File.Exists(chunkFilePath))
+								LastErrorMessage = "Финальное перемещение файла было прервано!";
+								if (!string.IsNullOrEmpty(errorMessage))
 								{
-									OutputFileName = GetNumberedFileName(OutputFileName);
-									if (IsSameLogicalDrive(OutputFileName, chunkFilePath))
-									{
-										File.Move(chunkFilePath, OutputFileName);
-										LastErrorCode = 200;
-										LastErrorMessage = null;
-									}
-									else
-									{
-										void func(long sourcePosition, long sourceLength, long destinationPosition, long destinationLength, long bytesTransferred)
-										{
-											DownloadedBytes = bytesTransferred;
-											MovingFileToDestination?.Invoke(this, sourcePosition, sourceLength, chunkFilePath,
-												char.ToUpper(chunkFilePath[0]), char.ToUpper(OutputFileName[0]));
-										};
-
-										using (Stream destinationStream = File.OpenWrite(OutputFileName))
-										{
-											Stream inputStream = downloadableChunks[0].OutputStream.Stream ?? File.OpenRead(chunkFilePath);
-											inputStream.Position = DownloadedBytes = 0L;
-											Append(inputStream, destinationStream,
-												(sourcePosition, sourceLength, destinationPosition, destinationLength) =>
-												{
-													MovingFileToDestination?.Invoke(this, sourcePosition, sourceLength, chunkFilePath,
-														char.ToUpper(chunkFilePath[0]), char.ToUpper(OutputFileName[0]));
-												}, func, func,
-												_cancellationTokenSource.Token, UpdateIntervalMilliseconds);
-											if (downloadableChunks[0].OutputStream.Stream != null)
-											{
-												downloadableChunks[0].OutputStream.Dispose();
-											}
-											else
-											{
-												inputStream.Dispose();
-											}
-										}
-
-										if (!_cancellationTokenSource.IsCancellationRequested)
-										{
-											File.Delete(chunkFilePath);
-											LastErrorCode = 200;
-											LastErrorMessage = null;
-										}
-										else
-										{
-											LastErrorCode = _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED;
-											LastErrorMessage = "Финальное перемещение файла было прервано";
-										}
-									}
+									LastErrorMessage += $" {errorMessage}";
 								}
-								else
-								{
-									LastErrorCode = 400;
-								}
-							} catch (Exception ex)
-							{
-								LastErrorCode = DOWNLOAD_ERROR_FINAL_FILE_MOVE;
-								LastErrorMessage = ex.Message;
 							}
 						}
 						else
 						{
-							LastErrorCode = 400;
+							LastErrorCode = DOWNLOAD_ERROR_UNDEFINED;
 						}
 					}
 				}
@@ -1128,6 +1072,81 @@ namespace MultiThreadedDownloaderLib
 			}
 
 			return 200;
+		}
+
+		private int MoveFileToDestination(ContentChunkStream chunk, out string errorMessage)
+		{
+			try
+			{
+				string chunkFilePath = chunk.FilePath;
+				if (!string.IsNullOrEmpty(chunkFilePath) && !string.IsNullOrWhiteSpace(chunkFilePath) &&
+					File.Exists(chunkFilePath))
+				{
+					errorMessage = null;
+
+					OutputFileName = GetNumberedFileName(OutputFileName);
+					if (IsSameLogicalDrive(OutputFileName, chunkFilePath))
+					{
+						File.Move(chunkFilePath, OutputFileName);
+						LastErrorMessage = null;
+						return 200;
+					}
+					else
+					{
+						void func(long sourcePosition, long sourceLength, long destinationPosition, long destinationLength, long bytesTransferred)
+						{
+							DownloadedBytes = bytesTransferred;
+							MovingFileToDestination?.Invoke(this, sourcePosition, sourceLength, chunkFilePath,
+								char.ToUpper(chunkFilePath[0]), char.ToUpper(OutputFileName[0]));
+						};
+
+						using (Stream destinationStream = File.OpenWrite(OutputFileName))
+						{
+							Stream inputStream = chunk.Stream ?? File.OpenRead(chunkFilePath);
+							inputStream.Position = DownloadedBytes = 0L;
+							Append(inputStream, destinationStream,
+								(sourcePosition, sourceLength, destinationPosition, destinationLength) =>
+								{
+									MovingFileToDestination?.Invoke(this, sourcePosition, sourceLength, chunkFilePath,
+										char.ToUpper(chunkFilePath[0]), char.ToUpper(OutputFileName[0]));
+								}, func, func,
+								_cancellationTokenSource.Token, UpdateIntervalMilliseconds);
+							if (chunk.Stream != null)
+							{
+								chunk.Dispose();
+							}
+							else
+							{
+								inputStream.Dispose();
+							}
+						}
+
+						if (!_cancellationTokenSource.IsCancellationRequested)
+						{
+							File.Delete(chunkFilePath);
+							LastErrorMessage = null;
+							return 200;
+						}
+						else
+						{
+							return _isAborted ? DOWNLOAD_ERROR_ABORTED : DOWNLOAD_ERROR_CANCELED;
+						}
+					}
+				}
+				else
+				{
+					errorMessage = "Файл не найден!";
+					return DOWNLOAD_ERROR_FINAL_FILE_MOVE;
+				}
+
+			} catch (Exception ex)
+			{
+#if DEBUG
+				Debug.WriteLine(ex.Message);
+#endif
+				errorMessage = ex.Message;
+				return DOWNLOAD_ERROR_FINAL_FILE_MOVE;
+			}
 		}
 
 		private void ClearGarbage(ConcurrentDictionary<int, DownloadableTask> dictionary)
