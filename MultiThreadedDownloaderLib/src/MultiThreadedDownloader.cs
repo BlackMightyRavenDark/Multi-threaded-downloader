@@ -952,7 +952,7 @@ namespace MultiThreadedDownloaderLib
 					long bytesNeeded = range.Length + ONE_MEGABYTE;
 					if (!IsEnoughDiskSpace(chunkFileName[0], bytesNeeded, out string errorMsg))
 					{
-						LastErrorCode = DOWNLOAD_ERROR_ABORTED;
+						LastErrorCode = DOWNLOAD_ERROR_INSUFFICIENT_DISK_SPACE;
 						LastErrorMessage = errorMsg;
 						outputStream = null;
 						return false;
