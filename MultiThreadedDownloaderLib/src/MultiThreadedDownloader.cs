@@ -821,18 +821,22 @@ namespace MultiThreadedDownloaderLib
 
 										using (Stream destinationStream = File.OpenWrite(OutputFileName))
 										{
-											using (Stream inputStream = downloadableChunks[0].OutputStream.Stream ??
-												File.OpenRead(chunkFilePath))
+											Stream inputStream = downloadableChunks[0].OutputStream.Stream ?? File.OpenRead(chunkFilePath);
+											inputStream.Position = DownloadedBytes = 0L;
+											Append(inputStream, destinationStream,
+												(sourcePosition, sourceLength, destinationPosition, destinationLength) =>
+												{
+													MovingFileToDestination?.Invoke(this, sourcePosition, sourceLength, chunkFilePath,
+														char.ToUpper(chunkFilePath[0]), char.ToUpper(OutputFileName[0]));
+												}, func, func,
+												_cancellationTokenSource.Token, UpdateIntervalMilliseconds);
+											if (downloadableChunks[0].OutputStream.Stream != null)
 											{
-												inputStream.Position = DownloadedBytes = 0L;
-												Append(inputStream, destinationStream,
-													(sourcePosition, sourceLength, destinationPosition, destinationLength) =>
-													{
-														DownloadedBytes = 0L;
-														MovingFileToDestination?.Invoke(this, sourcePosition, sourceLength, chunkFilePath,
-															char.ToUpper(chunkFilePath[0]), char.ToUpper(OutputFileName[0]));
-													}, func, func,
-													_cancellationTokenSource.Token, UpdateIntervalMilliseconds);
+												downloadableChunks[0].OutputStream.Dispose();
+											}
+											else
+											{
+												inputStream.Dispose();
 											}
 										}
 
