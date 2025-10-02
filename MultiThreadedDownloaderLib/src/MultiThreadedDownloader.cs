@@ -131,6 +131,8 @@ namespace MultiThreadedDownloaderLib
 			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit);
 		public delegate int TaskConnectedDelegate(object sender, DownloadableTask task,
 			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit, long innerContentLength, int errorCode);
+		public delegate bool TaskOutputStreamAssigningDelegate(object sender, DownloadRange range,
+			string chunkFileName, bool useRamForTempFiles, out Stream outputStream);
 		public delegate void TaskStartedDelegate(object sender, DownloadableTask task, long innerContentLength,
 			int innerTryNumber, int innerTryCountLimit, int taskTryNumber, int taskTryCountLimit);
 		public delegate void TaskProgressDelegate(object sender, DownloadableTask task,
@@ -160,6 +162,7 @@ namespace MultiThreadedDownloaderLib
 		public TaskHeadersReceivedDelegate TaskHeadersReceived;
 		public TaskConnectingDelegate TaskConnecting;
 		public TaskConnectedDelegate TaskConnected;
+		public TaskOutputStreamAssigningDelegate TaskOutputStreamAssigning;
 		public TaskStartedDelegate TaskStarted;
 		public TaskProgressDelegate TaskProgress;
 		public TaskErrorDelegate TaskError;
@@ -425,7 +428,7 @@ namespace MultiThreadedDownloaderLib
 			var tasks = chunkRanges.Select((taskDownloadRange, taskId) => Task.Run(() =>
 			{
 				string chunkFileName = null;
-				if (!UseRamForTempFiles && !isFakeDownloading)
+				if (!isFakeDownloading && (!UseRamForTempFiles || TaskOutputStreamAssigning != null))
 				{
 					chunkFileName = GetNumberedFileName(FormatChunkTempFilePath(chunkCount,
 						taskDownloadRange.StartPosition, taskDownloadRange.EndPosition, fullContentLength));
@@ -655,8 +658,8 @@ namespace MultiThreadedDownloaderLib
 
 						downloader.SetRange(taskDownloadRange);
 
-						ContentChunkStream chunkStream = new ContentChunkStream(
-							streamChunk, UseRamForTempFiles || isFakeDownloading ? null : chunkFileName);
+						ContentChunkStream chunkStream = new ContentChunkStream(streamChunk,
+							isFakeDownloading || streamChunk is MemoryStream ? null : chunkFileName);
 						LastErrorCode = downloader.Download(chunkStream, bufferSize, _cancellationTokenSource);
 
 						if (LastErrorCode == 200 || LastErrorCode == 206)
@@ -891,11 +894,19 @@ namespace MultiThreadedDownloaderLib
 		{
 			try
 			{
-				if (useRamForTempFiles || isFakeDownloading)
+				if (isFakeDownloading)
 				{
-					outputStream = isFakeDownloading ? null : new MemoryStream();
+					outputStream = null;
+					return true;
 				}
-				else
+
+				if (TaskOutputStreamAssigning != null)
+				{
+					return TaskOutputStreamAssigning.Invoke(this, range,
+						chunkFileName, useRamForTempFiles, out outputStream);
+				}
+
+				if (!useRamForTempFiles)
 				{
 					long bytesNeeded = range.Length + ONE_MEGABYTE;
 					if (!IsEnoughDiskSpace(chunkFileName[0], bytesNeeded, out string errorMsg))
@@ -908,6 +919,10 @@ namespace MultiThreadedDownloaderLib
 
 					outputStream = File.Open(chunkFileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
 					outputStream.Position = 0L;
+				}
+				else
+				{
+					outputStream = new MemoryStream();
 				}
 
 				return true;

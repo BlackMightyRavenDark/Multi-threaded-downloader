@@ -554,6 +554,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 
 			bool isPreparing = true;
 
+			long ramAvailable = (long)numericUpDownRamLimitMegabytes.Value * 1000000;
+
 			multiThreadedDownloader = new MultiThreadedDownloader();
 			multiThreadedDownloader.Preparing += (s) =>
 			{
@@ -893,6 +895,55 @@ namespace MultiThreadedDownloaderLib.GuiTest
 				}));
 				return errCode;
 			};
+			if (checkBoxLimitRamUsage.Checked)
+			{
+				multiThreadedDownloader.TaskOutputStreamAssigning += (object s, DownloadRange downloadRange,
+					string chunkFileName, bool useRamForTempFiles, out Stream taskOutputStream) =>
+				{
+					Stream stream = null;
+					bool result = false;
+
+					Invoke(new MethodInvoker(() =>
+					{
+						try
+						{
+							if (useRamForTempFiles && ramAvailable > 0L)
+							{
+								ramAvailable -= downloadRange.Length;
+							}
+
+							if (useRamForTempFiles && ramAvailable > 0L)
+							{
+								stream = new MemoryStream();
+								result = true;
+							}
+							else if (!string.IsNullOrEmpty(chunkFileName))
+							{
+								// Обязательно даём доступ 'чтение+запись', иначе не получится объединить скачанные чанки!
+								stream = File.Open(chunkFileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+								result = true;
+							}
+							else
+							{
+								stream = null;
+								result = false;
+							}
+						}
+#if DEBUG
+						catch (Exception ex)
+						{
+							System.Diagnostics.Debug.WriteLine(ex.Message);
+#else
+						catch
+						{
+#endif
+						}
+					}));
+
+					taskOutputStream = stream;
+					return result;
+				};
+			}
 			multiThreadedDownloader.TaskStarted += (s, task, innerContentLength,
 				innerTryNumber, innerTryCountLimit, taskTryNumber, taskTryCountLimit) =>
 			{
@@ -1003,6 +1054,8 @@ namespace MultiThreadedDownloaderLib.GuiTest
 			checkBoxMergeChunksAutomatically.Enabled = enable;
 			checkBoxDownloadToRAM.Enabled = enable;
 			checkBoxUseRamForTempFiles.Enabled = enable;
+			checkBoxLimitRamUsage.Enabled = enable;
+			numericUpDownRamLimitMegabytes.Enabled = enable;
 			checkBoxFakeDownloading.Enabled = enable;
 			checkBoxUseAccurateMode.Enabled = enable;
 			checkBoxIgnoreHeaderRequestErrors.Enabled = enable;
