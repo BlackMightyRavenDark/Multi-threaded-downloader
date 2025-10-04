@@ -193,7 +193,7 @@ namespace MultiThreadedDownloaderLib
 		public static int ExtractRangeFromHttpHeaders(WebHeaderCollection headers,
 			out long rangeFrom, out long rangeTo, out long contentLength)
 		{
-			string rangeHeaderValue = headers.Get("Range");
+			string rangeHeaderValue = headers?.Get("Range");
 			if (!string.IsNullOrEmpty(rangeHeaderValue))
 			{
 				bool success = ParseHttpHeaderRangeValue(rangeHeaderValue, out rangeFrom, out rangeTo);
