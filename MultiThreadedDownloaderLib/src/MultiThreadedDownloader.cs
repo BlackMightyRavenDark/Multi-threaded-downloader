@@ -412,6 +412,7 @@ namespace MultiThreadedDownloaderLib
 			bool isOutOfTries = false;
 			bool isExceptionRaised = false;
 			bool isHeadersReceived = false;
+			long updateIntervalMilliseconds = UpdateIntervalMilliseconds;
 
 			List<FileDownloader> downloaders = new List<FileDownloader>();
 			int predictedChunkCount = ContentLength > ONE_MEGABYTE ? ThreadCount : 1;
@@ -546,8 +547,7 @@ namespace MultiThreadedDownloaderLib
 				int lastTime = Environment.TickCount;
 				downloader.WorkProgress += (sender, transferred, contentLength, tryNumber, tryCountLimit) =>
 				{
-					int currentTime = Environment.TickCount;
-					if (currentTime - lastTime >= UpdateIntervalMilliseconds)
+					if (Environment.TickCount - lastTime >= updateIntervalMilliseconds)
 					{
 						FileDownloader d = sender as FileDownloader;
 						DownloadableTask downloadableTask = MakeDownloadableTaskFunc(
@@ -557,7 +557,7 @@ namespace MultiThreadedDownloaderLib
 						TaskProgress?.Invoke(this, downloadableTask, transferred, contentLength,
 							tryNumber, tryCountLimit, taskTryNumber, taskTryCountLimit);
 
-						lastTime = currentTime;
+						lastTime = Environment.TickCount;
 					}
 				};
 				downloader.WorkFinished += (sender, transferred, contentLength, tryNumber, tryCountLimit, errCode) =>
