@@ -30,7 +30,7 @@ namespace MultiThreadedDownloaderLib
 					SetHttpRequestHeaders(httpWebRequest, headers);
 				}
 
-				bool canSendBody = method == "POST" || method == "PUT";
+				bool canSendBody = method == "POST" || method == "PUT" || method == "PATCH";
 				if (canSendBody)
 				{
 					if (body != null && body.Length > 0L)
@@ -39,6 +39,8 @@ namespace MultiThreadedDownloaderLib
 						long contentLength = difference > 0L ? difference : 0L;
 						if (contentLength > 0L)
 						{
+							httpWebRequest.ContentLength = contentLength;
+
 							using (Stream requestStream = httpWebRequest.GetRequestStream())
 							{
 								if (requestStream.CanWrite)
@@ -50,8 +52,6 @@ namespace MultiThreadedDownloaderLib
 										if (bytesRead <= 0) { break; }
 										requestStream.Write(buffer, 0, bytesRead);
 									}
-
-									httpWebRequest.ContentLength = contentLength;
 								}
 							}
 						}
