@@ -22,7 +22,7 @@ namespace MultiThreadedDownloaderLib
 		/// </summary>
 		public int TryCountLimit { get; set; } = 1;
 
-		public WebHeaderCollection Headers { get; set; }
+		public WebHeaderCollection Headers { get; set; } = new WebHeaderCollection();
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
