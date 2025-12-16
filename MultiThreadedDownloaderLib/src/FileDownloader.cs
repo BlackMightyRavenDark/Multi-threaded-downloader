@@ -22,7 +22,7 @@ namespace MultiThreadedDownloaderLib
 		/// </summary>
 		public int TryCountLimit { get; set; } = 1;
 
-		public WebHeaderCollection Headers { get; set; } = new WebHeaderCollection();
+		public WebHeaderCollection Headers { get; set; }
 		public CookieContainer Cookies { get; set; }
 		public WebProxy Proxy { get; set; }
 		public int UpdateIntervalMilliseconds { get; set; } = 100;
@@ -100,7 +100,7 @@ namespace MultiThreadedDownloaderLib
 		public WorkErrorDelegate WorkError;
 		public WorkFinishedDelegate WorkFinished;
 
-		public FileDownloader(int id) { Id = id; }
+		public FileDownloader(int id) { Id = id; Headers = new WebHeaderCollection(); }
 		public FileDownloader() : this(0) { }
 		internal FileDownloader(DependentTaskInfo dependentTaskInfo, int id)
 			: this(id) { DependentTaskInfo = dependentTaskInfo; }
