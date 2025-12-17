@@ -122,9 +122,9 @@ namespace MultiThreadedDownloaderLib
 		public int Download(DownloadableChunk downloadableChunk, int bufferSize,
 			CancellationTokenSource cancellationTokenSource)
 		{
+			IsActive = true;
 			Preparing?.Invoke(this, Url, downloadableChunk);
 
-			IsActive = true;
 			LastErrorMessage = null;
 			DownloadableChunk = downloadableChunk;
 			DownloadedInLastSession = 0L;
