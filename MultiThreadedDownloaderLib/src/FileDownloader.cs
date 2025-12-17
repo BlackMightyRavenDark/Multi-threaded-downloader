@@ -14,7 +14,7 @@ namespace MultiThreadedDownloaderLib
 	{
 		public int Id { get; }
 		public string Url { get; set; }
-		public int ConnectionTimeout { get; set; }
+		public int ConnectionTimeout { get; set; } = 10000;
 
 		/// <summary>
 		/// Ограничение на число попыток скачивания. Если установлено значение '0' или меньше,
