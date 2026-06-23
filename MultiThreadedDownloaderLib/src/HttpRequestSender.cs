@@ -22,7 +22,7 @@ namespace MultiThreadedDownloaderLib
 				httpWebRequest.ServicePoint.Expect100Continue = sendExpect100ContinueHeader;
 				if (timeout >= 500)
 				{
-					httpWebRequest.Timeout = timeout;
+					httpWebRequest.Timeout = httpWebRequest.ReadWriteTimeout = httpWebRequest.ContinueTimeout = timeout;
 				}
 
 				if (headers != null && headers.Count > 0)
